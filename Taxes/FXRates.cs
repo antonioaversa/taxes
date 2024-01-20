@@ -6,7 +6,7 @@ static class FXRates
 {
     private static CultureInfo DefaultCulture => CultureInfo.InvariantCulture;
 
-    public static IDictionary<DateTime, decimal> Parse(string path, CultureInfo culture = null)
+    public static IDictionary<DateTime, decimal> Parse(string path, CultureInfo? culture = null)
     {
         var result = new Dictionary<DateTime, decimal>();
 
