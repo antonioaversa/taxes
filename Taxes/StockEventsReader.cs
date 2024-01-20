@@ -27,7 +27,8 @@ static class StockEventsReader
         var events = new List<Event>();
         foreach (var record in csv.GetRecords<EventStr>())
         {
-            var date = DateTime.ParseExact(record.Date, "yyyy-MM-ddTHH:mm:ss.ffffffK", CultureInfo.InvariantCulture);
+            var date = ReadDateTime(record);
+
             if (!fxRates.TryGetValue(date.Date, out var fxRate))
             {
                 Console.WriteLine($"WARN: No FX Rate found for day {date.Date} -> using {record.FXRate}");
@@ -57,6 +58,17 @@ static class StockEventsReader
         }
 
         return events;
+    }
+
+    private static DateTime ReadDateTime(EventStr record)
+    {
+        if (DateTime.TryParseExact(record.Date, "yyyy-MM-ddTHH:mm:ss.ffffffK", CultureInfo.InvariantCulture, 
+            DateTimeStyles.RoundtripKind, out var sixDecimalsDate))
+            return sixDecimalsDate;
+        if (DateTime.TryParseExact(record.Date, "yyyy-MM-ddTHH:mm:ss.fffK", CultureInfo.InvariantCulture,
+            DateTimeStyles.RoundtripKind, out var threeDecimalsDate))
+            return threeDecimalsDate;
+        throw new FormatException($"Unable to parse date: '{record.Date}'");
     }
 
     private static string Sanitize(string value) => value.Trim('(').Trim(')').Trim('$');
