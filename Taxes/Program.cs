@@ -2,7 +2,7 @@
 using static Taxes.Basics;
 
 var fxRates = FXRates.Parse("Reports/BCE-FXRate-EUR-USD.txt");
-ProcessEvents(StockEventsReader.Parse("Reports/stocks.csv", fxRates));
+ProcessEvents(StockEventsReader.Parse("Reports/stocks_2023.csv", fxRates));
 ProcessEvents(CryptoEventsReader.Parse("Reports/crypto_*.csv", "Reports/cryptoportfoliovalues.csv", fxRates));
 
 static void ProcessEvents(IList<Event> events)
