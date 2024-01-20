@@ -20,12 +20,13 @@ static class TickerProcessing
             TickerAction tickerAction = tickerEvent.Type switch
             {
                 EventType.CashTopUp => Noop,
+                EventType.CashWithdrawal => Noop,
                 EventType.CustodyFee => Noop,
                 EventType.BuyMarket or EventType.BuyLimit => ProcessBuy,
                 EventType.StockSplit => ProcessStockSplit,
                 EventType.SellMarket or EventType.SellLimit => ProcessSell,
                 EventType.Dividend => ProcessDividend,
-                _ => Noop,
+                _ => throw new NotSupportedException($"Event type not supported: {tickerEvent}"),
             };
 
             tickerState = tickerAction(tickerEvent, tickerEvents, eventIndex++, tickerState);

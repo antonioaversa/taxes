@@ -2,7 +2,7 @@
 
 enum EventType
 {
-    CashTopUp, BuyMarket, BuyLimit, SellMarket, SellLimit, CustodyFee, StockSplit, Dividend
+    CashTopUp, CashWithdrawal, BuyMarket, BuyLimit, SellMarket, SellLimit, CustodyFee, StockSplit, Dividend
 }
 
 // Nomenclature:

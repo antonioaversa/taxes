@@ -9,6 +9,7 @@ static class StockEventsReader
     private readonly static Dictionary<string, EventType> StringToEventType = new()
     {
         ["CASH TOP-UP"] = EventType.CashTopUp,
+        ["CASH WITHDRAWAL"] = EventType.CashWithdrawal,
         ["BUY - MARKET"] = EventType.BuyMarket,
         ["BUY - LIMIT"] = EventType.BuyLimit,
         ["SELL - MARKET"] = EventType.SellMarket,
