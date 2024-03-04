@@ -2,7 +2,13 @@
 
 enum EventType
 {
-    CashTopUp, CashWithdrawal, BuyMarket, BuyLimit, SellMarket, SellLimit, CustodyFee, StockSplit, Dividend
+    Reset,          // Synthetic event added to reset aggregates calculation at the beginning of a year
+    CashTopUp,      // Internal transfer from expenditure account to investing account (which are segregated)
+    CashWithdrawal, // Internal transfer from investing account to expenditure account
+    CustodyFee,     // Monthly fees for custody of cash and positions
+    CustodyChange,  // Change of custody entity (una-tantum events)
+    BuyMarket, BuyLimit, SellMarket, SellLimit, // Stock exchange events
+    StockSplit, Dividend,                       // Stock general events
 }
 
 // Nomenclature:
@@ -14,11 +20,11 @@ enum EventType
 
 record Event(
     DateTime Date,
-    string? Ticker,
     EventType Type,
+    string? Ticker, // Optional: some events are not ticker-specific (e.g. custody fee or change)
     decimal? Quantity,
     decimal? PricePerShareLocal,
-    decimal TotalAmountLocal,
+    decimal? TotalAmountLocal,
     decimal? FeesLocal,
     string Currency,
     decimal FXRate,
@@ -32,5 +38,7 @@ record Event(
         (PricePerShareLocal != null && Quantity != null 
             ? $"{Quantity.Value.R()} shares at {PricePerShareLocal.Value.R()} {Currency}/share " 
             : string.Empty) +
-        $"=> {TotalAmountLocal.R()} {Currency} (FXRate = {FXRate})";
+        (TotalAmountLocal != null 
+            ? $"=> {TotalAmountLocal.Value.R()} {Currency} (FXRate = {FXRate})"
+            : string.Empty);
 }

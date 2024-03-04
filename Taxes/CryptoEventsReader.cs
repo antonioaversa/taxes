@@ -62,8 +62,8 @@ static class CryptoEventsReader
 
                 events.Add(new(
                     Date: date,
-                    Ticker: "CRYPTO",
                     Type: type,
+                    Ticker: "CRYPTO",
                     Quantity: quantity,
                     PricePerShareLocal: totalAmountLocal / quantity,
                     TotalAmountLocal: totalAmountLocal,
