@@ -8,6 +8,7 @@ static class StockEventsReader
 {
     private readonly static Dictionary<string, EventType> StringToEventType = new()
     {
+        ["RESET"] = EventType.Reset,
         ["CASH TOP-UP"] = EventType.CashTopUp,
         ["CASH WITHDRAWAL"] = EventType.CashWithdrawal,
         ["BUY - MARKET"] = EventType.BuyMarket,
@@ -15,6 +16,8 @@ static class StockEventsReader
         ["SELL - MARKET"] = EventType.SellMarket,
         ["SELL - LIMIT"] = EventType.SellLimit,
         ["CUSTODY FEE"] = EventType.CustodyFee,
+        ["TRANSFER FROM REVOLUT BANK UAB TO REVOLUT SECURITIES EUROPE UAB"] = EventType.CustodyChange,
+        ["TRANSFER FROM REVOLUT TRADING LTD TO REVOLUT SECURITIES EUROPE UAB"] = EventType.CustodyChange,
         ["STOCK SPLIT"] = EventType.StockSplit,
         ["DIVIDEND"] = EventType.Dividend,
     };
@@ -38,15 +41,17 @@ static class StockEventsReader
             decimal? quantity = string.IsNullOrWhiteSpace(record.Quantity) ? null : decimal.Parse(record.Quantity);
             decimal? pricePerShareLocal = string.IsNullOrWhiteSpace(record.PricePerShare) ? null : decimal.Parse(Sanitize(record.PricePerShare));
             decimal? sharesPriceLocal = pricePerShareLocal == null ? null : pricePerShareLocal * quantity;
-            decimal totalAmountLocal = decimal.Parse(Sanitize(record.TotalAmount));
+            decimal? totalAmountLocal = string.IsNullOrWhiteSpace(record.TotalAmount) ? null : decimal.Parse(Sanitize(record.TotalAmount));
 
             // The difference between total amount and shares price is GENERALLY positive for BUY and negative for SELL
-            decimal? feesLocal = sharesPriceLocal == null ? null : Math.Abs(totalAmountLocal - sharesPriceLocal.Value);
+            decimal? feesLocal = totalAmountLocal == null || sharesPriceLocal == null 
+                ? null 
+                : Math.Abs(totalAmountLocal.Value - sharesPriceLocal.Value);
 
             events.Add(new(
                 Date: date,
-                Ticker: string.IsNullOrWhiteSpace(record.Ticker) ? null : record.Ticker,
                 Type: StringToEventType[record.Type],
+                Ticker: string.IsNullOrWhiteSpace(record.Ticker) ? null : record.Ticker,
                 Quantity: quantity,
                 PricePerShareLocal: pricePerShareLocal,
                 TotalAmountLocal: totalAmountLocal,

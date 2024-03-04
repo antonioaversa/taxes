@@ -19,12 +19,14 @@ static class TickerProcessing
             Console.WriteLine($"{eventIndex}: {tickerEvent}");
             TickerAction tickerAction = tickerEvent.Type switch
             {
+                EventType.Reset => ProcessReset,
                 EventType.CashTopUp => Noop,
                 EventType.CashWithdrawal => Noop,
                 EventType.CustodyFee => Noop,
+                EventType.CustodyChange => Noop,
                 EventType.BuyMarket or EventType.BuyLimit => ProcessBuy,
-                EventType.StockSplit => ProcessStockSplit,
                 EventType.SellMarket or EventType.SellLimit => ProcessSell,
+                EventType.StockSplit => ProcessStockSplit,
                 EventType.Dividend => ProcessDividend,
                 _ => throw new NotSupportedException($"Event type not supported: {tickerEvent}"),
             };
@@ -38,6 +40,19 @@ static class TickerProcessing
         Console.WriteLine(new string('=', 100));
 
         return tickerState;
+    }
+
+    static TickerState ProcessReset(Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState)
+    {
+        return new TickerState(tickerState.Ticker, tickerState.Isin) with
+        {
+            TotalQuantity = tickerState.TotalQuantity,
+            TotalAmountBase = tickerState.TotalAmountBase,
+            PepsCurrentIndex = tickerState.PepsCurrentIndex,
+            PepsCurrentIndexBoughtQuantity = tickerState.PepsCurrentIndexBoughtQuantity,
+            PortfolioAcquisitionValueBase = tickerState.PortfolioAcquisitionValueBase,
+            CryptoFractionOfInitialCapital = tickerState.CryptoFractionOfInitialCapital,
+        };
     }
 
     static TickerState Noop(Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState)
@@ -55,6 +70,8 @@ static class TickerProcessing
             throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.PricePerShareLocal)} null");
         if (tickerEvent.Quantity == null)
             throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.Quantity)} null");
+        if (tickerEvent.TotalAmountLocal == null)
+            throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.TotalAmountLocal)} null");
         if (tickerEvents.FirstOrDefault(e => e.Currency != tickerEvent.Currency) is { } previousEvent)
             throw new NotSupportedException($"Etherogenous currencies: {previousEvent} vs {tickerEvent}");
         if (tickerEvent.Ticker != tickerState.Ticker)
@@ -64,8 +81,8 @@ static class TickerProcessing
 
         var tickerCurrency = tickerEvent.Currency;
 
-        var totalBuyPriceLocal = tickerEvent.TotalAmountLocal;
-        Console.WriteLine($"\tTotal Buy Price ({tickerCurrency}) = {tickerEvent.TotalAmountLocal.R()}");
+        var totalBuyPriceLocal = tickerEvent.TotalAmountLocal.Value;
+        Console.WriteLine($"\tTotal Buy Price ({tickerCurrency}) = {totalBuyPriceLocal.R()}");
 
         var totalBuyPriceBase = totalBuyPriceLocal / tickerEvent.FXRate;
         Console.WriteLine($"\tTotal Buy Price ({BaseCurrency}) = {totalBuyPriceBase.R()}");
@@ -108,6 +125,8 @@ static class TickerProcessing
             throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.Quantity)} null");
         if (tickerEvent.PricePerShareLocal != null)
             throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.PricePerShareLocal)} not null");
+        if (tickerEvent.TotalAmountLocal == null)
+            throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.TotalAmountLocal)} null");
         if (tickerEvent.TotalAmountLocal != 0m)
             throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.TotalAmountLocal)} not zero");
         if (tickerEvent.Ticker != tickerState.Ticker)
@@ -155,6 +174,8 @@ static class TickerProcessing
             throw new NotSupportedException($"Etherogenous currencies: {previousEvent} vs {tickerEvent}");
         if (tickerState.TotalQuantity - tickerEvent.Quantity.Value < -Precision)
             throw new InvalidDataException($"Invalid event - Cannot sell more than owned");
+        if (tickerEvent.TotalAmountLocal == null)
+            throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.TotalAmountLocal)} null");
         if (tickerEvent.Ticker != tickerState.Ticker)
             throw new InvalidDataException($"Event and state tickers don't match");
         if (tickerEvent.FeesLocal == null)
@@ -162,7 +183,7 @@ static class TickerProcessing
 
         var tickerCurrency = tickerEvent.Currency;
 
-        var totalSellPriceLocal = tickerEvent.TotalAmountLocal;
+        var totalSellPriceLocal = tickerEvent.TotalAmountLocal.Value;
         Console.WriteLine($"\tTotal Sell Price ({tickerCurrency}) = {totalSellPriceLocal.R()}");
 
         var sharesSellPriceLocal = tickerEvent.PricePerShareLocal.Value * tickerEvent.Quantity.Value;
@@ -180,7 +201,7 @@ static class TickerProcessing
         var sharesSellPriceBase = perShareSellPriceBase * tickerEvent.Quantity.Value;
         Console.WriteLine($"\tShares Sell Price ({BaseCurrency}) = {sharesSellPriceBase.R()}");
 
-        var totalSellPriceBase = tickerEvent.TotalAmountLocal / tickerEvent.FXRate;
+        var totalSellPriceBase = totalSellPriceLocal / tickerEvent.FXRate;
         Console.WriteLine($"\tTotal Sell Price ({BaseCurrency}) = {totalSellPriceBase.R()}");
 
         var sellFees1Base = Math.Abs(sharesSellPriceBase - totalSellPriceBase);
@@ -339,10 +360,12 @@ static class TickerProcessing
             throw new NotSupportedException($"Unsupported type: {tickerEvent.Type}");
         if (tickerEvent.Ticker == null)
             throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.Ticker)} null");
+        if (tickerEvent.TotalAmountLocal == null)
+            throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.TotalAmountLocal)} null");
         if (tickerEvent.TotalAmountLocal == 0m)
             throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.TotalAmountLocal)} zero");
 
-        var netDividendLocal = tickerEvent.TotalAmountLocal;
+        var netDividendLocal = tickerEvent.TotalAmountLocal.Value;
         Console.WriteLine($"\tNet Dividend ({tickerEvent.Currency}) = {netDividendLocal.R()}");
 
         var netDividendBase = netDividendLocal / tickerEvent.FXRate;
