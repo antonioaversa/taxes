@@ -1,67 +1,75 @@
-﻿namespace Taxes;
+﻿using Newtonsoft.Json;
+using System.Collections.ObjectModel;
+using System.Globalization;
+using System.Text.RegularExpressions;
 
-public static class Basics
+namespace Taxes;
+
+public static partial class Basics
 {
-    public const decimal Precision = 0.01m;
+    private const string BasicsFileName = "Basics.json";
 
-    public const string BaseCurrency = "EUR";
+    public static string PathOf(this string fileName) => Path.Combine("Reports", fileName);
 
-    public static readonly Dictionary<string, string> ISIN = new()
+    public static readonly Func<decimal, decimal> Rounding;
+    public static readonly decimal Precision;
+    public static readonly string BaseCurrency;
+    public static readonly ReadOnlyDictionary<string, string> ISINs;
+
+    static Basics()
     {
-        ["AAPL"] = "US0378331005",
-        ["AMD"] = "US0079031078",
-        ["AMZN"] = "US0231351067",
-        ["BEP"] = "BMG162581083",
-        ["CFLT"] = "US20717M1036",
-        ["COIN"] = "US19260Q1076",
-        ["CVNA"] = "US1468691027",
-        ["GOOGL"] = "US02079K3059",
-        ["GSK"] = "US37733W2044",
-        ["GSK.WI"] = "US37733W2044",
-        ["INTC"] = "US0",
-        ["HLN"] = "US4055521003",
-        ["JKS"] = "US47759T1007",
-        ["KO"] = "US1912161007",
-        ["LLY"] = "US5324571083",
-        ["META"] = "US30303M1027",
-        ["MSFT"] = "US5949181045",
-        ["NVDA"] = "US0",
-        ["NVO"] = "US6701002056",
-        ["ORCL"] = "US0",
-        ["OXY"] = "US6745991058",
-        ["PFE"] = "US7170811035",
-        ["QCOM"] = "US7475251036",
-        ["TSLA"] = "US88160R1014",
-        ["TSM"] = "US8740391003",
+        var basicsFile = JsonConvert.DeserializeObject<BasicsFile>(File.ReadAllText(PathOf(BasicsFileName))) 
+            ?? throw new Exception($"Invalid {BasicsFileName}");
 
-        ["CRYPTO"] = "CRYPTO",
-        ["AAVE"] = "CRYPTO_AAVE",
-        ["ADA"] = "CRYPTO_ADA",
-        ["BNT"] = "CRYPTO_BNT",
-        ["BTC"] = "CRYPTO_BTC",
-        ["DOGE"] = "CRYPTO_DOGE",
-        ["ETH"] = "CRYPTO_ETH",
-        ["NMR"] = "CRYPTO_NMR",
-        ["NU"] = "CRYPTO_NU",
-        ["PERP"] = "CRYPTO_PERP",
-        ["RLC"] = "CRYPTO_RLC",
-        ["SKL"] = "CRYPTO_SKL",
-        ["SNX"] = "CRYPTO_SNX",
-        ["SOL"] = "CRYPTO_SOL",
-        ["STORJ"] = "CRYPTO_STORJ",
-        ["ZRX"] = "CRYPTO_ZRX",
+        Rounding = (basicsFile.Rounding
+            ?? throw new Exception($"Invalid {nameof(R)} in {BasicsFileName}")) switch
+        {
+            var r when Regex_RoundingWithNumberOfDigits().Match(r) is { Success: true, Groups: var groups } =>
+                value => RoundingWithNumberOfDigits(
+                    value, 
+                    int.Parse(groups["numberOfDigits"].Value, CultureInfo.InvariantCulture)),
+            var r when Regex_RoundingWithResolutionAroundZero().Match(r) is { Success: true, Groups: var groups } =>
+                value => RoundingWithResolutionAroundZero(
+                    value, 
+                    int.Parse(groups["numberOfDigits"].Value, CultureInfo.InvariantCulture),
+                    int.Parse(groups["resolutionAroundZero"].Value, CultureInfo.InvariantCulture)),
+            var r => throw new Exception($"Invalid {nameof(R)} value in {BasicsFileName}: {r}")
+        };
+        Precision = basicsFile.Precision 
+            ?? throw new Exception($"Invalid {nameof(Precision)} in {BasicsFileName}");
+        BaseCurrency = basicsFile.BaseCurrency
+            ?? throw new Exception($"Invalid {nameof(BaseCurrency)} in {BasicsFileName}");
+        ISINs = new ReadOnlyDictionary<string, string>(basicsFile.ISINs
+            ?? throw new Exception($"Invalid {nameof(ISINs)} in {BasicsFileName}"));
 
-    };
+        static decimal RoundingWithNumberOfDigits(decimal value, int numberOfDigits) =>
+            Math.Round(value, numberOfDigits);
 
-    public static decimal R(this decimal value) =>
-        //Math.Round(value, 2);
-        Math.Abs(Math.Round(value, 4)) < 0.0005m ? 0m : Math.Round(value, 4);
+        static decimal RoundingWithResolutionAroundZero(decimal value, int numberOfDigits, decimal resolutionAroundZero) =>
+            Math.Abs(Math.Round(value, numberOfDigits)) < resolutionAroundZero ? 0m : Math.Round(value, numberOfDigits);
+    }
+
+    public static decimal R(this decimal value) => Rounding(value);
 
     public static decimal WitholdingTaxFor(string isin) => 
         isin switch
         {
-            string s when s.StartsWith("US") && s[2] - '0' <= 9 => 0.15m,
-            string s when s.StartsWith("BMG") && s[3] - '0' <= 9 => 0.15m,
-            string s => throw new NotSupportedException($"Unknown WHT for {s}"),
+            var s when s.StartsWith("US") && s[2] - '0' <= 9 => 0.15m,
+            var s when s.StartsWith("BMG") && s[3] - '0' <= 9 => 0.15m,
+            var s => throw new NotSupportedException($"Unknown WHT for {s}"),
         };
+
+    private sealed class BasicsFile
+    {
+        public string? Rounding { get; set; }
+        public decimal? Precision { get; set; }
+        public string? BaseCurrency { get; set; }
+        public Dictionary<string, string>? ISINs { get; set; }
+    }
+
+    [GeneratedRegex(@"Fixed_(?<numberOfDigits>\d+)")]
+    private static partial Regex Regex_RoundingWithNumberOfDigits();
+    
+    [GeneratedRegex(@"Fixed_(?<numberOfDigits>\d+)_(?<resolutionAroundZero>\d+)")]
+    private static partial Regex Regex_RoundingWithResolutionAroundZero();
 }

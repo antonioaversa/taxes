@@ -1,12 +1,17 @@
 ﻿using Taxes;
 using static Taxes.Basics;
 
-var fxRates = FXRates.Parse("Reports/BCE-FXRate-EUR-USD.txt");
-ProcessEvents(
-    StockEventsReader.Parse("Reports/stocks_2022.csv", fxRates)
-        .Concat(StockEventsReader.Parse("Reports/stocks_2023.csv", fxRates))
-        .ToList());
-ProcessEvents(CryptoEventsReader.Parse("Reports/crypto_*.csv", "Reports/cryptoportfoliovalues.csv", fxRates));
+var fxRates = FXRates.Parse(Basics.PathOf($"BCE-FXRate-{BaseCurrency}-USD.txt"));
+
+var stockEvents = StockEventsReader.Parse(
+    Basics.PathOf("stocks_2022.csv"), fxRates)
+        .Concat(StockEventsReader.Parse(Basics.PathOf("stocks_2023.csv"), fxRates))
+        .ToList();
+ProcessEvents(stockEvents);
+
+var cryptoEvents = CryptoEventsReader.Parse(
+    Basics.PathOf("crypto_*.csv"), Basics.PathOf("cryptoportfoliovalues.csv"), fxRates);
+ProcessEvents(cryptoEvents);
 
 static void ProcessEvents(IList<Event> events)
 {

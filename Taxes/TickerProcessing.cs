@@ -6,7 +6,7 @@ static class TickerProcessing
 {
     public static TickerState ProcessTicker(string ticker, IList<Event> tickerEvents)
     {
-        var isin = (string.IsNullOrWhiteSpace(ticker) ? "" : ISIN[ticker]);
+        var isin = (string.IsNullOrWhiteSpace(ticker) ? "" : ISINs[ticker]);
         if (string.IsNullOrWhiteSpace(ticker))
             Console.WriteLine($"PROCESS NON-TICKER-RELATED EVENTS");
         else 
