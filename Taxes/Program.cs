@@ -22,11 +22,10 @@ static void ProcessEvents(IList<Event> events)
         select (ticker: g.Key, tickerEvents: g.OrderBy(e1 => e1.Date).ToArray()))
         .ToList();
 
-    var tickerStates = new List<TickerState>();
-    foreach (var (ticker, tickerEvents) in eventsByTicker)
-    {
-        tickerStates.Add(TickerProcessing.ProcessTicker(ticker, tickerEvents));
-    }
+    var tickerStates = (
+        from e in eventsByTicker
+        select TickerProcessing.ProcessTicker(e.ticker, e.tickerEvents))
+        .ToList();
 
     tickerStates.PrintAggregatedMetrics();
 }
