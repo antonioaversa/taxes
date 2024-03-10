@@ -396,3 +396,6 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+Taxes/Reports/crypto_*.csv
+Taxes/Reports/stocks_*.csv
+Taxes/Reports/cryptoportfoliovalues.csv
