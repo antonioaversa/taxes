@@ -59,6 +59,12 @@ public static partial class Basics
             var s => throw new NotSupportedException($"Unknown WHT for {s}"),
         };
 
+    [GeneratedRegex(@"^Fixed_(?<numberOfDigits>\d+)$")]
+    private static partial Regex Regex_RoundingWithNumberOfDigits();
+    
+    [GeneratedRegex(@"^Fixed_(?<numberOfDigits>\d+)_(?<resolutionAroundZero>[\d\.]+)$")]
+    private static partial Regex Regex_RoundingWithResolutionAroundZero();
+
     private sealed class BasicsFile
     {
         public string? Rounding { get; set; }
@@ -66,10 +72,4 @@ public static partial class Basics
         public string? BaseCurrency { get; set; }
         public Dictionary<string, string>? ISINs { get; set; }
     }
-
-    [GeneratedRegex(@"^Fixed_(?<numberOfDigits>\d+)$")]
-    private static partial Regex Regex_RoundingWithNumberOfDigits();
-    
-    [GeneratedRegex(@"^Fixed_(?<numberOfDigits>\d+)_(?<resolutionAroundZero>[\d\.]+)$")]
-    private static partial Regex Regex_RoundingWithResolutionAroundZero();
 }

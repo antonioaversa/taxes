@@ -8,11 +8,13 @@ Those reports are necessary for the calculation of the taxes.
 ### Setup basics
 
 Make sure that `Basics.json` is up-to-date:
-- define `Precision` for financial calculation, as a decimal number. E.g. `0.01`, for two digits precision.
-- define `BaseCurrency`, used as target currency for all financial calculations. E.g. `EUR`, for EURO.
 - define `Rounding`, used to round figure in calculations. Acceptable values are:
   - `Fixed_(?<numberOfDigits>\d+)`
+	- e.g. `Fixed_2`, for rounding with `2` digits after the decimal sign
   - `Fixed_(?<numberOfDigits>\d+)_(?<resolutionAroundZero>[\d\.]+)` 
+	- e.g. `Fixed_4_0.0005`, for rounding with `4` decimals and resolution around zero of `0.0005`
+- define `Precision` for financial calculation, as a decimal number. E.g. `0.01`, for two digits precision.
+- define `BaseCurrency`, used as target currency for all financial calculations. E.g. `EUR`, for EURO.
 - define `ISINs`, used in reporting of calculation results, as a string-to-string dictionary, mapping the Ticker of a
   financial asset, to the ISIN of that asset. E.g. `{ "AAPL" : "US0378331005", ... }`.
 
