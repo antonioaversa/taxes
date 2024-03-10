@@ -79,7 +79,7 @@ static class CryptoEventsReader
 
     private static decimal CalculatePortfolioCurrentValueBase(
         IDictionary<DateTime, decimal> fxRates, 
-        IDictionary<DateTime, decimal> portfolioCurrentValuesLocal, 
+        Dictionary<DateTime, decimal> portfolioCurrentValuesLocal, 
         DateTime date)
     {
         if (!portfolioCurrentValuesLocal.TryGetValue(date.Date, out var portfolioCurrentValueLocal))
