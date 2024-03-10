@@ -1,16 +1,19 @@
 ﻿using Taxes;
-using static Taxes.Basics;
 
-var fxRates = FXRates.Parse(Basics.PathOf($"BCE-FXRate-{BaseCurrency}-USD.txt"));
+var fxRates = FXRates.Parse(Basics.FXRatesFilePath);
 
-var stockEvents = StockEventsReader.Parse(
-    Basics.PathOf("stocks_2022.csv"), fxRates)
-        .Concat(StockEventsReader.Parse(Basics.PathOf("stocks_2023.csv"), fxRates))
-        .ToList();
+var stockEvents = Basics.StockEventsFilePaths
+    .SelectMany(pattern => Directory.GetFiles(Basics.ReportsDirectoryPath, pattern))
+    .Order()
+    .SelectMany(filePath => StockEventsReader.Parse(filePath, fxRates))
+    .ToList();
 ProcessEvents(stockEvents);
 
-var cryptoEvents = CryptoEventsReader.Parse(
-    Basics.PathOf("crypto_*.csv"), Basics.PathOf("cryptoportfoliovalues.csv"), fxRates);
+var cryptoEvents = Basics.CryptoEventsFilePaths
+    .SelectMany(pattern => Directory.GetFiles(Basics.ReportsDirectoryPath, pattern))
+    .Order()
+    .SelectMany(filePath => CryptoEventsReader.Parse(filePath, Basics.CryptoPortfolioValuesFilePath, fxRates))
+    .ToList();
 ProcessEvents(cryptoEvents);
 
 static void ProcessEvents(IList<Event> events)
