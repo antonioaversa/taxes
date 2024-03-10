@@ -10,6 +10,7 @@ public static partial class Basics
     private const string BasicsFileName = "Basics.json";
 
     public static string PathOf(this string fileName) => Path.Combine("Reports", fileName);
+    public static CultureInfo DefaultCulture => DefaultCulture;
 
     public static readonly Func<decimal, decimal> Rounding;
     public static readonly decimal Precision;

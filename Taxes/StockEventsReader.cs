@@ -4,6 +4,8 @@ using System.Globalization;
 
 namespace Taxes;
 
+using static Basics;
+
 static class StockEventsReader
 {
     private readonly static Dictionary<string, EventType> StringToEventType = new()
@@ -25,7 +27,7 @@ static class StockEventsReader
     public static IList<Event> Parse(string path, IDictionary<DateTime, decimal> fxRates)
     {
         using var reader = new StreamReader(path);
-        using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
+        using var csv = new CsvReader(reader, DefaultCulture);
 
         var events = new List<Event>();
         foreach (var record in csv.GetRecords<EventStr>())
@@ -67,10 +69,10 @@ static class StockEventsReader
 
     private static DateTime ReadDateTime(EventStr record)
     {
-        if (DateTime.TryParseExact(record.Date, "yyyy-MM-ddTHH:mm:ss.ffffffK", CultureInfo.InvariantCulture, 
+        if (DateTime.TryParseExact(record.Date, "yyyy-MM-ddTHH:mm:ss.ffffffK", DefaultCulture, 
             DateTimeStyles.RoundtripKind, out var sixDecimalsDate))
             return sixDecimalsDate;
-        if (DateTime.TryParseExact(record.Date, "yyyy-MM-ddTHH:mm:ss.fffK", CultureInfo.InvariantCulture,
+        if (DateTime.TryParseExact(record.Date, "yyyy-MM-ddTHH:mm:ss.fffK", DefaultCulture,
             DateTimeStyles.RoundtripKind, out var threeDecimalsDate))
             return threeDecimalsDate;
         throw new FormatException($"Unable to parse date: '{record.Date}'");

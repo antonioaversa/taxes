@@ -4,6 +4,7 @@ using System.Globalization;
 
 namespace Taxes;
 
+using static Basics;
 static class CryptoEventsReader
 {
     const string Type_Transfer = "TRANSFER";
@@ -20,7 +21,7 @@ static class CryptoEventsReader
         foreach (var path in Directory.GetFiles(".", pattern))
         {
             using var eventsReader = new StreamReader(path);
-            using var eventsCsv = new CsvReader(eventsReader, CultureInfo.InvariantCulture);
+            using var eventsCsv = new CsvReader(eventsReader, DefaultCulture);
 
             foreach (var record in eventsCsv.GetRecords<EventStr>())
             {
@@ -45,7 +46,7 @@ static class CryptoEventsReader
                 if (record.BaseCurrency != Basics.BaseCurrency)
                     throw new NotSupportedException($"Record base currency {record.BaseCurrency}: {record}");
 
-                var date = DateTime.ParseExact(record.StartedDate, "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
+                var date = DateTime.ParseExact(record.StartedDate, "yyyy-MM-dd HH:mm:ss", DefaultCulture);
                 var amount = decimal.Parse(record.Amount);
                 var quantity = Math.Abs(amount);
                 var type = amount >= 0 ? EventType.BuyMarket : EventType.SellMarket;
@@ -98,10 +99,10 @@ static class CryptoEventsReader
     private static Dictionary<DateTime, decimal> ParsePortfolioValues(string portfolioValuesPath)
     {
         using var tpvReader = new StreamReader(portfolioValuesPath);
-        using var tpvCsv = new CsvReader(tpvReader, CultureInfo.InvariantCulture);
+        using var tpvCsv = new CsvReader(tpvReader, DefaultCulture);
         return tpvCsv.GetRecords<PortfolioValueStr>().ToDictionary(
-            record => DateTime.ParseExact(record.Date, "yyyy-MM-dd", CultureInfo.InvariantCulture),
-            record => decimal.Parse(record.PortfolioValueUSD, CultureInfo.InvariantCulture));
+            record => DateTime.ParseExact(record.Date, "yyyy-MM-dd", DefaultCulture),
+            record => decimal.Parse(record.PortfolioValueUSD, DefaultCulture));
     }
 
     [Delimiter(",")]
