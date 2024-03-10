@@ -11,8 +11,8 @@ Make sure that `Basics.json` is up-to-date:
 - define `Precision` for financial calculation, as a decimal number. E.g. `0.01`, for two digits precision.
 - define `BaseCurrency`, used as target currency for all financial calculations. E.g. `EUR`, for EURO.
 - define `Rounding`, used to round figure in calculations. Acceptable values are:
-  - `Fixed_<numberOfDigits>`
-  - `Fixed_<numberOfDigits>_<resolutionAroundZero>` 
+  - `Fixed_(?<numberOfDigits>\d+)`
+  - `Fixed_(?<numberOfDigits>\d+)_(?<resolutionAroundZero>[\d\.]+)` 
 - define `ISINs`, used in reporting of calculation results, as a string-to-string dictionary, mapping the Ticker of a
   financial asset, to the ISIN of that asset. E.g. `{ "AAPL" : "US0378331005", ... }`.
 

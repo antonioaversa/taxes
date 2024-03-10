@@ -32,7 +32,7 @@ public static partial class Basics
                 value => RoundingWithResolutionAroundZero(
                     value, 
                     int.Parse(groups["numberOfDigits"].Value, CultureInfo.InvariantCulture),
-                    int.Parse(groups["resolutionAroundZero"].Value, CultureInfo.InvariantCulture)),
+                    decimal.Parse(groups["resolutionAroundZero"].Value, CultureInfo.InvariantCulture)),
             var r => throw new Exception($"Invalid {nameof(R)} value in {BasicsFileName}: {r}")
         };
         Precision = basicsFile.Precision 
@@ -67,9 +67,9 @@ public static partial class Basics
         public Dictionary<string, string>? ISINs { get; set; }
     }
 
-    [GeneratedRegex(@"Fixed_(?<numberOfDigits>\d+)")]
+    [GeneratedRegex(@"^Fixed_(?<numberOfDigits>\d+)$")]
     private static partial Regex Regex_RoundingWithNumberOfDigits();
     
-    [GeneratedRegex(@"Fixed_(?<numberOfDigits>\d+)_(?<resolutionAroundZero>\d+)")]
+    [GeneratedRegex(@"^Fixed_(?<numberOfDigits>\d+)_(?<resolutionAroundZero>[\d\.]+)$")]
     private static partial Regex Regex_RoundingWithResolutionAroundZero();
 }
