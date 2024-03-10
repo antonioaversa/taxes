@@ -45,7 +45,7 @@ internal static class TickerStateListExtensions
              from property in typeof(TickerState).GetProperties()
              let metricAttribute = property.GetCustomAttribute<MetricAttribute>()
              where metricAttribute is not null
-             let metricSum = tickerStates.Sum(ts => (decimal)property.GetValue(ts))
+             let metricSum = tickerStates.Sum(ts => (decimal)property.GetValue(ts)!)
              select $"{metricAttribute.Description} ({BaseCurrency}) = {metricSum.R()}";
 
         metricStrings.ToList().ForEach(Console.WriteLine);
