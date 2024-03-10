@@ -12,4 +12,9 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 
+  <ItemGroup>
+	<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+	  <_Parameter1>Taxes.Tests</_Parameter1>
+	</AssemblyAttribute>
+  </ItemGroup>
 </Project>
