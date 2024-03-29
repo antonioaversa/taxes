@@ -68,8 +68,8 @@ static class TickerProcessing
             throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.Ticker)} null");
         if (tickerEvent.PricePerShareLocal == null)
             throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.PricePerShareLocal)} null");
-        if (tickerEvent.Quantity == null)
-            throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.Quantity)} null");
+        if (tickerEvent.Quantity == null || tickerEvent.Quantity.Value <= 0)
+            throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.Quantity)} null or non-positive");
         if (tickerEvent.TotalAmountLocal == null)
             throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.TotalAmountLocal)} null");
         if (tickerEvents.FirstOrDefault(e => e.Currency != tickerEvent.Currency) is { } previousEvent)
