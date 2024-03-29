@@ -33,18 +33,18 @@ public static partial class Basics
 
         Rounding = (basicsFile.Rounding
             ?? throw new Exception($"Invalid {nameof(R)} in {BasicsFileName}")) switch
-        {
-            var r when Regex_RoundingWithNumberOfDigits().Match(r) is { Success: true, Groups: var groups } =>
-                value => RoundingWithNumberOfDigits(
-                    value, 
-                    int.Parse(groups["numberOfDigits"].Value, DefaultCulture)),
-            var r when Regex_RoundingWithResolutionAroundZero().Match(r) is { Success: true, Groups: var groups } =>
-                value => RoundingWithResolutionAroundZero(
-                    value, 
-                    int.Parse(groups["numberOfDigits"].Value, DefaultCulture),
-                    decimal.Parse(groups["resolutionAroundZero"].Value, DefaultCulture)),
-            var r => throw new Exception($"Invalid {nameof(R)} value in {BasicsFileName}: {r}")
-        };
+            {
+                var r when Regex_RoundingWithNumberOfDigits().Match(r) is { Success: true, Groups: var groups } =>
+                    value => RoundingWithNumberOfDigits(
+                        value, 
+                        int.Parse(groups["numberOfDigits"].Value, DefaultCulture)),
+                var r when Regex_RoundingWithResolutionAroundZero().Match(r) is { Success: true, Groups: var groups } =>
+                    value => RoundingWithResolutionAroundZero(
+                        value, 
+                        int.Parse(groups["numberOfDigits"].Value, DefaultCulture),
+                        decimal.Parse(groups["resolutionAroundZero"].Value, DefaultCulture)),
+                var r => throw new Exception($"Invalid {nameof(R)} value in {BasicsFileName}: {r}")
+            };
         Precision = basicsFile.Precision 
             ?? throw new Exception($"Invalid {nameof(Precision)} in {BasicsFileName}");
         BaseCurrency = basicsFile.BaseCurrency
