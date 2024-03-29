@@ -11,7 +11,7 @@ public static partial class Basics
     public const string ReportsDirectoryPath = "Reports";
     public const string BasicsFileName = "Basics.json";
 
-    public static CultureInfo DefaultCulture => DefaultCulture;
+    public static CultureInfo DefaultCulture => CultureInfo.InvariantCulture;
 
     // Read from Basics.json
     public static readonly Func<decimal, decimal> Rounding;
