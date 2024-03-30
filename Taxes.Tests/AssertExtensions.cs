@@ -5,6 +5,7 @@ static class AssertExtensions
     public static void ThrowsAny<T>(Action action) where T : Exception
     {
         bool exceptionThrown = false;
+        Exception differentException = null;
         try
         {
             action();
@@ -16,8 +17,12 @@ static class AssertExtensions
         }
         catch (Exception ex)
         {
-            Assert.Fail($"Expected exception of type {typeof(T)} or derived, but exception of type {ex.GetType()} was thrown: {ex}");
+            differentException = ex;
         }
+
+        if (differentException is not null)
+            Assert.Fail($"Expected exception of type {typeof(T)} or derived, but exception of type " +
+                $"{differentException.GetType()} was thrown: {differentException}");
 
         if (!exceptionThrown)
             Assert.Fail($"Expected exception of type {typeof(T)} or derived, but no exception was thrown");

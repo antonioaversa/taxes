@@ -4,18 +4,14 @@
 public class AssertExtensionsTests
 {
     [TestMethod]
-    [ExpectedException(typeof(AssertFailedException))]
-    public void ThrowsAny_ThrowsWhenNoExceptionIsThrown()
-    {
-        AssertExtensions.ThrowsAny<Exception>(() => { });
-    }
+    public void ThrowsAny_ThrowsWhenNoExceptionIsThrown() =>
+        AssertExtensions.ThrowsAny<AssertFailedException>(() =>
+            AssertExtensions.ThrowsAny<Exception>(() => { }));
 
     [TestMethod]
-    [ExpectedException(typeof(AssertFailedException))]
-    public void ThrowsAny_ThrowsWhenDifferentExceptionIsThrown()
-    {
-        AssertExtensions.ThrowsAny<ArgumentException>(() => throw new IOException());
-    }
+    public void ThrowsAny_ThrowsWhenDifferentExceptionIsThrown() => 
+        AssertExtensions.ThrowsAny<AssertFailedException>(() =>
+            AssertExtensions.ThrowsAny<ArgumentException>(() => throw new IOException()));
 
     [TestMethod]
     public void ThrowsAny_DoesNotThrowWhenDerivedExceptionIsThrown()
