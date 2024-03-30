@@ -1,6 +1,7 @@
 ﻿using CsvHelper;
 using CsvHelper.Configuration.Attributes;
 using System.Globalization;
+using System.IO;
 
 namespace Taxes;
 
@@ -27,7 +28,12 @@ static class StockEventsReader
     public static IList<Event> Parse(string path, IDictionary<DateTime, decimal> fxRates)
     {
         using var reader = new StreamReader(path);
-        using var csv = new CsvReader(reader, DefaultCulture);
+        return Parse(reader, fxRates);
+    }
+
+    public static IList<Event> Parse(TextReader textReader, IDictionary<DateTime, decimal> fxRates)
+    {
+        using var csv = new CsvReader(textReader, DefaultCulture);
 
         var events = new List<Event>();
         foreach (var record in csv.GetRecords<EventStr>())
