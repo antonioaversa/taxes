@@ -21,7 +21,9 @@ enum EventType
 record Event(
     DateTime Date,
     EventType Type,
-    string? Ticker, // Optional: some events are not ticker-specific (e.g. custody fee or change)
+    /// Optional: some events are not ticker-specific (e.g. custody fee or change)
+    string? Ticker,
+    /// Mandatory for Buy*, Sell* and StockSplit. When defined, must be strictly positive.
     decimal? Quantity,
     decimal? PricePerShareLocal,
     decimal? TotalAmountLocal,
