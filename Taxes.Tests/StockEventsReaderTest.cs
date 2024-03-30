@@ -78,6 +78,19 @@ public class StockEventsReaderTest
     }
 
     [TestMethod]
+    public void Parse_WithInvalidDateFormat_RaisesException()
+    {
+        AssertExtensions.ThrowsAny<Exception>(() => StockEventsReader.Parse(new StringReader("""
+            Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
+            2022-03-29,,CASH TOP-UP,,,"$3,000",USD,1.12
+            """), NoFxRates));
+        AssertExtensions.ThrowsAny<Exception>(() => StockEventsReader.Parse(new StringReader("""
+            Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
+            29-03-2022T00:00:00.000Z,,CASH TOP-UP,,,"$3,000",USD,1.12
+            """), NoFxRates));
+    }
+
+    [TestMethod]
     public void Parse_TakesIntoAccountProvidedFxRate_WhenAvailable()
     {
         using var textReader = new StringReader("""

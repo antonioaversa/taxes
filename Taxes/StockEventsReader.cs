@@ -1,7 +1,6 @@
 ﻿using CsvHelper;
 using CsvHelper.Configuration.Attributes;
 using System.Globalization;
-using System.IO;
 
 namespace Taxes;
 
