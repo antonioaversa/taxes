@@ -1,4 +1,6 @@
-﻿namespace Taxes.Test;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+namespace Taxes.Test;
 
 [TestClass]
 public class StockEventsReaderTest
@@ -20,6 +22,17 @@ public class StockEventsReaderTest
         [new(2023, 12, 11)] = 1.08m,
         [new(2023, 12, 18)] = 1.10m,
     };
+
+    [TestMethod]
+    public void Parse_WithPricePerShareNull()
+    {
+        using var textReader = new StringReader("""
+            Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
+            2022-03-30T23:48:44.882381Z,,CASH TOP-UP,,,"$3,000",USD,1.12
+            """);
+        var events = StockEventsReader.Parse(textReader, NoFxRates);
+        Assert.IsNull(events[0].PricePerShareLocal);
+    }
 
     [TestMethod]
     public void Parse_AllTypesOfEvents_Correctly()
@@ -110,6 +123,50 @@ public class StockEventsReaderTest
             pricePerShareLocal: 861.63m, totalAmountLocal: 878, currency: "USD", fxRate: 1.06m);
         events[3].AssertEvent(
             date: new(2022, 6, 2), type: EventType.CustodyFee, totalAmountLocal: 1.35m, currency: "USD", fxRate: 1.08m);
+    }
+
+    [TestMethod]
+    public void Parse_WithTemporaryFile()
+    {
+        var path = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllText(path, """
+                Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
+                2022-03-30T23:48:44.882381Z,,CASH TOP-UP,,,"$3,000",USD,1.12
+                """);
+
+            var events = StockEventsReader.Parse(path, NoFxRates);
+            Assert.AreEqual(1, events.Count);
+            events[0].AssertEvent(
+                type: EventType.CashTopUp, totalAmountLocal: 3000, currency: "USD", fxRate: 1.12m);
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [TestMethod]
+    public void Parse_WithoutHeader_RaisesException()
+    {
+        using var textReader = new StringReader("""
+            2022-03-30T23:48:44.882381Z,,CASH TOP-UP,,,""$3,000"",USD,1.12
+            """);
+        AssertExtensions.ThrowsAny<Exception>(() => StockEventsReader.Parse(textReader, NoFxRates));
+    }
+
+    [TestMethod]
+    public void Parse_WithInvalidFields_RaisesExceptio()
+    {
+        using var textReader = new StringReader("""
+            Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
+            2022-05-02T13:32:24.217636Z,TSLA,BUY - MARKET,1.018999,$861.63,$878,USD,01.06
+            2022-06-02T06:41:50.336664Z,,CUSTODY FEE,,,($1.35),USD,01.07
+            2022-06-06T05:20:46.594417Z,AMZN,STOCK SPLIT,11.49072,,$0,USD,01.08,NONEXISTANT
+            """);
+        AssertExtensions.ThrowsAny<Exception>(() => StockEventsReader.Parse(textReader, NoFxRates));
     }
 }
 

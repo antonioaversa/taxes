@@ -1,4 +1,5 @@
 ﻿using CsvHelper;
+using CsvHelper.Configuration;
 using CsvHelper.Configuration.Attributes;
 using System.Globalization;
 
@@ -32,7 +33,13 @@ static class StockEventsReader
 
     public static IList<Event> Parse(TextReader textReader, IDictionary<DateTime, decimal> fxRates)
     {
-        using var csv = new CsvReader(textReader, DefaultCulture);
+        var csvConfiguration = new CsvConfiguration(DefaultCulture)
+        {
+            Delimiter = ",",
+            DetectColumnCountChanges = true,
+            HasHeaderRecord = true,
+        };
+        using var csv = new CsvReader(textReader, csvConfiguration);
 
         var events = new List<Event>();
         foreach (var record in csv.GetRecords<EventStr>())
@@ -47,7 +54,7 @@ static class StockEventsReader
 
             decimal? quantity = string.IsNullOrWhiteSpace(record.Quantity) ? null : decimal.Parse(record.Quantity);
             decimal? pricePerShareLocal = string.IsNullOrWhiteSpace(record.PricePerShare) ? null : decimal.Parse(Sanitize(record.PricePerShare));
-            decimal? sharesPriceLocal = pricePerShareLocal == null ? null : pricePerShareLocal * quantity;
+            decimal? sharesPriceLocal = pricePerShareLocal * quantity;
             decimal? totalAmountLocal = string.IsNullOrWhiteSpace(record.TotalAmount) ? null : decimal.Parse(Sanitize(record.TotalAmount));
 
             // The difference between total amount and shares price is GENERALLY positive for BUY and negative for SELL
