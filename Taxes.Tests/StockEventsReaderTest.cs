@@ -42,7 +42,6 @@ public class StockEventsReaderTest
             """);
         var events = StockEventsReader.Parse(textReader, NoFxRates);
     
-        // Assert all data read correctly for all events
         Assert.AreEqual(13, events.Count);
         events[0].AssertEvent(
             type: EventType.CashTopUp, totalAmountLocal: 3000, currency: "USD", fxRate: 1.12m);
@@ -76,6 +75,28 @@ public class StockEventsReaderTest
         events[12].AssertEvent(
             type: EventType.BuyMarket, ticker: "ORCL", quantity: 20, pricePerShareLocal: 104.24m, 
             totalAmountLocal: 2084.90m, currency: "USD", fxRate: 1.0947m);
+    }
+
+    [TestMethod]
+    public void Parse_TakesIntoAccountProvidedFxRate_WhenAvailable()
+    {
+        using var textReader = new StringReader("""
+            Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
+            2022-03-29T00:00:00.000Z,,CASH TOP-UP,,,"$3,000",USD,1.12
+            2022-03-30T00:00:00.000Z,,CASH TOP-UP,,,"$3,000",USD,1.12
+            2022-05-02T00:00:00.000Z,TSLA,BUY - MARKET,1.018999,$861.63,$878,USD,01.06
+            2022-06-02T00:00:00.000Z,,CUSTODY FEE,,,($1.35),USD,01.07
+            """);
+        var events = StockEventsReader.Parse(textReader, FxRates);
+        events[0].AssertEvent(
+            date: new(2022, 3, 29), type: EventType.CashTopUp, totalAmountLocal: 3000, currency: "USD", fxRate: 1.12m);
+        events[1].AssertEvent(
+            date: new(2022, 3, 30), type: EventType.CashTopUp, totalAmountLocal: 3000, currency: "USD", fxRate: 1.11m);
+        events[2].AssertEvent(
+            date: new(2022, 5, 2), type: EventType.BuyMarket, ticker: "TSLA", quantity: 1.018999m, 
+            pricePerShareLocal: 861.63m, totalAmountLocal: 878, currency: "USD", fxRate: 1.06m);
+        events[3].AssertEvent(
+            date: new(2022, 6, 2), type: EventType.CustodyFee, totalAmountLocal: 1.35m, currency: "USD", fxRate: 1.08m);
     }
 }
 
