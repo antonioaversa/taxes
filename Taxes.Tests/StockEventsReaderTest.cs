@@ -89,6 +89,30 @@ public class StockEventsReaderTest
     }
 
     [TestMethod]
+    public void Parse_FillsInFeesLocal_Correctly()
+    {
+        using var textReader = new StringReader("""
+            Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
+            2022-03-30T23:48:44.882381Z,,CASH TOP-UP,,,"$3,000",USD,1.12
+            2022-05-02T13:32:24.217636Z,TSLA,BUY - MARKET,1.018999,$861.63,$878,USD,01.06
+            2022-06-02T06:41:50.336664Z,,CUSTODY FEE,,,($1.35),USD,01.07
+            2022-06-06T05:20:46.594417Z,AMZN,STOCK SPLIT,11.49072,,$0,USD,01.08
+            2022-06-23T14:30:37.660417Z,CVNA,SELL - LIMIT,15,$26.62,$398.23,USD,01.06
+            2022-06-29T13:45:38.161874Z,CVNA,BUY - LIMIT,10,$23.02,$231.25,USD,01.05
+            """);
+        var events = StockEventsReader.Parse(textReader, NoFxRates);
+        Assert.IsNull(events[0].FeesLocal);
+        Assert.IsNotNull(events[1].FeesLocal);
+        Assert.AreEqual(0m, events[1].FeesLocal!.Value, 0.001m);
+        Assert.IsNull(events[2].FeesLocal);
+        Assert.IsNull(events[3].FeesLocal);
+        Assert.IsNotNull(events[4].FeesLocal);
+        events[4].AssertEvent(feesLocal: 1.07m);
+        Assert.IsNotNull(events[5].FeesLocal);
+        events[5].AssertEvent(feesLocal: 1.05m);
+    }
+
+    [TestMethod]
     public void Parse_WithInvalidDateFormat_RaisesException()
     {
         AssertExtensions.ThrowsAny<Exception>(() => StockEventsReader.Parse(new StringReader("""
