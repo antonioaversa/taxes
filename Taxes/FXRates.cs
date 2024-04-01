@@ -15,7 +15,12 @@ using static Basics;
 public record FxRates(Dictionary<string, Dictionary<DateTime, decimal>> Rates)
 {
     /// <summary>
-    /// Parses the FX Rates for a single currency from a file.
+    /// Parses the FX Rates for a single currency from a file with the provided path.
+    /// The file needs to have the following format: 
+    /// - each line represents the FX Rate for a given day
+    /// - the line format is: "M/d/yyyy\tFXRate"
+    /// - the file can have comment lines starting with "//"
+    /// - the FX Rate must be a positive number in the default culture
     /// </summary>
     public static FxRates ParseSingleCurrency(string currency, string path)
     {
