@@ -5,7 +5,7 @@ static class AssertExtensions
     public static void ThrowsAny<T>(Action action) where T : Exception
     {
         bool exceptionThrown = false;
-        Exception differentException = null;
+        Exception? differentException = null;
         try
         {
             action();
