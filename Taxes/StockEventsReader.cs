@@ -8,7 +8,7 @@ namespace Taxes;
 
 using static Basics;
 
-static class StockEventsReader
+static partial class StockEventsReader
 {
     private readonly static Dictionary<string, EventType> StringToEventType = new()
     {
@@ -102,7 +102,7 @@ static class StockEventsReader
     private static string Sanitize(string value)
     {
         var valueWithoutParenthesisAndSymbol = value.TrimStart('(').TrimEnd(')').Trim('$', '€', '£');
-        if (Regex.Match(valueWithoutParenthesisAndSymbol, "^(?<currecyName>[A-Za-z]+)\\s") is { Success: true, Length: var length })
+        if (TotalQuantityCurrencyPrefix().Match(valueWithoutParenthesisAndSymbol) is { Success: true, Length: var length })
         {
             return valueWithoutParenthesisAndSymbol[length..];
         }
@@ -125,4 +125,6 @@ static class StockEventsReader
         [Name("FX Rate")] public string FXRate { get; set; } = string.Empty;
     }
 
+    [GeneratedRegex("^(?<currecyName>[A-Za-z]+)\\s")]
+    private static partial Regex TotalQuantityCurrencyPrefix();
 }
