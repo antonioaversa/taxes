@@ -32,5 +32,5 @@ static void ProcessEvents(IList<Event> events)
         select TickerProcessing.ProcessTicker(e.ticker, e.tickerEvents))
         .ToList();
 
-    tickerStates.PrintAggregatedMetrics();
+    tickerStates.PrintAggregatedMetrics(Console.Out);
 }

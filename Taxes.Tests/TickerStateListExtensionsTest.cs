@@ -44,4 +44,15 @@ public class TickerStateListExtensionsTest
         Assert.IsTrue(metrics.Contains($"Total Plus Value CUMP ({Basics.BaseCurrency}) = 70"));
         Assert.IsTrue(metrics.Contains($"Total Minus Value PEPS ({Basics.BaseCurrency}) = 72"));
     }
+
+    [TestMethod]
+    public void PrintAggregatedMetrics_WritesOnTheProvidedTextWriter()
+    {
+        List<TickerState> e = [new(Ticker, Isin, PlusValueCumpBase: 34, MinusValuePepsBase: 35)];
+        var writer = new StringWriter();
+        e.PrintAggregatedMetrics(writer);
+        var metrics = writer.ToString().Split(Environment.NewLine);
+        Assert.IsTrue(metrics.Contains($"Total Plus Value CUMP ({Basics.BaseCurrency}) = 34"));
+        Assert.IsTrue(metrics.Contains($"Total Minus Value PEPS ({Basics.BaseCurrency}) = 35"));
+    }
 }

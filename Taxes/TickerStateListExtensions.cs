@@ -5,8 +5,8 @@ using static Basics;
 
 internal static class TickerStateListExtensions
 {
-    internal static void PrintAggregatedMetrics(this IEnumerable<TickerState> tickerStates) =>
-        tickerStates.GetAggregatedMetrics().ToList().ForEach(Console.WriteLine);
+    internal static void PrintAggregatedMetrics(this IEnumerable<TickerState> tickerStates, TextWriter writer) =>
+        tickerStates.GetAggregatedMetrics().ToList().ForEach(writer.WriteLine);
 
     internal static IEnumerable<string> GetAggregatedMetrics(this IEnumerable<TickerState> tickerStates) => 
         from property in typeof(TickerState).GetProperties()
