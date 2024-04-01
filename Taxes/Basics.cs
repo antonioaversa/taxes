@@ -20,6 +20,7 @@ public static partial class Basics
     public static readonly ReadOnlyDictionary<string, string> ISINs;
     public static readonly ReadOnlyCollection<string> StockEventsFilePaths;
     public static readonly ReadOnlyCollection<string> CryptoEventsFilePaths;
+    public static readonly string CryptoPortfolioValuesCurrency;
     public static readonly string CryptoPortfolioValuesFilePath;
 
     // Derived
@@ -55,6 +56,8 @@ public static partial class Basics
             ?? throw new Exception($"Invalid {nameof(StockEventsFilePaths)} in {BasicsFileName}")).AsReadOnly();
         CryptoEventsFilePaths = (basicsFile.CryptoEventsFilePaths
             ?? throw new Exception($"Invalid {nameof(CryptoEventsFilePaths)} in {BasicsFileName}")).AsReadOnly();
+        CryptoPortfolioValuesCurrency = basicsFile.CryptoPortfolioValuesCurrency
+            ?? throw new Exception($"Invalid {nameof(CryptoPortfolioValuesCurrency)} in {BasicsFileName}");
         CryptoPortfolioValuesFilePath = basicsFile.CryptoPortfolioValuesFilePath
             ?? throw new Exception($"Invalid {nameof(CryptoPortfolioValuesFilePath)} in {BasicsFileName}");
 
@@ -91,6 +94,7 @@ public static partial class Basics
         public Dictionary<string, string>? ISINs { get; set; }
         public List<string>? StockEventsFilePaths { get; set; }
         public List<string>? CryptoEventsFilePaths { get; set; }
+        public string? CryptoPortfolioValuesCurrency { get; set; }
         public string? CryptoPortfolioValuesFilePath { get; set; }
     }
 }
