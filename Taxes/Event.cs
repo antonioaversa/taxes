@@ -27,6 +27,11 @@ record Event(
     decimal? Quantity,
     decimal? PricePerShareLocal,
     decimal? TotalAmountLocal,
+
+    /// Mandatory for Buy*, Sell* and Dividend.
+    /// Automatically calculated:
+    /// - for Buy events as TotalAmountLocal - Quantity * PricePerShareLocal
+    /// - for Sell events as Quantity * PricePerShareLocal - TotalAmountLocal
     decimal? FeesLocal,
     string Currency,
     decimal FXRate,
