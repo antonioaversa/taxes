@@ -21,17 +21,33 @@ enum EventType
 record Event(
     DateTime Date,
     EventType Type,
-    /// Optional: some events are not ticker-specific (e.g. custody fee or change)
+
+    /// <summary>
+    /// Mandatory for Buy*, Sell*, StockSplit and Dividend. Null otherwise.
+    /// All other events type are not ticker-specific (e.g. custody fee or change).
+    /// </summary>
     string? Ticker,
-    /// Mandatory for Buy*, Sell* and StockSplit. When defined, must be strictly positive.
+
+    /// <summary>
+    /// Mandatory for Buy*, Sell* and StockSplit. Null otherwise.
+    /// - It doesn't make sense for Dividend, since it's a cash event.
+    /// - The same applies for CashTopUp and CashWithdrawal.
+    /// - It doesn't make sense for CustodyChange and Reset, as they are not transactions.
+    /// When defined, must be strictly positive, even for Sell* events.
+    /// </summary>
     decimal? Quantity,
+
     decimal? PricePerShareLocal,
     decimal? TotalAmountLocal,
 
-    /// Mandatory for Buy*, Sell* and Dividend.
+    /// <summary>
+    /// Mandatory for Buy* and Sell*. Null otherwise.
+    /// - It cannot be calculated for Dividend, as there is not enough information in the input file.
+    /// - It doesn't make sense for StockSplit, as it's not a transaction, so fees are not applied.
     /// Automatically calculated:
     /// - for Buy events as TotalAmountLocal - Quantity * PricePerShareLocal
     /// - for Sell events as Quantity * PricePerShareLocal - TotalAmountLocal
+    /// </summary>
     decimal? FeesLocal,
     string Currency,
     decimal FXRate,

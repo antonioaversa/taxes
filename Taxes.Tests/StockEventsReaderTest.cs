@@ -331,6 +331,28 @@ public class StockEventsReaderTest
     }
 
     [TestMethod]
+    public void Parse_FeesLocal_NotAvailableForDividends()
+    {
+        using var textReader = new StringReader("""
+            Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
+            2022-06-10T04:28:02.657456Z,MSFT,DIVIDEND,,,$10.54,USD,01.07
+            """);
+        var events = StockEventsReader.Parse(textReader, NoFxRates);
+        Assert.IsNull(events[0].FeesLocal);
+    }
+
+    [TestMethod]
+    public void Parse_FeesLocal_NotAvailableForStockSplits()
+    {
+        using var textReader = new StringReader("""
+            Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
+            2022-06-06T05:20:46.594417Z,AMZN,STOCK SPLIT,11.49072,,$0,USD,01.08
+            """);
+        var events = StockEventsReader.Parse(textReader, NoFxRates);
+        Assert.IsNull(events[0].FeesLocal);
+    }
+
+    [TestMethod]
     public void Parse_TakesIntoAccountProvidedFxRate_WhenAvailable()
     {
         using var textReader = new StringReader("""
