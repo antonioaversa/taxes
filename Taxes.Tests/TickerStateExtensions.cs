@@ -93,3 +93,4 @@ static class TickerStateExtensions
             portfolioAcquisitionValueBase: portfolioAcquisitionValueBase ?? 0,
             cryptoFractionOfInitialCapital: cryptoFractionOfInitialCapital ?? 0);
 }
+

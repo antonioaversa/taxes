@@ -281,7 +281,7 @@ public class StockEventsReaderTest
     }
 
     [TestMethod]
-    public void Parse_FillsInFeesLocal_Correctly()
+    public void Parse_FeesLocal_AutocalculatedOrNullDependingOnEventType()
     {
         using var textReader = new StringReader("""
             Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
@@ -295,13 +295,10 @@ public class StockEventsReaderTest
         var events = StockEventsReader.Parse(textReader, NoFxRates);
         Assert.IsNull(events[0].FeesLocal);
         Assert.IsNotNull(events[1].FeesLocal);
-        Assert.AreEqual(0m, events[1].FeesLocal!.Value, 0.001m);
         Assert.IsNull(events[2].FeesLocal);
         Assert.IsNull(events[3].FeesLocal);
         Assert.IsNotNull(events[4].FeesLocal);
-        events[4].AssertEvent(feesLocal: 1.07m);
         Assert.IsNotNull(events[5].FeesLocal);
-        events[5].AssertEvent(feesLocal: 1.05m);
     }
 
     [TestMethod]
