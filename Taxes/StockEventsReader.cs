@@ -38,6 +38,7 @@ static class StockEventsReader
             Delimiter = ",",
             DetectColumnCountChanges = true,
             HasHeaderRecord = true,
+            IgnoreBlankLines = true,
         };
         using var csv = new CsvReader(textReader, csvConfiguration);
 

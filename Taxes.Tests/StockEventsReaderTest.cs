@@ -22,6 +22,36 @@ public class StockEventsReaderTest
     };
 
     [TestMethod]
+    public void Parse_WithEmptyFile_ReturnEmptyList()
+    {
+        using var textReader = new StringReader(string.Empty);
+        var events = StockEventsReader.Parse(textReader, NoFxRates);
+        Assert.AreEqual(0, events.Count);
+    }
+
+    [TestMethod]
+    public void Parse_WithOnlyHeader_ReturnEmptyList()
+    {
+        using var textReader = new StringReader(
+            "Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate");
+        var events = StockEventsReader.Parse(textReader, NoFxRates);
+        Assert.AreEqual(0, events.Count);
+    }
+
+    [TestMethod]
+    public void Parse_WithBlankLines_IgnoresThem()
+    {
+        using var textReader = new StringReader("""
+            Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
+            2022-03-30T23:48:44.882381Z,,CASH TOP-UP,,,"$3,000",USD,1.12
+            
+            2022-05-02T13:32:24.217636Z,TSLA,BUY - MARKET,1.018999,$861.63,$878,USD,01.06
+            """);
+        var events = StockEventsReader.Parse(textReader, NoFxRates);
+        Assert.AreEqual(2, events.Count);
+    }
+
+    [TestMethod]
     public void Parse_WithPricePerShareNull()
     {
         using var textReader = new StringReader("""
