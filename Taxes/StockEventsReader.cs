@@ -100,10 +100,10 @@ static partial class StockEventsReader
     }
 
     private static string Sanitize(string value) => 
-        value.TrimStart('(').TrimEnd(')').Trim('$', '€', '£') is var valueWithoutParenthesisAndSymbol
-            && TotalQuantityCurrencyPrefix().Match(valueWithoutParenthesisAndSymbol) is { Success: true, Length: var length }
-            ? valueWithoutParenthesisAndSymbol[length..]
-            : valueWithoutParenthesisAndSymbol;
+        value.TrimStart('(').TrimEnd(')').Trim('$', '€', '£') is var valueWithoutParenthesesAndSymbol
+            && TotalQuantityCurrencyPrefix().Match(valueWithoutParenthesesAndSymbol) is { Success: true, Length: var length }
+            ? valueWithoutParenthesesAndSymbol[length..]
+            : valueWithoutParenthesesAndSymbol;
 
     [GeneratedRegex("^(?<currecyName>[A-Za-z]+)\\s")]
     private static partial Regex TotalQuantityCurrencyPrefix();
