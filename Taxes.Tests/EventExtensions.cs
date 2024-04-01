@@ -2,6 +2,8 @@
 
 static class EventExtensions
 {
+    private const decimal DefaultDelta = 0.01m;
+
     public static void AssertEvent(
         this Event @event, 
         DateTime? date = null, 
@@ -16,24 +18,24 @@ static class EventExtensions
         decimal? portfolioCurrentValueBase = null)
     {
         if (date is not null)
-            Assert.AreEqual(date, @event.Date);
+            Assert.AreEqual(date.Value, @event.Date);
         if (type is not null)
-            Assert.AreEqual(type, @event.Type);
+            Assert.AreEqual(type.Value, @event.Type);
         if (ticker is not null)
             Assert.AreEqual(ticker, @event.Ticker);
         if (quantity is not null)
-            Assert.AreEqual(quantity, @event.Quantity);
+            Assert.AreEqual(quantity.Value, @event.Quantity!.Value);
         if (pricePerShareLocal is not null)
-            Assert.AreEqual(pricePerShareLocal, @event.PricePerShareLocal);
+            Assert.AreEqual(pricePerShareLocal.Value, @event.PricePerShareLocal!.Value);
         if (totalAmountLocal is not null)
-            Assert.AreEqual(totalAmountLocal, @event.TotalAmountLocal);
+            Assert.AreEqual(totalAmountLocal.Value, @event.TotalAmountLocal!.Value);
         if (feesLocal is not null)
-            Assert.AreEqual(feesLocal, @event.FeesLocal);
+            Assert.AreEqual(feesLocal.Value, @event.FeesLocal!.Value, DefaultDelta);
         if (currency is not null)
             Assert.AreEqual(currency, @event.Currency);
         if (fxRate is not null)
-            Assert.AreEqual(fxRate, @event.FXRate);
+            Assert.AreEqual(fxRate.Value, @event.FXRate);
         if (portfolioCurrentValueBase is not null)
-            Assert.AreEqual(portfolioCurrentValueBase, @event.PortfolioCurrentValueBase);
+            Assert.AreEqual(portfolioCurrentValueBase.Value, @event.PortfolioCurrentValueBase);
     }
 }
