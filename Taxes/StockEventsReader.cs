@@ -99,18 +99,14 @@ static partial class StockEventsReader
         throw new FormatException($"Unable to parse date: '{record.Date}'");
     }
 
-    private static string Sanitize(string value)
-    {
-        var valueWithoutParenthesisAndSymbol = value.TrimStart('(').TrimEnd(')').Trim('$', '€', '£');
-        if (TotalQuantityCurrencyPrefix().Match(valueWithoutParenthesisAndSymbol) is { Success: true, Length: var length })
-        {
-            return valueWithoutParenthesisAndSymbol[length..];
-        }
-        else
-        {
-            return valueWithoutParenthesisAndSymbol;
-        }
-    }
+    private static string Sanitize(string value) => 
+        value.TrimStart('(').TrimEnd(')').Trim('$', '€', '£') is var valueWithoutParenthesisAndSymbol
+            && TotalQuantityCurrencyPrefix().Match(valueWithoutParenthesisAndSymbol) is { Success: true, Length: var length }
+            ? valueWithoutParenthesisAndSymbol[length..]
+            : valueWithoutParenthesisAndSymbol;
+
+    [GeneratedRegex("^(?<currecyName>[A-Za-z]+)\\s")]
+    private static partial Regex TotalQuantityCurrencyPrefix();
 
     [Delimiter(",")]
     class EventStr
@@ -124,7 +120,4 @@ static partial class StockEventsReader
         [Name("Currency")] public string Currency { get; set; } = string.Empty;
         [Name("FX Rate")] public string FXRate { get; set; } = string.Empty;
     }
-
-    [GeneratedRegex("^(?<currecyName>[A-Za-z]+)\\s")]
-    private static partial Regex TotalQuantityCurrencyPrefix();
 }
