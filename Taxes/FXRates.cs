@@ -4,11 +4,22 @@ namespace Taxes;
 
 using static Basics;
 
-static class FXRates
+/// <summary>
+/// Defines the FX Rates by currency and day.
+/// FX Rates are stored in a dictionary where:
+/// - the key is the symbol of the currency (e.g. USD)
+/// - and the value is another dictionary where:
+///   - the key is the day
+///   - and the value is the FX Rate, for that currency, that day.
+/// </summary>
+public record FxRates(Dictionary<string, Dictionary<DateTime, decimal>> Rates)
 {
-    public static IDictionary<DateTime, decimal> Parse(string path)
+    /// <summary>
+    /// Parses the FX Rates for a single currency from a file.
+    /// </summary>
+    public static FxRates ParseSingleCurrency(string currency, string path)
     {
-        var result = new Dictionary<DateTime, decimal>();
+        var currencyFxRates = new Dictionary<DateTime, decimal>();
 
         foreach (var line in File.ReadAllLines(path))
         {
@@ -22,7 +33,7 @@ static class FXRates
                 throw new InvalidDataException($"Invalid line: '{line}'");
             if (!DateTime.TryParseExact(fields[0], "M/d/yyyy", DefaultCulture, DateTimeStyles.AssumeLocal, out var date))
                 throw new InvalidDataException($"Invalid line: '{line}'");
-            if (result.ContainsKey(date))
+            if (currencyFxRates.ContainsKey(date))
                 throw new InvalidDataException($"Multiple FX Rates for day {date}");
 
             if (fields[1] == "-")
@@ -34,9 +45,9 @@ static class FXRates
                 throw new InvalidDataException($"Invalid line: '{line}'");
             if (fxRate <= 0)
                 throw new InvalidDataException($"Invalid line: '{line}'");
-            result[date] = fxRate;
+            currencyFxRates[date] = fxRate;
         }
 
-        return result;
+        return new(new Dictionary<string, Dictionary<DateTime, decimal>>() { [currency] = currencyFxRates });
     }
 }

@@ -93,7 +93,7 @@ static class TickerProcessing
         var sharesBuyPriceBase = sharesBuyPriceLocal / tickerEvent.FXRate;
         Console.WriteLine($"\tShares Buy Price ({BaseCurrency}) = {sharesBuyPriceBase.R()}");
 
-        var perShareBuyPriceLocal = tickerEvent.PricePerShareLocal.Value / tickerEvent.FXRate;
+        var perShareBuyPriceLocal = tickerEvent.PricePerShareLocal.Value;
         Console.WriteLine($"\tPerShare Buy Price ({tickerCurrency}) = {perShareBuyPriceLocal.R()}");
 
         var perShareBuyPriceBase = perShareBuyPriceLocal / tickerEvent.FXRate;

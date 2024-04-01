@@ -25,13 +25,13 @@ static class StockEventsReader
         ["DIVIDEND"] = EventType.Dividend,
     };
 
-    public static IList<Event> Parse(string path, IDictionary<DateTime, decimal> fxRates)
+    public static IList<Event> Parse(string path, FxRates fxRates)
     {
         using var reader = new StreamReader(path);
         return Parse(reader, fxRates);
     }
 
-    public static IList<Event> Parse(TextReader textReader, IDictionary<DateTime, decimal> fxRates)
+    public static IList<Event> Parse(TextReader textReader, FxRates fxRates)
     {
         var csvConfiguration = new CsvConfiguration(DefaultCulture)
         {
@@ -45,11 +45,13 @@ static class StockEventsReader
         var events = new List<Event>();
         foreach (var record in csv.GetRecords<EventStr>())
         {
+            var currency = record.Currency;
             var date = ReadDateTime(record);
 
-            if (!fxRates.TryGetValue(date.Date, out var fxRate))
+            if (!fxRates.Rates.TryGetValue(currency, out var currencyRates)
+                || !currencyRates.TryGetValue(date.Date, out var fxRate))
             {
-                Console.WriteLine($"WARN: No FX Rate found for day {date.Date} -> using {record.FXRate}");
+                Console.WriteLine($"WARN: No FX Rate found for currency {record.Currency} and day {date.Date} -> using {record.FXRate}");
                 fxRate = decimal.Parse(record.FXRate);
             }
 
@@ -71,7 +73,7 @@ static class StockEventsReader
                 PricePerShareLocal: pricePerShareLocal,
                 TotalAmountLocal: totalAmountLocal,
                 FeesLocal: feesLocal,
-                Currency: record.Currency,
+                Currency: currency,
                 FXRate: fxRate,
                 PortfolioCurrentValueBase: -1m // Info not available, only available in crypto sell events
             ));

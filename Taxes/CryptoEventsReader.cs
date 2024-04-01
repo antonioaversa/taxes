@@ -11,9 +11,9 @@ static class CryptoEventsReader
     const string Product_Current = "Current";
     const string State_Completed = "COMPLETED";
 
-    public static IList<Event> Parse(string pattern, string portfolioValuesPath, IDictionary<DateTime, decimal> fxRates)
+    public static IList<Event> Parse(string pattern, string portfolioValuesCurrency, string portfolioValuesPath, FxRates fxRates)
     {
-        var tpvs = ParsePortfolioValues(portfolioValuesPath);
+        var portfolioValuesLocal = ParsePortfolioValues(portfolioValuesPath);
 
         var events = new List<Event>();
 
@@ -58,7 +58,7 @@ static class CryptoEventsReader
                 var fxRate = 1m;
 
                 // Portfolio value is calculated in Local FIAT, so it needs to be converted in Base FIAT
-                var portfolioCurrentValueBase = CalculatePortfolioCurrentValueBase(fxRates, tpvs, date);
+                var portfolioCurrentValueBase = CalculatePortfolioValueBase(portfolioValuesCurrency, portfolioValuesLocal, fxRates, date);
 
                 events.Add(new(
                     Date: date,
@@ -77,22 +77,38 @@ static class CryptoEventsReader
         return events;
     }
 
-    private static decimal CalculatePortfolioCurrentValueBase(
-        IDictionary<DateTime, decimal> fxRates, 
-        Dictionary<DateTime, decimal> portfolioCurrentValuesLocal, 
+    private static decimal CalculatePortfolioValueBase(
+        string portfolioValuesCurrency,
+        Dictionary<DateTime, decimal> portfolioValuesLocal,
+        FxRates fxRates,
         DateTime date)
     {
-        if (!portfolioCurrentValuesLocal.TryGetValue(date.Date, out var portfolioCurrentValueLocal))
-            return -1m; // We don't have portfolio current value for all events, we barely have it for sell events
+        // We don't have portfolio current value for all events, we barely have it for sell events
+        if (!portfolioValuesLocal.TryGetValue(date.Date, out var portfolioValueLocal))
+            return -1m;
 
-        var validFxRateFound = fxRates.TryGetValue(date.Date, out var fxRate) || 
-            fxRates.TryGetValue(date.Date.AddDays(1), out fxRate) || 
-            fxRates.TryGetValue(date.Date.AddDays(2), out fxRate);
+        // An FX Rate is considered valid if it's found for the local currency of the portfolio and for the day or,
+        // in case of weekend days, one of the next two days following the date
+        decimal fxRate = 0m;
+        var validFxRateFound = 
+            fxRates.Rates.TryGetValue(portfolioValuesCurrency, out var currencyFxRates) &&
+            (
+                currencyFxRates.TryGetValue(date.Date, out fxRate) || 
+                (IsWeekend(date) && TryGetForTheFollowingTwoDays(date, currencyFxRates, out fxRate))
+            );
 
         if (!validFxRateFound)
-            throw new InvalidDataException($"Missing FXRate for day {date.Date}");
+            throw new InvalidDataException($"Missing FX Rate for currency {portfolioValuesCurrency} and day {date.Date}");
 
-        return portfolioCurrentValueLocal / fxRate;
+        // FX Rates are Base/Local and portfolio value is in Local, so we need to divide to get the value in Bases
+        return portfolioValueLocal / fxRate;
+
+        static bool IsWeekend(DateTime date) => 
+            date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday;
+
+        static bool TryGetForTheFollowingTwoDays(DateTime date, Dictionary<DateTime, decimal> currencyFxRates, out decimal fxRate) =>
+            currencyFxRates.TryGetValue(date.Date.AddDays(1), out fxRate) ||
+            currencyFxRates.TryGetValue(date.Date.AddDays(2), out fxRate);
     }
 
     private static Dictionary<DateTime, decimal> ParsePortfolioValues(string portfolioValuesPath)
@@ -101,7 +117,7 @@ static class CryptoEventsReader
         using var tpvCsv = new CsvReader(tpvReader, DefaultCulture);
         return tpvCsv.GetRecords<PortfolioValueStr>().ToDictionary(
             record => DateTime.ParseExact(record.Date, "yyyy-MM-dd", DefaultCulture),
-            record => decimal.Parse(record.PortfolioValueUSD, DefaultCulture));
+            record => decimal.Parse(record.PortfolioValue, DefaultCulture));
     }
 
     [Delimiter(",")]
@@ -125,6 +141,6 @@ static class CryptoEventsReader
     class PortfolioValueStr
     {
         [Name("Date")] public string Date { get; set; } = string.Empty;
-        [Name("PortfolioValueUSD")] public string PortfolioValueUSD { get; set; } = string.Empty;
+        [Name("PortfolioValue")] public string PortfolioValue { get; set; } = string.Empty;
     }
 }

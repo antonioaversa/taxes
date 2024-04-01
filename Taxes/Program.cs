@@ -1,6 +1,7 @@
 ﻿using Taxes;
 
-var fxRates = FXRates.Parse(Basics.FXRatesFilePath);
+// TODO: for the time being only FX rates of BCE for USD are supported
+var fxRates = FxRates.ParseSingleCurrency("USD", Basics.FXRatesFilePath);
 
 var stockEvents = Basics.StockEventsFilePaths
     .SelectMany(pattern => Directory.GetFiles(Basics.ReportsDirectoryPath, pattern))
@@ -12,7 +13,8 @@ ProcessEvents(stockEvents);
 var cryptoEvents = Basics.CryptoEventsFilePaths
     .SelectMany(pattern => Directory.GetFiles(Basics.ReportsDirectoryPath, pattern))
     .Order()
-    .SelectMany(filePath => CryptoEventsReader.Parse(filePath, Basics.CryptoPortfolioValuesFilePath, fxRates))
+    .SelectMany(filePath => CryptoEventsReader.Parse(
+        filePath, Basics.CryptoPortfolioValuesCurrency, Basics.CryptoPortfolioValuesFilePath, fxRates))
     .ToList();
 ProcessEvents(cryptoEvents);
 

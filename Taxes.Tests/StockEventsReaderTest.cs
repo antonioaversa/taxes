@@ -3,23 +3,26 @@
 [TestClass]
 public class StockEventsReaderTest
 {
-    private static readonly Dictionary<DateTime, decimal> NoFxRates = new() { };
-    private static readonly Dictionary<DateTime, decimal> FxRates = new()
+    private static readonly FxRates NoFxRates = new([]);
+    private static readonly FxRates OnlyUSDFxRates = new(new()
     {
-        [new(2022, 3, 30)] = 1.11m,
-        [new(2022, 5, 2)] = 1.06m,
-        [new(2022, 6, 2)] = 1.08m,
-        [new(2022, 6, 6)] = 1.08m,
-        [new(2022, 6, 10)] = 1.07m,
-        [new(2022, 6, 23)] = 1.06m,
-        [new(2022, 6, 29)] = 1.05m,
-        [new(2022, 7, 7)] = 1.03m,
-        [new(2022, 7, 19)] = 1.02m,
-        [new(2023, 1, 1)] = 1.059m,
-        [new(2023, 11, 26)] = 1.10m,
-        [new(2023, 12, 11)] = 1.08m,
-        [new(2023, 12, 18)] = 1.10m,
-    };
+        ["USD"] = new()
+        {
+            [new(2022, 3, 30)] = 1.11m,
+            [new(2022, 5, 2)] = 1.06m,
+            [new(2022, 6, 2)] = 1.08m,
+            [new(2022, 6, 6)] = 1.08m,
+            [new(2022, 6, 10)] = 1.07m,
+            [new(2022, 6, 23)] = 1.06m,
+            [new(2022, 6, 29)] = 1.05m,
+            [new(2022, 7, 7)] = 1.03m,
+            [new(2022, 7, 19)] = 1.02m,
+            [new(2023, 1, 1)] = 1.059m,
+            [new(2023, 11, 26)] = 1.10m,
+            [new(2023, 12, 11)] = 1.08m,
+            [new(2023, 12, 18)] = 1.10m,
+        }
+    });
 
     [TestMethod]
     public void Parse_WithEmptyFile_ReturnEmptyList()
@@ -52,14 +55,118 @@ public class StockEventsReaderTest
     }
 
     [TestMethod]
+    public void Parse_WithInvalidDateTime_RaisesException()
+    {
+        // Missing time
+        AssertExtensions.ThrowsAny<Exception>(() => StockEventsReader.Parse(new StringReader("""
+            Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
+            2022-03-29,,CASH TOP-UP,,,"$3,000",USD,1.12
+            """), NoFxRates));
+        // dd-MM-yyyy instead of yyyy-MM-dd
+        AssertExtensions.ThrowsAny<Exception>(() => StockEventsReader.Parse(new StringReader("""
+            Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
+            29-03-2022T00:00:00.000Z,,CASH TOP-UP,,,"$3,000",USD,1.12
+            """), NoFxRates));
+        // 31 of April does not exist
+        AssertExtensions.ThrowsAny<Exception>(() => StockEventsReader.Parse(new StringReader("""
+            Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
+            2022-04-31T00:00:00.000Z,,CASH TOP-UP,,,"$3,000",USD,1.12
+            """), NoFxRates));
+    }
+
+    [TestMethod]
+    public void Parse_WithInvalidType_RaisesException()
+    {
+        using var textReader = new StringReader("""
+            Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
+            2022-03-30T23:48:44.882381Z,,INVALID,,,"$3,000",USD,1.12
+            """);
+        AssertExtensions.ThrowsAny<Exception>(() => StockEventsReader.Parse(textReader, NoFxRates));
+    }
+
+    [TestMethod]
     public void Parse_WithPricePerShareNull()
     {
+        // A cash top-up event has no price per share
         using var textReader = new StringReader("""
             Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
             2022-03-30T23:48:44.882381Z,,CASH TOP-UP,,,"$3,000",USD,1.12
             """);
         var events = StockEventsReader.Parse(textReader, NoFxRates);
         Assert.IsNull(events[0].PricePerShareLocal);
+    }
+
+    [TestMethod]
+    public void Parse_WithoutThousandsSeparatorOrDollarSymbol()
+    {
+        // Without thousands separator and with dollar symbol
+        using var textReader1 = new StringReader("""
+            Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
+            2022-03-30T23:48:44.882381Z,,CASH TOP-UP,,,"$3000",USD,1.12
+            """);
+        var events1 = StockEventsReader.Parse(textReader1, NoFxRates);
+        Assert.AreEqual(3000m, events1[0].TotalAmountLocal);
+        // With thousands separator and without dollar symbol
+        using var textReader2 = new StringReader("""
+            Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
+            2022-03-30T23:48:44.882381Z,,CASH TOP-UP,,,"3,000",USD,1.12
+            """);
+        var events2 = StockEventsReader.Parse(textReader2, NoFxRates);
+        Assert.AreEqual(3000m, events2[0].TotalAmountLocal);
+        // Without thousands separator nor dollar symbol
+        using var textReader3 = new StringReader("""
+            Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
+            2022-03-30T23:48:44.882381Z,,CASH TOP-UP,,,"3000",USD,1.12
+            """);
+        var events3 = StockEventsReader.Parse(textReader3, NoFxRates);
+        Assert.AreEqual(3000m, events3[0].TotalAmountLocal);
+    }
+
+    [TestMethod]
+    public void Parse_WithCurrency_NoFxRatesAvailableForTheCurrency()
+    {
+        using var textReader = new StringReader("""
+            Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
+            2022-03-30T23:48:44.882381Z,,CASH TOP-UP,,,"3000",IDR,17153.90
+            """);
+        var fxRates = new FxRates(new() { ["USD"] = new() { [new(2022, 03, 30)] = 2.0m } });
+        // A FX Rate is provided for the date of the event. However, it's not for the right currency.
+        // So, the value provided in the input file should be used.
+        var events = StockEventsReader.Parse(textReader, fxRates);
+        Assert.AreEqual("IDR", events[0].Currency);
+        Assert.AreEqual(17153.90m, events[0].FXRate);
+    }
+
+    [TestMethod]
+    public void Parse_WithCurrency_FxRatesAvailableForThatDate()
+    {
+        using var textReader = new StringReader("""
+            Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
+            2022-03-30T23:48:44.882381Z,,CASH TOP-UP,,,"3000",IDR,17153.90
+            """);
+        var fxRates = new FxRates(new() { ["IDR"] = new() { [new(2022, 03, 30)] = 0.000062m } });
+        // FX Rates are expressed in Base/Local, so we need to invert them.
+        // Inverting the value provided in the input file would give us 0.000058m.
+        // However, fxRates provides a slightly different value for that currency that day, that is 0.000062m.
+        // So, the value to be used is the one provided by fxRates.
+        var events = StockEventsReader.Parse(textReader, fxRates);
+        Assert.AreEqual("IDR", events[0].Currency);
+        Assert.AreEqual(0.000062m, events[0].FXRate);
+    }
+
+    [TestMethod]
+    public void Parse_WithCurrency_FxRatesAvailableForTheCurrencyButNotThatDate()
+    {
+        using var textReader = new StringReader("""
+            Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
+            2022-03-30T23:48:44.882381Z,,CASH TOP-UP,,,"3000",IDR,17153.90
+            """);
+        var fxRates = new FxRates(new() { ["IDR"] = new() { [new(2022, 03, 29)] = 0.000062m } });
+        // A FX Rate is provided for the currency of the event. However, it's not for the right date.
+        // So, the value provided in the input file should be used.
+        var events = StockEventsReader.Parse(textReader, fxRates);
+        Assert.AreEqual("IDR", events[0].Currency);
+        Assert.AreEqual(17153.90m, events[0].FXRate);
     }
 
     [TestMethod]
@@ -143,16 +250,29 @@ public class StockEventsReaderTest
     }
 
     [TestMethod]
-    public void Parse_WithInvalidDateFormat_RaisesException()
+    public void Parse_FeesLocal_AutocalculatedForBuy()
     {
-        AssertExtensions.ThrowsAny<Exception>(() => StockEventsReader.Parse(new StringReader("""
+        // FeesLocal = TotalAmountLocal - Quantity * PricePerShareLocal
+        using var textReader = new StringReader("""
             Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
-            2022-03-29,,CASH TOP-UP,,,"$3,000",USD,1.12
-            """), NoFxRates));
-        AssertExtensions.ThrowsAny<Exception>(() => StockEventsReader.Parse(new StringReader("""
+            2022-12-28T20:12:29.182442Z,AAPL,BUY - MARKET,5,$126.21,$632.62,USD,01.07
+            """);
+        var events = StockEventsReader.Parse(textReader, NoFxRates);
+        Assert.IsNotNull(events[0].FeesLocal);
+        events[0].AssertEvent(feesLocal: 1.57m); // 632.62 - 5 * 126.21
+    }
+
+    [TestMethod]
+    public void Parse_FeesLocal_AutocalculatedForSell()
+    {
+        // FeesLocal =  Quantity * PricePerShareLocal - TotalAmountLocal
+        using var textReader = new StringReader("""
             Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
-            29-03-2022T00:00:00.000Z,,CASH TOP-UP,,,"$3,000",USD,1.12
-            """), NoFxRates));
+            2023-03-23T14:01:01.396Z,AAPL,SELL - LIMIT,5,$159.92 ,$797.58 ,USD,1.0897
+            """);
+        var events = StockEventsReader.Parse(textReader, NoFxRates);
+        Assert.IsNotNull(events[0].FeesLocal);
+        events[0].AssertEvent(feesLocal: 2.02m); // 5 * 159.92 - 797.58
     }
 
     [TestMethod]
@@ -165,7 +285,7 @@ public class StockEventsReaderTest
             2022-05-02T00:00:00.000Z,TSLA,BUY - MARKET,1.018999,$861.63,$878,USD,01.06
             2022-06-02T00:00:00.000Z,,CUSTODY FEE,,,($1.35),USD,01.07
             """);
-        var events = StockEventsReader.Parse(textReader, FxRates);
+        var events = StockEventsReader.Parse(textReader, OnlyUSDFxRates);
         events[0].AssertEvent(
             date: new(2022, 3, 29), type: EventType.CashTopUp, totalAmountLocal: 3000, currency: "USD", fxRate: 1.12m);
         events[1].AssertEvent(
