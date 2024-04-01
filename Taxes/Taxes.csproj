@@ -25,7 +25,7 @@
     <None Update="Reports\BCE-FXRate-EUR-USD.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Reports\cryptoportfoliovalues.csv">
+    <None Update="Reports\cryptoportfoliovalues-USD.csv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Reports\crypto_AAVE.csv">
