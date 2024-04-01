@@ -1,7 +1,7 @@
 ﻿namespace Taxes.Test;
 
 [TestClass]
-public class AssertExtensionsTests
+public class AssertExtensionsTest
 {
     [TestMethod]
     public void ThrowsAny_ThrowsWhenNoExceptionIsThrown() =>
