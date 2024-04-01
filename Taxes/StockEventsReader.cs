@@ -2,6 +2,7 @@
 using CsvHelper.Configuration;
 using CsvHelper.Configuration.Attributes;
 using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace Taxes;
 
@@ -46,13 +47,18 @@ static class StockEventsReader
         foreach (var record in csv.GetRecords<EventStr>())
         {
             var currency = record.Currency;
+            var recordFxRate = decimal.Parse(record.FXRate);
+
+            if (currency == BaseCurrency && recordFxRate != 1.0m)
+                throw new InvalidOperationException($"Invalid FX Rate {record.FXRate} for base currency {BaseCurrency}");
+
             var date = ReadDateTime(record);
 
             if (!fxRates.Rates.TryGetValue(currency, out var currencyRates)
                 || !currencyRates.TryGetValue(date.Date, out var fxRate))
             {
                 Console.WriteLine($"WARN: No FX Rate found for currency {record.Currency} and day {date.Date} -> using {record.FXRate}");
-                fxRate = decimal.Parse(record.FXRate);
+                fxRate = recordFxRate;
             }
 
             decimal? quantity = string.IsNullOrWhiteSpace(record.Quantity) ? null : decimal.Parse(record.Quantity);
@@ -93,7 +99,18 @@ static class StockEventsReader
         throw new FormatException($"Unable to parse date: '{record.Date}'");
     }
 
-    private static string Sanitize(string value) => value.Trim('(').Trim(')').Trim('$');
+    private static string Sanitize(string value)
+    {
+        var valueWithoutParenthesisAndSymbol = value.TrimStart('(').TrimEnd(')').Trim('$', '€', '£');
+        if (Regex.Match(valueWithoutParenthesisAndSymbol, "^(?<currecyName>[A-Za-z]+)\\s") is { Success: true, Length: var length })
+        {
+            return valueWithoutParenthesisAndSymbol[length..];
+        }
+        else
+        {
+            return valueWithoutParenthesisAndSymbol;
+        }
+    }
 
     [Delimiter(",")]
     class EventStr
