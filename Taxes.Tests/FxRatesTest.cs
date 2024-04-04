@@ -1,5 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using static Taxes.FxRates;
+﻿using static Taxes.FxRates;
 
 namespace Taxes.Test;
 
