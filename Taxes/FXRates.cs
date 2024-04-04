@@ -22,11 +22,14 @@ public record FxRates(Dictionary<string, Dictionary<DateTime, decimal>> Rates)
     /// - the file can have comment lines starting with "//"
     /// - the FX Rate must be a positive number in the default culture
     /// </summary>
-    public static FxRates ParseSingleCurrency(string currency, string path)
+    public static FxRates ParseSingleCurrencyFromFile(string currency, string path) => 
+        ParseSingleCurrencyFromContent(currency, File.ReadAllLines(path));
+
+    internal static FxRates ParseSingleCurrencyFromContent(string currency, string[] lines)
     {
         var currencyFxRates = new Dictionary<DateTime, decimal>();
 
-        foreach (var line in File.ReadAllLines(path))
+        foreach (var line in lines)
         {
             if (line.TrimStart().StartsWith("//"))
             {
