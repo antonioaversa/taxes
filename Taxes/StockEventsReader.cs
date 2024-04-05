@@ -109,7 +109,7 @@ static partial class StockEventsReader
     private static partial Regex TotalQuantityCurrencyPrefix();
 
     [Delimiter(",")]
-    class EventStr
+    private sealed class EventStr
     {
         [Name("Date")] public string Date { get; set; } = string.Empty;
         [Name("Ticker")] public string Ticker { get; set; } = string.Empty;
