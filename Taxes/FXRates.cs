@@ -1,8 +1,14 @@
-﻿using System.Globalization;
-
+﻿using System.Collections.Generic;
+using System;
+using System.Globalization;
+using System.Security.Cryptography;
+using CsvHelper.Configuration.Attributes;
+using System.Text.RegularExpressions;
+using System.Linq;
 namespace Taxes;
 
 using static Basics;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 /// <summary>
 /// Defines the FX Rates by currency and day.
@@ -12,17 +18,20 @@ using static Basics;
 ///   - the key is the day
 ///   - and the value is the FX Rate, for that currency, that day.
 /// </summary>
-public record FxRates(Dictionary<string, Dictionary<DateTime, decimal>> Rates)
+public partial record FxRates(Dictionary<string, Dictionary<DateTime, decimal>> Rates)
 {
-    /// <summary>
-    /// Parses the FX Rates for a single currency from a file with the provided path.
-    /// The file needs to have the following format: 
-    /// - each line represents the FX Rate for a given day
-    /// - the line format is: "M/d/yyyy\tFXRate"
-    /// - the file can have comment lines starting with "//"
-    /// - the FX Rate must be a positive number in the default culture
-    /// </summary>
-    public static FxRates ParseSingleCurrencyFromFile(string currency, string path) => 
+    private static readonly string[] FxRatesHeaderLinesFirstWord = 
+        [ "Titre", "Code série", "Unité", "Magnitude", "Méthode", "Source" ];
+
+/// <summary>
+/// Parses the FX Rates for a single currency from a file with the provided path.
+/// The file needs to have the following format: 
+/// - each line represents the FX Rate for a given day
+/// - the line format is: "M/d/yyyy\tFXRate"
+/// - the file can have comment lines starting with "//"
+/// - the FX Rate must be a positive number in the default culture
+/// </summary>
+public static FxRates ParseSingleCurrencyFromFile(string currency, string path) => 
         ParseSingleCurrencyFromContent(currency, File.ReadAllLines(path));
 
     internal static FxRates ParseSingleCurrencyFromContent(string currency, string[] lines)
@@ -58,4 +67,54 @@ public record FxRates(Dictionary<string, Dictionary<DateTime, decimal>> Rates)
 
         return new(new Dictionary<string, Dictionary<DateTime, decimal>>() { [currency] = currencyFxRates });
     }
+
+    // The following method parses the FX Rates from a file with the following format:
+    // Titre :;Dollar australien (AUD);Lev bulgare (BGN);Real brésilien (BRL);Dollar canadien (CAD);Franc suisse (CHF);Yuan renminbi chinois (CNY);Livre chypriote (CYP);Couronne tchèque (CZK);Couronne danoise (DKK);Couronne estonienne (EEK);Livre sterling (GBP);Dollar de Hong Kong (HKD);Kuna croate (HRK);Forint hongrois (HUF);Roupie indonésienne (IDR);Sheqel israélien (ILS);Roupie Indienne (100 paise);Couronne islandaise (ISK);Yen japonais (JPY);Won coréen (KRW);Litas lituanien (LTL);Lats letton (LVL);Livre maltaise (MTL);Peso méxicain (MXN);Ringgit malaisien (MYR);Couronne norvégienne (NOK);Dollar neo-zélandais (NZD);Peso philippin (PHP);Zloty polonais (PLN);Leu roumain (RON);Rouble russe (RUB);Couronne suédoise (SEK);Dollar de Singapour (SGD);Tolar slovène (SIT);Couronne slovaque (SKK);Baht thaïlandais (THB);Livre turque (TRY);Dollar des Etats-Unis (USD);Rand sud-africain (ZAR)
+    //     Code série :; EXR.D.AUD.EUR.SP00.A;EXR.D.BGN.EUR.SP00.A;EXR.D.BRL.EUR.SP00.A;EXR.D.CAD.EUR.SP00.A;EXR.D.CHF.EUR.SP00.A;EXR.D.CNY.EUR.SP00.A;EXR.D.CYP.EUR.SP00.A;EXR.D.CZK.EUR.SP00.A;EXR.D.DKK.EUR.SP00.A;EXR.D.EEK.EUR.SP00.A;EXR.D.GBP.EUR.SP00.A;EXR.D.HKD.EUR.SP00.A;EXR.D.HRK.EUR.SP00.A;EXR.D.HUF.EUR.SP00.A;EXR.D.IDR.EUR.SP00.A;EXR.D.ILS.EUR.SP00.A;EXR.D.INR.EUR.SP00.A;EXR.D.ISK.EUR.SP00.A;EXR.D.JPY.EUR.SP00.A;EXR.D.KRW.EUR.SP00.A;EXR.D.LTL.EUR.SP00.A;EXR.D.LVL.EUR.SP00.A;EXR.D.MTL.EUR.SP00.A;EXR.D.MXN.EUR.SP00.A;EXR.D.MYR.EUR.SP00.A;EXR.D.NOK.EUR.SP00.A;EXR.D.NZD.EUR.SP00.A;EXR.D.PHP.EUR.SP00.A;EXR.D.PLN.EUR.SP00.A;EXR.D.RON.EUR.SP00.A;EXR.D.RUB.EUR.SP00.A;EXR.D.SEK.EUR.SP00.A;EXR.D.SGD.EUR.SP00.A;EXR.D.SIT.EUR.SP00.A;EXR.D.SKK.EUR.SP00.A;EXR.D.THB.EUR.SP00.A;EXR.D.TRY.EUR.SP00.A;EXR.D.USD.EUR.SP00.A;EXR.D.ZAR.EUR.SP00.A
+    //     Unité :; Dollar Australien(AUD); Lev Nouveau(BGN); Real Bresilien(BRL); Dollar Canadien(CAD); Franc Suisse(CHF); Yuan Ren Min Bi(CNY); Livre Cypriote(CYP); Couronne Tcheque(CZK); Couronne Danoise(DKK); Couronne d`Estonie(EEK); Livre Sterling(GBP); Dollar de Hong Kong(HKD); Kuna Croate(HRK); Forint(HUF); Rupiah(IDR); Nouveau Israeli Shekel(ILS); Roupie Indienne(INR); Couronne Islandaise(ISK); Yen(JPY); Won(KRW); Litas Lituanien(LTL); Lats Letton(LVL); Livre Maltaise(MTL); Nouveau Peso Mexicain(MXN); Ringgit de Malaisie(MYR); Couronne Norvegienne(NOK); Dollar Neo-Zelandais(NZD); Peso Philippin(PHP); Zloty(PLN); Nouveau Ron(RON); Rouble Russe(RUB) (RUB);Couronne Suedoise(SEK); Dollar de Singapour(SGD); Tolar(SIT); Couronne Slovaque(SKK); Baht(THB); Nouvelle Livre Turque(TRY); Dollar des Etats-Unis(USD); Rand(ZAR)
+    // Magnitude :;Unités(0); Unités(0); Unités(0); Unités(0); Unités(0); Unités(0); Unités(0); Unités(0); Unités(0); Unités(0); Unités(0); Unités(0); Unités(0); Unités(0); Unités(0); Unités(0); Unités(0); Unités(0); Unités(0); Unités(0); Unités(0); Unités(0); Unités(0); Unités(0); Unités(0); Unités(0); Unités(0); Unités(0); Unités(0); Unités(0); Unités(0); Unités(0); Unités(0); Unités(0); Unités(0); Unités(0); Unités(0); Unités(0); Unités(0)
+    // Méthode d'observation :;Fin de période (E);Fin de période (E);Fin de période (E);Fin de période (E);Fin de période (E);Fin de période (E);Moyenne de la période (A);Fin de période (E);Fin de période (E);Moyenne de la période (A);Fin de période (E);Fin de période (E);Moyenne de la période (A);Fin de période (E);Fin de période (E);Fin de période (E);Fin de période (E);Fin de période (E);Fin de période (E);Fin de période (E);Moyenne de la période (A);Moyenne de la période (A);Moyenne de la période (A);Fin de période (E);Fin de période (E);Fin de période (E);Fin de période (E);Fin de période (E);Fin de période (E);Fin de période (E);Fin de période (E);Fin de période (E);Fin de période (E);Moyenne de la période (A);Moyenne de la période (A);Fin de période (E);Fin de période (E);Fin de période (E);Fin de période (E)
+    // Source :;BCE(Banque Centrale Européenne) (4F0);BCE(Banque Centrale Européenne) (4F0);BCE(Banque Centrale Européenne) (4F0);BCE(Banque Centrale Européenne) (4F0);BCE(Banque Centrale Européenne) (4F0);BCE(Banque Centrale Européenne) (4F0);BCE(Banque Centrale Européenne) (4F0);BCE(Banque Centrale Européenne) (4F0);BCE(Banque Centrale Européenne) (4F0);BCE(Banque Centrale Européenne) (4F0);BCE(Banque Centrale Européenne) (4F0);BCE(Banque Centrale Européenne) (4F0);BCE(Banque Centrale Européenne) (4F0);BCE(Banque Centrale Européenne) (4F0);BCE(Banque Centrale Européenne) (4F0);BCE(Banque Centrale Européenne) (4F0);BCE(Banque Centrale Européenne) (4F0);BCE(Banque Centrale Européenne) (4F0);BCE(Banque Centrale Européenne) (4F0);BCE(Banque Centrale Européenne) (4F0);BCE(Banque Centrale Européenne) (4F0);BCE(Banque Centrale Européenne) (4F0);BCE(Banque Centrale Européenne) (4F0);BCE(Banque Centrale Européenne) (4F0);BCE(Banque Centrale Européenne) (4F0);BCE(Banque Centrale Européenne) (4F0);BCE(Banque Centrale Européenne) (4F0);BCE(Banque Centrale Européenne) (4F0);BCE(Banque Centrale Européenne) (4F0);BCE(Banque Centrale Européenne) (4F0);BCE(Banque Centrale Européenne) (4F0);BCE(Banque Centrale Européenne) (4F0);BCE(Banque Centrale Européenne) (4F0);BCE(Banque Centrale Européenne) (4F0);BCE(Banque Centrale Européenne) (4F0);BCE(Banque Centrale Européenne) (4F0);BCE(Banque Centrale Européenne) (4F0);BCE(Banque Centrale Européenne) (4F0);BCE(Banque Centrale Européenne) (4F0)
+    // 04/04/2024;1,6446;1,9558;5,4751;1,4652;0,9846;7,8501;;25,322;7,4589;;0,85788;8,4957;;391,55;17233,19;4,0339;90,5116;150,3;164,69;1462,46;;;;17,9675;5,1433;11,6125;1,7998;61,243;4,2955;4,9687;;11,5105;1,4628;;;39,881;34,6065;1,0852;20,2704
+    // 03/04/2024;1,6539;1,9558;5,4681;1,4626;0,9792;7,8023;;25,352;7,4589;;0,85713;8,4421;;393,2;17196,78;4,0165;90,0055;150,1;163,66;1456,04;;;;17,8782;5,1273;11,658;1,8054;60,817;4,2968;4,9687;;11,575;1,4571;;;39,584;34,4418;1,0783;20,2667
+    // 02/04/2024;1,6522;1,9558;5,4114;1,4577;0,9765;7,7779;;25,361;7,4582;;0,8551;8,4148;;395,63;17103,38;3,9826;89,649;150,1;163,01;1453,23;;;;17,849;5,1106;11,708;1,804;60,506;4,2938;4,9699;;11,5575;1,4535;;;39,395;34,6033;1,0749;20,2399
+    // 01/04/2024;-;-;-;-;-;-;;-;-;;-;-;;-;-;-;-;-;-;-;;;;-;-;-;-;-;-;-;;-;-;;;-;-;-;-
+    // 31/03/2024;-;-;-;-;-;-;;-;-;;-;-;;-;-;-;-;-;-;-;;;;-;-;-;-;-;-;-;;-;-;;;-;-;-;-
+    internal static FxRates ParseAllCurrenciesFromContent(IList<string> lines)
+    {
+        if (lines.Count < FxRatesHeaderLinesFirstWord.Length || 
+            FxRatesHeaderLinesFirstWord.Where((s, i) => !lines[i].Trim().StartsWith(s)).Any())
+            throw new InvalidDataException("Invalid header lines");
+
+        var currencies = (
+            from field in lines[0].Split(';')[1..]
+            let match = CurrencyRegex().Match(field)
+            where match.Success
+            select match.Groups["currency"].Value).ToList();
+        if (currencies.Count == 0)
+            throw new InvalidDataException("Invalid or no currencies found in header");
+
+        var currencyFxRates = currencies.ToDictionary(k => k, v => new Dictionary<DateTime, decimal>());
+
+        for (int lineIndex = FxRatesHeaderLinesFirstWord.Length; lineIndex < lines.Count; lineIndex++)
+        {
+            var lineFields = lines[lineIndex].Split(';');
+            if (lineFields.Length != currencies.Count + 1)
+                throw new InvalidDataException($"Invalid data line: '{lines[lineIndex]}'");
+            
+            var day = DateTime.ParseExact(lineFields[0], "dd/MM/yyyy", DefaultCulture);
+            for (int fieldIndex = 1; fieldIndex < lineFields.Length; fieldIndex++)
+            {
+                if (lineFields[fieldIndex] == "-")
+                    continue;
+
+                var fxRate = decimal.Parse(lineFields[fieldIndex], CultureInfo.GetCultureInfo("fr-FR"));
+                currencyFxRates[currencies[fieldIndex - 1]][day] = fxRate;
+            }
+        }
+        return new(currencyFxRates);
+    }
+
+    [GeneratedRegex(@"^[^\(]+\((?<currency>[A-Z]+)\)$")]
+    private static partial Regex CurrencyRegex();
 }
