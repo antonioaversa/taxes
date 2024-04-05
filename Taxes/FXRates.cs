@@ -23,15 +23,18 @@ public partial record FxRates(Dictionary<string, Dictionary<DateTime, decimal>> 
     private static readonly string[] FxRatesHeaderLinesFirstWord = 
         [ "Titre", "Code série", "Unité", "Magnitude", "Méthode", "Source" ];
 
-/// <summary>
-/// Parses the FX Rates for a single currency from a file with the provided path.
-/// The file needs to have the following format: 
-/// - each line represents the FX Rate for a given day
-/// - the line format is: "M/d/yyyy\tFXRate"
-/// - the file can have comment lines starting with "//"
-/// - the FX Rate must be a positive number in the default culture
-/// </summary>
-public static FxRates ParseSingleCurrencyFromFile(string currency, string path) => 
+    public IDictionary<DateTime, decimal> this[string currency] => Rates[currency];
+    public decimal this[string currency, DateTime date] => Rates[currency][date];
+
+    /// <summary>
+    /// Parses the FX Rates for a single currency from a file with the provided path.
+    /// The file needs to have the following format: 
+    /// - each line represents the FX Rate for a given day
+    /// - the line format is: "M/d/yyyy\tFXRate"
+    /// - the file can have comment lines starting with "//"
+    /// - the FX Rate must be a positive number in the default culture
+    /// </summary>
+    public static FxRates ParseSingleCurrencyFromFile(string currency, string path) => 
         ParseSingleCurrencyFromContent(currency, File.ReadAllLines(path));
 
     internal static FxRates ParseSingleCurrencyFromContent(string currency, string[] lines)
@@ -91,6 +94,7 @@ public static FxRates ParseSingleCurrencyFromFile(string currency, string path) 
             let match = CurrencyRegex().Match(field)
             where match.Success
             select match.Groups["currency"].Value).ToList();
+
         if (currencies.Count == 0)
             throw new InvalidDataException("Invalid or no currencies found in header");
 

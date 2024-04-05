@@ -7,9 +7,13 @@ namespace Taxes.Test;
 public class FxRatesTest
 {
     private const string CurrencyUSD = "USD";
+    private const string CurrencyCHF = "CHF";
+    private const string CurrencyGBP = "GBP";
     private const string CurrencyUSDHeader = "Dollars(USD)";
+    private const string CurrencyCHFHeader = "Francs(CHF)";
+    private const string CurrencyGBPHeader = "Pounds(GBP)";
 
-    private static string[] BuildHeaderLines(string[] currencies) =>
+    private static string[] BuildHeaderLines(params string[] currencies) =>
         [
             $"Titre :;{string.Join(';', currencies)}",
             "    Code série : ... not relevant for the parsing",
@@ -129,29 +133,85 @@ public class FxRatesTest
     }
 
     [TestMethod]
-    public void ParseAllCurrenciesFromContent_WithNotAllHeaderLines_RaisesException()
+    public void ParseAllCurrenciesFromContent_WithInvalidHeaderLines_RaisesException()
     {
         // Including only the first header line
         AssertExtensions.ThrowsAny<InvalidDataException>(
-            () => ParseAllCurrenciesFromContent(BuildHeaderLines([CurrencyUSDHeader]).Take(1).ToList()));
+            () => ParseAllCurrenciesFromContent(BuildHeaderLines(CurrencyUSDHeader).Take(1).ToList()));
         // Including only the second header line
         AssertExtensions.ThrowsAny<InvalidDataException>(
-            () => ParseAllCurrenciesFromContent(BuildHeaderLines([CurrencyUSDHeader]).Skip(1).Take(1).ToList()));
+            () => ParseAllCurrenciesFromContent(BuildHeaderLines(CurrencyUSDHeader).Skip(1).Take(1).ToList()));
         // Including only the first three header lines
         AssertExtensions.ThrowsAny<InvalidDataException>(
-            () => ParseAllCurrenciesFromContent(BuildHeaderLines([CurrencyUSDHeader]).Take(3).ToList()));
+            () => ParseAllCurrenciesFromContent(BuildHeaderLines(CurrencyUSDHeader).Take(3).ToList()));
         // With one of the header lines wrong (different prefix than expected)
         AssertExtensions.ThrowsAny<InvalidDataException>(
-            () => ParseAllCurrenciesFromContent(BuildHeaderLines([CurrencyUSDHeader])
+            () => ParseAllCurrenciesFromContent(BuildHeaderLines(CurrencyUSDHeader)
                 .Select((s, i) => i != 3 ? s : $"Invalid Prefix{s}").ToList()));
         // With header lines in the wrong order
         AssertExtensions.ThrowsAny<InvalidDataException>(
-            () => ParseAllCurrenciesFromContent(BuildHeaderLines([CurrencyUSDHeader]).Reverse().ToList()));
+            () => ParseAllCurrenciesFromContent(BuildHeaderLines(CurrencyUSDHeader).Reverse().ToList()));
 
         // With currency with invalid format
-        AssertExtensions.ThrowsAny<Exception>(() => ParseAllCurrenciesFromContent(BuildHeaderLines(["Dollar"])));
-        AssertExtensions.ThrowsAny<Exception>(() => ParseAllCurrenciesFromContent(BuildHeaderLines(["Dollar(USD"])));
-        AssertExtensions.ThrowsAny<Exception>(() => ParseAllCurrenciesFromContent(BuildHeaderLines(["DollarUSD)"])));
-        AssertExtensions.ThrowsAny<Exception>(() => ParseAllCurrenciesFromContent(BuildHeaderLines(["(USD)"])));
+        AssertExtensions.ThrowsAny<Exception>(() => ParseAllCurrenciesFromContent(BuildHeaderLines("")));
+        AssertExtensions.ThrowsAny<Exception>(() => ParseAllCurrenciesFromContent(BuildHeaderLines("Dollar")));
+        AssertExtensions.ThrowsAny<Exception>(() => ParseAllCurrenciesFromContent(BuildHeaderLines("Dollar(USD")));
+        AssertExtensions.ThrowsAny<Exception>(() => ParseAllCurrenciesFromContent(BuildHeaderLines("DollarUSD)")));
+        AssertExtensions.ThrowsAny<Exception>(() => ParseAllCurrenciesFromContent(BuildHeaderLines("(USD)")));
+    }
+
+    [TestMethod]
+    public void ParseAllCurrenciesFromContent_WithSingleCurrencyAndNoData_ReturnsDictionaryOfTheEmptyCurrency()
+    {
+        var fxRates = ParseAllCurrenciesFromContent(BuildHeaderLines(CurrencyUSDHeader));
+        Assert.AreEqual(1, fxRates.Rates.Count);
+        Assert.IsTrue(fxRates.Rates.ContainsKey(CurrencyUSD));
+        Assert.AreEqual(0, fxRates.Rates[CurrencyUSD].Count);
+    }
+
+    [TestMethod]
+    public void ParseAllCurrenciesFromContent_WithMultipleCurrenciesAndNoData_ReturnsDictionaryOfTheEmptyCurrencies()
+    {
+        var fxRates = ParseAllCurrenciesFromContent(BuildHeaderLines(CurrencyUSDHeader, CurrencyCHFHeader, CurrencyGBPHeader));
+        Assert.AreEqual(3, fxRates.Rates.Count);
+        Assert.IsTrue(fxRates.Rates.ContainsKey(CurrencyUSD));
+        Assert.IsTrue(fxRates.Rates.ContainsKey(CurrencyCHF));
+        Assert.IsTrue(fxRates.Rates.ContainsKey(CurrencyGBP));
+        Assert.AreEqual(0, fxRates.Rates[CurrencyUSD].Count);
+        Assert.AreEqual(0, fxRates.Rates[CurrencyCHF].Count);
+        Assert.AreEqual(0, fxRates.Rates[CurrencyGBP].Count);
+    }
+
+    [TestMethod]
+    public void ParseAllCurrenciesFromContent_WithDifferentNumberOfDataFieldsThanCurrencies_RaisesException()
+    {
+        // Less data than currencies
+        AssertExtensions.ThrowsAny<InvalidDataException>(() => ParseAllCurrenciesFromContent(
+            [.. BuildHeaderLines(CurrencyUSDHeader, CurrencyCHFHeader), "01/01/2021;1,23"]));
+        // More data than currencies
+        AssertExtensions.ThrowsAny<InvalidDataException>(() => ParseAllCurrenciesFromContent(
+            [.. BuildHeaderLines(CurrencyUSDHeader, CurrencyCHFHeader), "01/01/2021;1,23;1,24;1,25"]));
+    }
+
+    [TestMethod]
+    public void ParseAllCurrenciesFromContent_WithInvalidDayFormat_RaisesException()
+    {
+        AssertExtensions.ThrowsAny<FormatException>(() => ParseAllCurrenciesFromContent(
+            [.. BuildHeaderLines(CurrencyUSDHeader, CurrencyCHFHeader), "1/1/2021;1,23;1,24"]));
+        AssertExtensions.ThrowsAny<FormatException>(() => ParseAllCurrenciesFromContent(
+            [.. BuildHeaderLines(CurrencyUSDHeader, CurrencyCHFHeader), "01/1/2021;1,23;1,24"]));
+        AssertExtensions.ThrowsAny<FormatException>(() => ParseAllCurrenciesFromContent(
+            [.. BuildHeaderLines(CurrencyUSDHeader, CurrencyCHFHeader), "01/01/21;1,23;1,24"]));
+    }
+
+    [TestMethod]
+    public void ParseAllCurrenciesFromContent_WithInvalidNumber_RaisesException()
+    {
+        AssertExtensions.ThrowsAny<FormatException>(() => ParseAllCurrenciesFromContent(
+            [.. BuildHeaderLines(CurrencyUSDHeader), "01/01/2021;1.23"]));
+        AssertExtensions.ThrowsAny<FormatException>(() => ParseAllCurrenciesFromContent(
+            [.. BuildHeaderLines(CurrencyUSDHeader), "01/01/2021;1,24.0"]));
+        AssertExtensions.ThrowsAny<FormatException>(() => ParseAllCurrenciesFromContent(
+            [.. BuildHeaderLines(CurrencyUSDHeader), "01/01/2021;1,23a"]));
     }
 }
