@@ -34,4 +34,5 @@ record TickerState(
         $"Dividends = {NetDividendsBase.R()} {BaseCurrency} + WHT {WhtDividendsBase.R()} {BaseCurrency} = {GrossDividendsBase.R()} {BaseCurrency}";  
 }
 
-delegate TickerState TickerAction(Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState);
+delegate TickerState TickerAction(
+    Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter);

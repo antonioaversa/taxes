@@ -4,8 +4,10 @@ using static Basics;
 
 static class TickerProcessing
 {
-    public static TickerState ProcessTicker(string ticker, IList<Event> tickerEvents)
+    public static TickerState ProcessTicker(string ticker, IList<Event> tickerEvents, TextWriter? textWriter = null)
     {
+        textWriter ??= TextWriter.Null;
+
         var isin = (string.IsNullOrWhiteSpace(ticker) ? "" : ISINs[ticker]);
         if (string.IsNullOrWhiteSpace(ticker))
             Console.WriteLine($"PROCESS NON-TICKER-RELATED EVENTS");
@@ -31,7 +33,7 @@ static class TickerProcessing
                 _ => throw new NotSupportedException($"Event type not supported: {tickerEvent}"),
             };
 
-            tickerState = tickerAction(tickerEvent, tickerEvents, eventIndex++, tickerState);
+            tickerState = tickerAction(tickerEvent, tickerEvents, eventIndex++, tickerState, textWriter);
 
             Console.WriteLine($"\tTicker State: {tickerState}");
             Console.WriteLine();
@@ -42,7 +44,8 @@ static class TickerProcessing
         return tickerState;
     }
 
-    static TickerState ProcessReset(Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState)
+    internal /* for testing */ static TickerState ProcessReset(
+        Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter)
     {
         return new TickerState(tickerState.Ticker, tickerState.Isin) with
         {
@@ -55,12 +58,14 @@ static class TickerProcessing
         };
     }
 
-    static TickerState Noop(Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState)
+    internal /* for testing */ static TickerState Noop(
+        Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter)
     {
         return tickerState;
     }
 
-    static TickerState ProcessBuy(Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState)
+    internal /* for testing */ static TickerState ProcessBuy(
+        Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter)
     {
         if (tickerEvent.Type is not (EventType.BuyMarket or EventType.BuyLimit))
             throw new NotSupportedException($"Unsupported type: {tickerEvent.Type}");
@@ -114,8 +119,9 @@ static class TickerProcessing
             PortfolioAcquisitionValueBase = tickerState.PortfolioAcquisitionValueBase + totalBuyPriceBase,
         };
     }
-    
-    static TickerState ProcessStockSplit(Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState)
+
+    internal /* for testing */ static TickerState ProcessStockSplit(
+        Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter)
     {
         if (tickerEvent.Type is not EventType.StockSplit)
             throw new NotSupportedException($"Unsupported type: {tickerEvent.Type}");
@@ -160,7 +166,8 @@ static class TickerProcessing
         };
     }
 
-    static TickerState ProcessSell(Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState)
+    internal /* for testing */ static TickerState ProcessSell(
+        Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter)
     {
         if (tickerEvent.Type is not (EventType.SellMarket or EventType.SellLimit))
             throw new NotSupportedException($"Unsupported type: {tickerEvent.Type}");
@@ -181,34 +188,36 @@ static class TickerProcessing
         if (tickerEvent.FeesLocal == null)
             throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.FeesLocal)} null");
 
+        outWriter ??= Console.Out;
+        
         var tickerCurrency = tickerEvent.Currency;
 
         var totalSellPriceLocal = tickerEvent.TotalAmountLocal.Value;
-        Console.WriteLine($"\tTotal Sell Price ({tickerCurrency}) = {totalSellPriceLocal.R()}");
+        outWriter.WriteLine($"\tTotal Sell Price ({tickerCurrency}) = {totalSellPriceLocal.R()}");
 
         var sharesSellPriceLocal = tickerEvent.PricePerShareLocal.Value * tickerEvent.Quantity.Value;
-        Console.WriteLine($"\tShares Sell Price ({tickerCurrency}) = {sharesSellPriceLocal.R()}");
+        outWriter.WriteLine($"\tShares Sell Price ({tickerCurrency}) = {sharesSellPriceLocal.R()}");
 
         var perShareAvgBuyPriceBase = tickerState.TotalAmountBase / tickerState.TotalQuantity;
-        Console.WriteLine($"\tPerShare Average Buy Price ({BaseCurrency}) = {perShareAvgBuyPriceBase.R()}");
+        outWriter.WriteLine($"\tPerShare Average Buy Price ({BaseCurrency}) = {perShareAvgBuyPriceBase.R()}");
 
         var totalAvgBuyPriceBase = perShareAvgBuyPriceBase * tickerEvent.Quantity.Value;
-        Console.WriteLine($"\tTotal Average Buy Price ({BaseCurrency}) = {totalAvgBuyPriceBase.R()}");
+        outWriter.WriteLine($"\tTotal Average Buy Price ({BaseCurrency}) = {totalAvgBuyPriceBase.R()}");
 
         var perShareSellPriceBase = tickerEvent.PricePerShareLocal.Value / tickerEvent.FXRate;
-        Console.WriteLine($"\tPerShare Sell Price ({BaseCurrency}) = {perShareSellPriceBase.R()}");
+        outWriter.WriteLine($"\tPerShare Sell Price ({BaseCurrency}) = {perShareSellPriceBase.R()}");
 
         var sharesSellPriceBase = perShareSellPriceBase * tickerEvent.Quantity.Value;
-        Console.WriteLine($"\tShares Sell Price ({BaseCurrency}) = {sharesSellPriceBase.R()}");
+        outWriter.WriteLine($"\tShares Sell Price ({BaseCurrency}) = {sharesSellPriceBase.R()}");
 
         var totalSellPriceBase = totalSellPriceLocal / tickerEvent.FXRate;
-        Console.WriteLine($"\tTotal Sell Price ({BaseCurrency}) = {totalSellPriceBase.R()}");
+        outWriter.WriteLine($"\tTotal Sell Price ({BaseCurrency}) = {totalSellPriceBase.R()}");
 
         var sellFees1Base = Math.Abs(sharesSellPriceBase - totalSellPriceBase);
-        Console.WriteLine($"\tSell Fees 1 ({BaseCurrency}) = {sellFees1Base.R()}");
+        outWriter.WriteLine($"\tSell Fees 1 ({BaseCurrency}) = {sellFees1Base.R()}");
 
         var sellFees2Base = tickerEvent.FeesLocal.Value / tickerEvent.FXRate;
-        Console.WriteLine($"\tSell Fees 2 ({BaseCurrency}) = {sellFees2Base.R()}");
+        outWriter.WriteLine($"\tSell Fees 2 ({BaseCurrency}) = {sellFees2Base.R()}");
 
         // TODO: ensure that buyFees1Base and buyFees2Base are consistent with each other, which is currently not the case
 
@@ -354,7 +363,8 @@ static class TickerProcessing
         }
     }
 
-    static TickerState ProcessDividend(Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState)
+    internal static /* for testing */ TickerState ProcessDividend(
+        Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter)
     {
         if (tickerEvent.Type is not EventType.Dividend)
             throw new NotSupportedException($"Unsupported type: {tickerEvent.Type}");
