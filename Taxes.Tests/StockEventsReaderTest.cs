@@ -372,6 +372,19 @@ public class StockEventsReaderTest
     }
 
     [TestMethod]
+    public void Parse_CustodyFee_ReturnsPositiveTotalAmount_EvenThoughItsNegativeInTheInput()
+    {
+        // The total amount is negative in the input file, but it should be positive in the Event
+        using var textReader = new StringReader("""
+            Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
+            2022-06-02T06:41:50.336664Z,,CUSTODY FEE,,,($1.35),USD,01.07
+            """);
+        var events = StockEventsReader.Parse(textReader, NoFxRates);
+        Assert.AreEqual(1, events.Count);
+        events[0].AssertEvent(type: EventType.CustodyFee, totalAmountLocal: 1.35m, currency: "USD", fxRate: 1.07m);
+    }
+
+    [TestMethod]
     public void Parse_WithTemporaryFile()
     {
         var path = Path.GetTempFileName();
