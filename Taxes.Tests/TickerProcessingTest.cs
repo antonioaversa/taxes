@@ -93,7 +93,7 @@ public class TickerProcessingTest
     [TestMethod]
     public void ProcessReset_KeepsTickerAndIsin()
     {
-        var tickerEvent = new Event(T0, Reset, Ticker, 0, 0, 0, 0, EUR, 1, -1);
+        var tickerEvent = new Event(T0, Reset, Ticker, null, null, null, null, EUR, 1, -1);
         var tickerState = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
         var tickerStateAfterReset = ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null);
         Assert.AreEqual(Ticker, tickerStateAfterReset.Ticker);
