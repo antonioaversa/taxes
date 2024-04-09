@@ -22,10 +22,10 @@ static class TickerProcessing
             TickerAction tickerAction = tickerEvent.Type switch
             {
                 EventType.Reset => ProcessReset,
-                EventType.CashTopUp => Noop,
-                EventType.CashWithdrawal => Noop,
-                EventType.CustodyFee => Noop,
-                EventType.CustodyChange => Noop,
+                EventType.CashTopUp => ProcessNoop,
+                EventType.CashWithdrawal => ProcessNoop,
+                EventType.CustodyFee => ProcessNoop,
+                EventType.CustodyChange => ProcessNoop,
                 EventType.BuyMarket or EventType.BuyLimit => ProcessBuy,
                 EventType.SellMarket or EventType.SellLimit => ProcessSell,
                 EventType.StockSplit => ProcessStockSplit,
@@ -69,7 +69,7 @@ static class TickerProcessing
         };
     }
 
-    internal /* for testing */ static TickerState Noop(
+    internal /* for testing */ static TickerState ProcessNoop(
         Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter)
     {
         return tickerState;

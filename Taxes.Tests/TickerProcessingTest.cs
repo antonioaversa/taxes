@@ -190,6 +190,21 @@ public class TickerProcessingTest
     }
 
     [TestMethod]
+    public void ProcessNoop_LeavesTickerStateUnchanged()
+    {
+        var tickerEvent = new Event(T0, CashTopUp, Ticker, null, null, null, null, EUR, 1, -1);
+        var tickerState = new TickerState(Ticker, Isin, 
+            PlusValueCumpBase: 5.5m, PlusValuePepsBase: 5.6m, PlusValueCryptoBase: 13.22m,
+            MinusValueCumpBase: 3.2m, MinusValuePepsBase: 0m, MinusValueCryptoBase: 3.9m,
+            TotalQuantity: 3, TotalAmountBase: 25.46m,
+            NetDividendsBase: 4.5m, WhtDividendsBase: 0.2m, GrossDividendsBase: 4.7m,
+            PepsCurrentIndex: 3, PepsCurrentIndexBoughtQuantity: 2.1m,
+            PortfolioAcquisitionValueBase: 23.3m, CryptoFractionOfInitialCapital: 0.75m);
+        var tickerStateAfterNoop = ProcessNoop(tickerEvent, [], 0, tickerState, TextWriter.Null);
+        Assert.AreEqual(tickerState, tickerStateAfterNoop);
+    }
+
+    [TestMethod]
     public void ProcessSell_WhenPassingNotSupportedType_RaisesException()
     {
         // Custody fees for 12 EUR
