@@ -47,6 +47,17 @@ static class TickerProcessing
     internal /* for testing */ static TickerState ProcessReset(
         Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter)
     {
+        if (tickerEvent.Type is not EventType.Reset)
+            throw new NotSupportedException($"Unsupported type: {tickerEvent.Type}");
+        if (tickerEvent.Quantity != null)
+            throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.Quantity)} not null");
+        if (tickerEvent.PricePerShareLocal != null)
+            throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.PricePerShareLocal)} not null");
+        if (tickerEvent.TotalAmountLocal != null)
+            throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.TotalAmountLocal)} not null");
+        if (tickerEvent.FeesLocal != null)
+            throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.FeesLocal)} not null");
+
         return new TickerState(tickerState.Ticker, tickerState.Isin) with
         {
             TotalQuantity = tickerState.TotalQuantity,
@@ -187,8 +198,6 @@ static class TickerProcessing
             throw new InvalidDataException($"Event and state tickers don't match");
         if (tickerEvent.FeesLocal == null)
             throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.FeesLocal)} null");
-
-        outWriter ??= Console.Out;
         
         var tickerCurrency = tickerEvent.Currency;
 
