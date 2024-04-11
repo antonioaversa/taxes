@@ -90,6 +90,21 @@ public class TickerProcessingTest
             plusValueCumpBase: 27, plusValuePepsBase: 27, plusValueCryptoBase: 0);
     }
 
+    /////////////////////////////////////////////////////////////////////////////////////////
+
+    [DataTestMethod]
+    [DataRow(CashTopUp)]
+    [DataRow(CashWithdrawal)]
+    [DataRow(CustodyFee)]
+    [DataRow(CustodyChange)]
+    public void ProcessTicker_Event_DoesntChangeTickerState(EventType eventType)
+    {
+        var tickerState = new TickerState(Ticker, Isin);
+        var tickerEvent = new Event(T0, eventType, Ticker, null, null, 100, null, EUR, 1, -1);
+        var tickerStateAfterTopUp = ProcessTicker(Ticker, [tickerEvent], TextWriter.Null);
+        Assert.AreEqual(tickerState, tickerStateAfterTopUp);
+    }
+
     [TestMethod]
     public void ProcessReset_KeepsTickerAndIsin()
     {

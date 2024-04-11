@@ -1,6 +1,6 @@
 ﻿namespace Taxes;
 
-enum EventType
+public enum EventType
 {
     Reset,          // Synthetic event added to reset aggregates calculation at the beginning of a year
     CashTopUp,      // Internal transfer from expenditure account to investing account (which are segregated)
