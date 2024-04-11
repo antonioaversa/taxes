@@ -220,6 +220,88 @@ public class TickerProcessingTest
     }
 
     [TestMethod]
+    public void ProcessBuy_WhenPassingNotSupportedType_RaisesException()
+    {
+        var tickerEvent = new Event(T0, CustodyFee, Ticker, null, null, 12.0m, null, EUR, 1, -1);
+        var tickerState = new TickerState(Ticker, Isin);
+        ThrowsAny<Exception>(() => ProcessBuy(tickerEvent, [], 0, tickerState, TextWriter.Null));
+    }
+
+    [TestMethod]
+    public void ProcessBuy_WhenTickerNameIsNull_RaisesException()
+    {
+        var tickerEvent = new Event(T0, BuyLimit, null, 3, 100, 303, 3, EUR, 1, -1);
+        var tickerState = new TickerState(Ticker, Isin);
+        ThrowsAny<Exception>(() => ProcessBuy(tickerEvent, [], 0, tickerState, TextWriter.Null));
+    }
+
+    [TestMethod]
+    public void ProcessBuy_WhenPricePerShareLocalIsNull_RaisesException()
+    {
+        var tickerEvent = new Event(T0, BuyLimit, Ticker, 3, null, 303, 3, EUR, 1, -1);
+        var tickerState = new TickerState(Ticker, Isin);
+        ThrowsAny<Exception>(() => ProcessBuy(tickerEvent, [], 0, tickerState, TextWriter.Null));
+    }
+
+    [TestMethod]
+    public void ProcessBuy_WhenQuantityIsNull_RaisesException()
+    {
+        var tickerEvent = new Event(T0, BuyLimit, Ticker, null, 100, 303, 3, EUR, 1, -1);
+        var tickerState = new TickerState(Ticker, Isin);
+        ThrowsAny<Exception>(() => ProcessBuy(tickerEvent, [], 0, tickerState, TextWriter.Null));
+    }
+
+    [TestMethod]
+    public void ProcessBuy_WhenTotalAmountLocalIsNull_RaisesException()
+    {
+        var tickerEvent = new Event(T0, BuyLimit, Ticker, 3, 100, null, 3, EUR, 1, -1);
+        var tickerState = new TickerState(Ticker, Isin);
+        ThrowsAny<Exception>(() => ProcessBuy(tickerEvent, [], 0, tickerState, TextWriter.Null));
+    }
+
+    [TestMethod]
+    public void ProcessBuy_WhenFeesLocalIsNull_RaisesException()
+    {
+        var tickerEvent = new Event(T0, BuyLimit, Ticker, 3, 100, 303, null, EUR, 1, -1);
+        var tickerState = new TickerState(Ticker, Isin);
+        ThrowsAny<Exception>(() => ProcessBuy(tickerEvent, [], 0, tickerState, TextWriter.Null));
+    }
+
+    [TestMethod]
+    public void ProcessBuy_WhenCurrenciesDontMatch_RaisesException()
+    {
+        var tickerEvent = new Event(T0, BuyLimit, Ticker, 3, 100, 303, 3, USD, 1, -1);
+        var tickerState = new TickerState(Ticker, Isin);
+        var tickerEvents = new[] { new Event(T0, BuyLimit, Ticker, 0, 0, 0, 0, EUR, 1, -1) };
+        ThrowsAny<Exception>(() => ProcessBuy(tickerEvent, tickerEvents, 0, tickerState, TextWriter.Null));
+    }
+
+    [TestMethod]
+    public void ProcessBuy_WhenTickersDontMatch_RaisesException()
+    {
+        var tickerEvent = new Event(T0, BuyLimit, Ticker, 3, 100, 303, 3, EUR, 1, -1);
+        var tickerState = new TickerState(AnotherTicker, AnotherIsin);
+        ThrowsAny<Exception>(() => ProcessBuy(tickerEvent, [], 0, tickerState, TextWriter.Null));
+    }
+
+    [TestMethod]
+    public void ProcessBuy_IncreasesTotalQuantityByTheQuantityInTheEvent()
+    {
+        // First buy of 3 shares
+        var tickerEvent = new Event(T0, BuyLimit, Ticker, 3, 100, 303, 3, EUR, 1, -1);
+        var tickerState = new TickerState(Ticker, Isin);
+        var tickerStateAfterBuy = ProcessBuy(tickerEvent, [], 0, tickerState, TextWriter.Null);
+        Assert.AreEqual(3, tickerStateAfterBuy.TotalQuantity);
+        // Second buy of 2 shares
+        tickerEvent = new Event(T0 + D, BuyLimit, Ticker, 2, 110, 222, 2, EUR, 1, -1);
+        tickerStateAfterBuy = ProcessBuy(tickerEvent, [], 0, tickerStateAfterBuy, TextWriter.Null);
+        Assert.AreEqual(5, tickerStateAfterBuy.TotalQuantity);
+        // Third buy of 2.5 shares
+        tickerEvent = new Event(T0 + 2 * D, BuyLimit, Ticker, 2.5m, 90, 225, 2.5m, EUR, 1, -1);
+        tickerStateAfterBuy = ProcessBuy(tickerEvent, [], 0, tickerStateAfterBuy, TextWriter.Null);
+        Assert.AreEqual(7.5m, tickerStateAfterBuy.TotalQuantity);
+    }
+    [TestMethod]
     public void ProcessSell_WhenPassingNotSupportedType_RaisesException()
     {
         // Custody fees for 12 EUR
