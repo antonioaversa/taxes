@@ -125,14 +125,20 @@ public class TickerProcessingTest
     }
 
     [TestMethod]
+    public void ProcessReset_WhenPassingANonZeroTotalAmount_RaisesException()
+    {
+        var tickerState = new TickerState(Ticker, Isin);
+        var tickerEvent = new Event(T0, Reset, Ticker, null, null, TotalAmountLocal: 303, null, EUR, 1, -1);
+        ThrowsAny<Exception>(() => ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null));
+    }
+
+    [TestMethod]
     public void ProcessReset_WhenPassingTransactionRelatedInfo_RaisesException()
     {
         var tickerState = new TickerState(Ticker, Isin);
         var tickerEvent = new Event(T0, Reset, Ticker, Quantity: 4, null, 0m, null, EUR, 1, -1);
         ThrowsAny<Exception>(() => ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null));
         tickerEvent = new Event(T0, Reset, Ticker, null, PricePerShareLocal: 100, 0m, null, EUR, 1, -1);
-        ThrowsAny<Exception>(() => ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null));
-        tickerEvent = new Event(T0, Reset, Ticker, null, null, TotalAmountLocal: 303, null, EUR, 1, -1);
         ThrowsAny<Exception>(() => ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null));
         tickerEvent = new Event(T0, Reset, Ticker, null, null, 0m, FeesLocal: 3, EUR, 1, -1);
         ThrowsAny<Exception>(() => ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null));

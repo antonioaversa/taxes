@@ -1,4 +1,6 @@
-﻿namespace Taxes.Test;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+namespace Taxes.Test;
 
 [TestClass]
 public class StockEventsReaderTest
@@ -82,6 +84,24 @@ public class StockEventsReaderTest
             2022-03-30T23:48:44.882381Z,,INVALID,,,"$3,000",USD,1.12
             """);
         AssertExtensions.ThrowsAny<Exception>(() => StockEventsReader.Parse(textReader, NoFxRates));
+    }
+
+    [TestMethod]
+    public void Parse_WithTotalAmountNull_RaisesException()
+    {
+        // With CASH TOP-UP: the Total Amount is significant as it's the amount of money added to the account
+        using var textReader = new StringReader("""
+            Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
+            2022-03-30T23:48:44.882381Z,,CASH TOP-UP,,,,USD,1.12
+            """);
+        AssertExtensions.ThrowsAny<Exception>(() => StockEventsReader.Parse(textReader, NoFxRates));
+        
+        // With RESET: even though it's a synthetic event, it should have a Total Amount equal to 0
+        using var textReader2 = new StringReader("""
+            Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
+            2023-01-01T00:00:00.000000Z,,RESET,,,,USD,1.0584
+            """);
+        AssertExtensions.ThrowsAny<Exception>(() => StockEventsReader.Parse(textReader2, NoFxRates));
     }
 
     [TestMethod]
