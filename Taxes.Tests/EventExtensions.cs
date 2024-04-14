@@ -28,7 +28,7 @@ static class EventExtensions
         if (pricePerShareLocal is not null)
             Assert.AreEqual(pricePerShareLocal.Value, @event.PricePerShareLocal!.Value);
         if (totalAmountLocal is not null)
-            Assert.AreEqual(totalAmountLocal.Value, @event.TotalAmountLocal!.Value);
+            Assert.AreEqual(totalAmountLocal.Value, @event.TotalAmountLocal);
         if (feesLocal is not null)
             Assert.AreEqual(feesLocal.Value, @event.FeesLocal!.Value, DefaultDelta);
         if (currency is not null)

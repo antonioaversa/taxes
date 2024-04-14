@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Reports\basics.json">
+    <None Update="Reports\Basics.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Reports\BCE-FXRate-EUR-USD.txt">

@@ -49,6 +49,8 @@ static partial class StockEventsReader
             var currency = record.Currency;
             var recordFxRate = decimal.Parse(record.FXRate);
 
+            if (string.IsNullOrWhiteSpace(record.TotalAmount))
+                throw new InvalidOperationException("Invalid Total Amount");
             if (currency == BaseCurrency && recordFxRate != 1.0m)
                 throw new InvalidOperationException($"Invalid FX Rate {record.FXRate} for base currency {BaseCurrency}");
 
@@ -64,12 +66,10 @@ static partial class StockEventsReader
             decimal? quantity = string.IsNullOrWhiteSpace(record.Quantity) ? null : decimal.Parse(record.Quantity);
             decimal? pricePerShareLocal = string.IsNullOrWhiteSpace(record.PricePerShare) ? null : decimal.Parse(Sanitize(record.PricePerShare));
             decimal? sharesPriceLocal = pricePerShareLocal * quantity;
-            decimal? totalAmountLocal = string.IsNullOrWhiteSpace(record.TotalAmount) ? null : decimal.Parse(Sanitize(record.TotalAmount));
+            decimal totalAmountLocal =  decimal.Parse(Sanitize(record.TotalAmount));
 
             // The difference between total amount and shares price is GENERALLY positive for BUY and negative for SELL
-            decimal? feesLocal = totalAmountLocal == null || sharesPriceLocal == null 
-                ? null 
-                : Math.Abs(totalAmountLocal.Value - sharesPriceLocal.Value);
+            decimal? feesLocal = sharesPriceLocal == null ? null : Math.Abs(totalAmountLocal - sharesPriceLocal.Value);
 
             events.Add(new(
                 Date: date,

@@ -2,7 +2,11 @@
 
 public enum EventType
 {
-    Reset,          // Synthetic event added to reset aggregates calculation at the beginning of a year
+    /// <summary>
+    /// Synthetic event added to reset aggregates calculation at the beginning of a year.
+    /// It's not present in the original format.
+    /// </summary>
+    Reset,
     CashTopUp,      // Internal transfer from expenditure account to investing account (which are segregated)
     CashWithdrawal, // Internal transfer from investing account to expenditure account
     CustodyFee,     // Monthly fees for custody of cash and positions
@@ -19,30 +23,56 @@ public enum EventType
 // - Portfolio: all shares of all events, not just this event
 
 record Event(
+    /// <summary>
+    /// The date and time at which the event occurred.
+    /// It's mandatory for all types of events, even synthetic ones like Reset.
+    /// This is because it's necessary to sort events chronologically, in order to process them accordingly.
+    /// </summary>
     DateTime Date,
+
+    /// <summary>
+    /// The type of event.
+    /// It's mandatory for all events.
+    /// Depending on the type, other properties are mandatory or not, and can assume a different semantics.
+    /// For example, for Buy* and Sell* events, the Quantity property is mandatory.
+    /// For Buy* events, the TotalAmountLocal is bigger than Quantity * PricePerShareLocal, as it includes fees.
+    /// For Sell* events, the TotalAmountLocal is instead smaller than Quantity * PricePerShareLocal, as fees are 
+    /// deducted from the proceeds.
+    /// </summary>
     EventType Type,
 
     /// <summary>
     /// Mandatory for Buy*, Sell*, StockSplit and Dividend. Null otherwise.
-    /// All other events type are not ticker-specific (e.g. custody fee or change).
+    /// All other events type are not ticker-specific (e.g. custody fee or change) so this property is null.
     /// </summary>
     string? Ticker,
 
     /// <summary>
     /// Mandatory for Buy*, Sell* and StockSplit. Null otherwise.
-    /// - It doesn't make sense for Dividend, since it's a cash event.
+    /// - It doesn't make sense for Dividend, since it's a cash event (and it's not the number of shares generating the 
+    ///   dividend).
     /// - The same applies for CashTopUp and CashWithdrawal.
     /// - It doesn't make sense for CustodyChange and Reset, as they are not transactions.
     /// When defined, must be strictly positive, even for Sell* events.
     /// </summary>
     decimal? Quantity,
 
+    /// <summary>
+    /// The market price of the share at the time of the event.
+    /// It's mandatory for Buy* and Sell* events, and null otherwise.
+    /// For limit orders, it's the price at which the order was executed, not the limit price nor the market price at
+    /// the time the order was placed.
+    /// </summary>
     decimal? PricePerShareLocal,
 
     /// <summary>
+    /// In the case of Reset, it's non-relevant, as it's a synthetic event not present in the original format.
+    /// In the case of CashTopUp and CashWithdrawal, it's the amount of money added or withdrawn from the investment
+    /// account (that is segregated from the normal cash account used for daily expenses).
     /// In the case of CustodyFee, it's the total amount of the fee.
+    /// In the case of CustodyChange, it's non-relevant, and set to 0.
     /// </summary>
-    decimal? TotalAmountLocal,
+    decimal TotalAmountLocal,
 
     /// <summary>
     /// Mandatory for Buy* and Sell*. Null otherwise.
@@ -83,6 +113,6 @@ record Event(
             ? $"{Quantity.Value.R()} shares at {PricePerShareLocal.Value.R()} {Currency}/share " 
             : string.Empty) +
         (TotalAmountLocal != null 
-            ? $"=> {TotalAmountLocal.Value.R()} {Currency} (FXRate = {FXRate})"
+            ? $"=> {TotalAmountLocal.R()} {Currency} (FXRate = {FXRate})"
             : string.Empty);
 }

@@ -109,7 +109,7 @@ public class TickerProcessingTest
     [TestMethod]
     public void ProcessReset_KeepsTickerAndIsin()
     {
-        var tickerEvent = new Event(T0, Reset, Ticker, null, null, null, null, EUR, 1, -1);
+        var tickerEvent = new Event(T0, Reset, Ticker, null, null, 0m, null, EUR, 1, -1);
         var tickerState = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
         var tickerStateAfterReset = ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null);
         Assert.AreEqual(Ticker, tickerStateAfterReset.Ticker);
@@ -128,20 +128,20 @@ public class TickerProcessingTest
     public void ProcessReset_WhenPassingTransactionRelatedInfo_RaisesException()
     {
         var tickerState = new TickerState(Ticker, Isin);
-        var tickerEvent = new Event(T0, Reset, Ticker, Quantity: 4, null, null, null, EUR, 1, -1);
+        var tickerEvent = new Event(T0, Reset, Ticker, Quantity: 4, null, 0m, null, EUR, 1, -1);
         ThrowsAny<Exception>(() => ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null));
-        tickerEvent = new Event(T0, Reset, Ticker, null, PricePerShareLocal: 100, null, null, EUR, 1, -1);
+        tickerEvent = new Event(T0, Reset, Ticker, null, PricePerShareLocal: 100, 0m, null, EUR, 1, -1);
         ThrowsAny<Exception>(() => ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null));
         tickerEvent = new Event(T0, Reset, Ticker, null, null, TotalAmountLocal: 303, null, EUR, 1, -1);
         ThrowsAny<Exception>(() => ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null));
-        tickerEvent = new Event(T0, Reset, Ticker, null, null, null, FeesLocal: 3, EUR, 1, -1);
+        tickerEvent = new Event(T0, Reset, Ticker, null, null, 0m, FeesLocal: 3, EUR, 1, -1);
         ThrowsAny<Exception>(() => ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null));
     }
 
     [TestMethod]
     public void ProcessReset_PreservesTotalQuantityAndAmountBase()
     {
-        var tickerEvent = new Event(T0, Reset, Ticker, null, null, null, null, EUR, 1, -1);
+        var tickerEvent = new Event(T0, Reset, Ticker, null, null, 0m, null, EUR, 1, -1);
         var tickerState = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
         var tickerStateAfterReset = ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null);
         Assert.AreEqual(3, tickerStateAfterReset.TotalQuantity);
@@ -151,7 +151,7 @@ public class TickerProcessingTest
     [TestMethod]
     public void ProcessReset_PreservesPepsIndexes()
     {
-        var tickerEvent = new Event(T0, Reset, Ticker, null, null, null, null, EUR, 1, -1);
+        var tickerEvent = new Event(T0, Reset, Ticker, null, null, 0m, null, EUR, 1, -1);
         var tickerState = new TickerState(Ticker, Isin, PepsCurrentIndex: 3, PepsCurrentIndexBoughtQuantity: 5.5m);
         var tickerStateAfterReset = ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null);
         Assert.AreEqual(3, tickerStateAfterReset.PepsCurrentIndex);
@@ -161,7 +161,7 @@ public class TickerProcessingTest
     [TestMethod]
     public void ProcessReset_PreservesPortfolioAcquisitionValueBaseAndCryptoFractionOfInitialCapital()
     {
-        var tickerEvent = new Event(T0, Reset, Ticker, null, null, null, null, EUR, 1, -1);
+        var tickerEvent = new Event(T0, Reset, Ticker, null, null, 0m, null, EUR, 1, -1);
         var tickerState = new TickerState(Ticker, Isin, 
             PortfolioAcquisitionValueBase: 5.5m, CryptoFractionOfInitialCapital: 0.75m);
         var tickerStateAfterReset = ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null);
@@ -172,7 +172,7 @@ public class TickerProcessingTest
     [TestMethod]
     public void ProcessReset_ResetsPlusValues()
     {
-        var tickerEvent = new Event(T0, Reset, Ticker, null, null, null, null, EUR, 1, -1);
+        var tickerEvent = new Event(T0, Reset, Ticker, null, null, 0m, null, EUR, 1, -1);
         var tickerState = new TickerState(Ticker, Isin, 
             PlusValueCumpBase: 5.5m, PlusValuePepsBase: 5.5m, PlusValueCryptoBase: 5.5m);
         var tickerStateAfterReset = ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null);
@@ -184,7 +184,7 @@ public class TickerProcessingTest
     [TestMethod]
     public void ProcessReset_ResetsMinusValues()
     {
-        var tickerEvent = new Event(T0, Reset, Ticker, null, null, null, null, EUR, 1, -1);
+        var tickerEvent = new Event(T0, Reset, Ticker, null, null, 0m, null, EUR, 1, -1);
         var tickerState = new TickerState(Ticker, Isin, 
                        MinusValueCumpBase: 5.5m, MinusValuePepsBase: 5.5m, MinusValueCryptoBase: 5.5m);
         var tickerStateAfterReset = ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null);
@@ -196,7 +196,7 @@ public class TickerProcessingTest
     [TestMethod]
     public void ProcessReset_ResetsDividends()
     {
-        var tickerEvent = new Event(T0, Reset, Ticker, null, null, null, null, EUR, 1, -1);
+        var tickerEvent = new Event(T0, Reset, Ticker, null, null, 0m, null, EUR, 1, -1);
         var tickerState = new TickerState(Ticker, Isin, 
                        NetDividendsBase: 5.5m, WhtDividendsBase: 5.5m, GrossDividendsBase: 5.5m);
         var tickerStateAfterReset = ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null);
@@ -208,7 +208,7 @@ public class TickerProcessingTest
     [TestMethod]
     public void ProcessNoop_LeavesTickerStateUnchanged()
     {
-        var tickerEvent = new Event(T0, CashTopUp, Ticker, null, null, null, null, EUR, 1, -1);
+        var tickerEvent = new Event(T0, CashTopUp, Ticker, null, null, 0m, null, EUR, 1, -1);
         var tickerState = new TickerState(Ticker, Isin, 
             PlusValueCumpBase: 5.5m, PlusValuePepsBase: 5.6m, PlusValueCryptoBase: 13.22m,
             MinusValueCumpBase: 3.2m, MinusValuePepsBase: 0m, MinusValueCryptoBase: 3.9m,
@@ -253,10 +253,15 @@ public class TickerProcessingTest
     }
 
     [TestMethod]
-    public void ProcessBuy_WhenTotalAmountLocalIsNull_RaisesException()
+    public void ProcessBuy_WhenTotalAmountLocalIsNonPositive_RaisesException()
     {
-        var tickerEvent = new Event(T0, BuyLimit, Ticker, 3, 100, null, 3, EUR, 1, -1);
+        // Buying 3 shares at 100 EUR, with fees of 3 EUR => Total Amount Local of 0 EUR
+        var tickerEvent = new Event(T0, BuyLimit, Ticker, 3, 100, 0m, 3, EUR, 1, -1);
         var tickerState = new TickerState(Ticker, Isin);
+        ThrowsAny<Exception>(() => ProcessBuy(tickerEvent, [], 0, tickerState, TextWriter.Null));
+
+        // Buying 3 shares at 100 EUR, with fees of 3 EUR => Total Amount Local of -1 EUR
+        tickerEvent = new Event(T0, BuyLimit, Ticker, 3, 100, -1m, 3, EUR, 1, -1);
         ThrowsAny<Exception>(() => ProcessBuy(tickerEvent, [], 0, tickerState, TextWriter.Null));
     }
 
@@ -332,12 +337,16 @@ public class TickerProcessingTest
     }
 
     [TestMethod]
-    public void ProcessSell_WhenTotalAmountLocalIsNull_RaisesException()
+    public void ProcessSell_WhenTotalAmountLocalIsNonPositive_RaisesException()
     {
-        // Selling 1 share at 2.0 EUR, with fees of 0.2 EUR => Total Amount Local of NULL EUR
-        var tickerEvent = new Event(T0, SellLimit, Ticker, 1, 2.0m, null, 0.2m, EUR, 1, -1);
+        // Selling 1 share at 2.0 EUR, with fees of 0.2 EUR => Total Amount Local of 0 EUR
+        var tickerEvent = new Event(T0, SellLimit, Ticker, 1, 2.0m, 0m, 0.2m, EUR, 1, -1);
         // While owning 3 shares for a total of 5.5 EUR
         var tickerState = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
+        ThrowsAny<Exception>(() => ProcessSell(tickerEvent, [], 0, tickerState, TextWriter.Null));
+
+        // Selling 1 share at 2.0 EUR, with fees of 0.2 EUR => Total Amount Local of -1 EUR
+        tickerEvent = new Event(T0, SellLimit, Ticker, 1, 2.0m, -1m, 0.2m, EUR, 1, -1);
         ThrowsAny<Exception>(() => ProcessSell(tickerEvent, [], 0, tickerState, TextWriter.Null));
     }
 
