@@ -71,6 +71,11 @@ record Event(
     /// account (that is segregated from the normal cash account used for daily expenses).
     /// In the case of CustodyFee, it's the total amount of the fee.
     /// In the case of CustodyChange, it's non-relevant, and set to 0.
+    /// In the case of Buy* and Sell*, it's the total amount of the transaction, including fees: 
+    /// - for Buy* events, it's bigger than Quantity * PricePerShareLocal, as it includes the fees payed for those shares
+    /// - for Sell* events, it's smaller than Quantity * PricePerShareLocal, as it includes the fees deducted from the proceeds
+    /// In the case of Dividend, it's the amount of the dividend.
+    /// In the case of StockSplit, it's non-relevant, and set to 0 mandatorily.
     /// </summary>
     decimal TotalAmountLocal,
 
@@ -79,7 +84,7 @@ record Event(
     /// - It cannot be calculated for Dividend, as there is not enough information in the input file.
     /// - It doesn't make sense for StockSplit, as it's not a transaction, so fees are not applied.
     /// - It's not defined for CustodyFee: the fee is conventionally defined as a TotalAmountLocal.
-    /// Automatically calculated:
+    /// It's always a positive number, both for Buy* and Sell* events. It's automatically calculated as follows:
     /// - for Buy events as TotalAmountLocal - Quantity * PricePerShareLocal
     /// - for Sell events as Quantity * PricePerShareLocal - TotalAmountLocal
     /// </summary>
