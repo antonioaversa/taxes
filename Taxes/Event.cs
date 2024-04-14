@@ -111,8 +111,6 @@ record Event(
         $"{Date:yyyy-MM-dd HH:mm:ss} {Type} " +
         (PricePerShareLocal != null && Quantity != null 
             ? $"{Quantity.Value.R()} shares at {PricePerShareLocal.Value.R()} {Currency}/share " 
-            : string.Empty) +
-        (TotalAmountLocal != null 
-            ? $"=> {TotalAmountLocal.R()} {Currency} (FXRate = {FXRate})"
-            : string.Empty);
+            : string.Empty) + 
+        $"=> {TotalAmountLocal.R()} {Currency} (FXRate = {FXRate})";
 }
