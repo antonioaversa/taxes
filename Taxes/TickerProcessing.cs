@@ -100,6 +100,9 @@ static class TickerProcessing
         var totalBuyPriceLocal = tickerEvent.TotalAmountLocal;
         outWriter.WriteLine($"\tTotal Buy Price ({tickerCurrency}) = {totalBuyPriceLocal.R()}");
 
+        // Reminder: FXRate is the amount of LocalCurrency per BaseCurrency:
+        // e.g. FXRate = 1.2 means 1.2 USD = 1 EUR, where USD is the LocalCurrency and EUR is the BaseCurrency 
+
         var totalBuyPriceBase = totalBuyPriceLocal / tickerEvent.FXRate;
         outWriter.WriteLine($"\tTotal Buy Price ({BaseCurrency}) = {totalBuyPriceBase.R()}");
 
@@ -212,6 +215,9 @@ static class TickerProcessing
 
         var totalAvgBuyPriceBase = perShareAvgBuyPriceBase * tickerEvent.Quantity.Value;
         outWriter.WriteLine($"\tTotal Average Buy Price ({BaseCurrency}) = {totalAvgBuyPriceBase.R()}");
+
+        // Reminder: FXRate is the amount of LocalCurrency per BaseCurrency:
+        // e.g. FXRate = 1.2 means 1.2 USD = 1 EUR, where USD is the LocalCurrency and EUR is the BaseCurrency
 
         var perShareSellPriceBase = tickerEvent.PricePerShareLocal.Value / tickerEvent.FXRate;
         outWriter.WriteLine($"\tPerShare Sell Price ({BaseCurrency}) = {perShareSellPriceBase.R()}");

@@ -104,6 +104,12 @@ record Event(
     /// So it's not the use to be used for tax purposes, unless no ECB rate is available for the date of the event.
     /// That can happen, for example, for events happening on weekends or holidays, when the ECB doesn't provide rates.
     /// An example of such scenario is for crypto, that are traded 24/7.
+    /// 
+    /// The exchange rate is defined as the amount of local currency needed to buy 1 unit of the base currency.
+    /// For example, if the event is in USD and the base currency is EUR, the event has happened on the 1st of January
+    /// 2023, the FXRate would be 1.06, because on the 1st of January 2023, 1 EUR was worth 1.06 USD.
+    /// 
+    /// Therefore, to convert to the base currency, one needs to divide the local amount by the FXRate.
     /// </summary>
     decimal FXRate,
 
