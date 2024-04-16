@@ -124,7 +124,8 @@ static class TickerProcessing
         var buyFees2Base = tickerEvent.FeesLocal.Value / tickerEvent.FXRate;
         outWriter.WriteLine($"\tBuy Fees 2 ({BaseCurrency}) = {buyFees2Base.R()}");
 
-        // TODO: ensure that buyFees1Base and buyFees2Base are consistent with each other, which is currently not the case
+        if (Math.Abs(buyFees1Base - buyFees2Base) >= Precision)
+            throw new InvalidDataException($"Invalid event - Fees are inconsistent");
 
         return tickerState with
         {
@@ -145,8 +146,6 @@ static class TickerProcessing
             throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.Quantity)} null");
         if (tickerEvent.PricePerShareLocal != null)
             throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.PricePerShareLocal)} not null");
-        if (tickerEvent.TotalAmountLocal <= 0)
-            throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.TotalAmountLocal)} non-positive");
         if (tickerEvent.TotalAmountLocal != 0m)
             throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.TotalAmountLocal)} not zero");
         if (tickerEvent.Ticker != tickerState.Ticker)

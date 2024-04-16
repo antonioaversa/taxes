@@ -36,7 +36,7 @@ public class TickerProcessingTest
         e.Add(new(T0 + 2 * D, BuyLimit, Ticker, 1, 90, 91, 1, EUR, 1, -1));
         ProcessTicker(Ticker, e).AssertZeroExceptFor(
             totalQuantity: 6, totalAmountBase: 616, portfolioAcquisitionValueBase: 616);
-        e.Add(new(T0 + 2 * D, BuyLimit, Ticker, 1, 90, 92, 1, EUR, 1, -1));
+        e.Add(new(T0 + 2 * D, BuyLimit, Ticker, 1, 90, 92, 2, EUR, 1, -1));
         ProcessTicker(Ticker, e).AssertZeroExceptFor(
             totalQuantity: 7, totalAmountBase: 708, portfolioAcquisitionValueBase: 708);
     }
@@ -50,18 +50,18 @@ public class TickerProcessingTest
     }
 
     [TestMethod]
+    public void ProcessTicker_BuyLimit_NonPositiveQuantity_RaisesException()
+    {
+        ThrowsAny<Exception>(() => ProcessTicker(Ticker, [new(T0, BuyLimit, Ticker, -3, 100, 303, 3, EUR, 1, -1)]));
+        ThrowsAny<Exception>(() => ProcessTicker(Ticker, [new(T0, BuyLimit, Ticker, 0, 100, 303, 3, EUR, 1, -1)]));
+    }
+
+    [TestMethod]
     public void ProcessTicker_BuyMarket_Fees()
     {
         // Assert fees after 2022-12-28T20:12:29.182442Z,AAPL,BUY - MARKET,5,$126.21,$632.62,EUR,1
         List<Event> e = [new(T0, BuyMarket, Ticker, 5, 126.21m, 632.62m, 1.58m, EUR, 1, -1)];
         // TODO: continue
-    }
-
-    [TestMethod]
-    public void ProcessTicker_BuyLimit_NonPositiveQuantity_RaisesException()
-    {
-        ThrowsAny<Exception>(() => ProcessTicker(Ticker, [new(T0, BuyLimit, Ticker, -3, 100, 303, 3, EUR, 1, -1)]));
-        ThrowsAny<Exception>(() => ProcessTicker(Ticker, [new(T0, BuyLimit, Ticker, 0, 100, 303, 3, EUR, 1, -1)]));
     }
 
     [TestMethod]
@@ -299,9 +299,9 @@ public class TickerProcessingTest
     [TestMethod]
     public void ProcessBuy_IncreasesTotalQuantityByTheQuantityInTheEvent()
     {
+        var tickerState = new TickerState(Ticker, Isin);
         // First buy of 3 shares
         var tickerEvent = new Event(T0, BuyLimit, Ticker, 3, 100, 303, 3, EUR, 1, -1);
-        var tickerState = new TickerState(Ticker, Isin);
         var tickerStateAfterBuy = ProcessBuy(tickerEvent, [], 0, tickerState, TextWriter.Null);
         Assert.AreEqual(3, tickerStateAfterBuy.TotalQuantity);
         // Second buy of 2 shares
@@ -309,15 +309,35 @@ public class TickerProcessingTest
         tickerStateAfterBuy = ProcessBuy(tickerEvent, [], 0, tickerStateAfterBuy, TextWriter.Null);
         Assert.AreEqual(5, tickerStateAfterBuy.TotalQuantity);
         // Third buy of 2.5 shares
-        tickerEvent = new Event(T0 + 2 * D, BuyLimit, Ticker, 2.5m, 90, 225, 2.5m, EUR, 1, -1);
+        tickerEvent = new Event(T0 + 2 * D, BuyLimit, Ticker, 2.5m, 90, 227.5m, 2.5m, EUR, 1, -1);
         tickerStateAfterBuy = ProcessBuy(tickerEvent, [], 0, tickerStateAfterBuy, TextWriter.Null);
         Assert.AreEqual(7.5m, tickerStateAfterBuy.TotalQuantity);
     }
 
     [TestMethod]
-    public void ProcessBuy_IncreasesTotalAmountBase()
+    public void ProcessBuy_IncreasesTotalAmountBase_BySharesAmountPlusFees()
     {
+        var tickerState = new TickerState(Ticker, Isin);
+        // First buy of 3 shares at 100 EUR, with fees of 3 EUR => Total Amount Local of 303 EUR
+        var tickerEvent = new Event(T0, BuyLimit, Ticker, 3, 100, 303, 3, EUR, 1, -1);
+        var tickerStateAfterBuy = ProcessBuy(tickerEvent, [], 0, tickerState, TextWriter.Null);
+        Assert.AreEqual(303, tickerStateAfterBuy.TotalAmountBase);
+        // Second buy of 2 shares at 110 EUR, with fees of 2 EUR => Total Amount Local of 222 EUR
+        tickerEvent = new Event(T0 + D, BuyLimit, Ticker, 2, 110, 222, 2, EUR, 1, -1);
+        tickerStateAfterBuy = ProcessBuy(tickerEvent, [], 0, tickerStateAfterBuy, TextWriter.Null);
+        Assert.AreEqual(525, tickerStateAfterBuy.TotalAmountBase);
+        // Third buy of 2.5 shares at 90 EUR, with fees of 2.5 EUR => Total Amount Local of 227.5 EUR
+        tickerEvent = new Event(T0 + 2 * D, BuyLimit, Ticker, 2.5m, 90, 227.5m, 2.5m, EUR, 1, -1);
+        tickerStateAfterBuy = ProcessBuy(tickerEvent, [], 0, tickerStateAfterBuy, TextWriter.Null);
+        Assert.AreEqual(752.5m, tickerStateAfterBuy.TotalAmountBase);
+    }
 
+    [TestMethod]
+    public void ProcessBuy_WhenFeesDontMatch_RaisesException()
+    {
+        var tickerState = new TickerState(Ticker, Isin);
+        var tickerEvent = new Event(T0, BuyLimit, Ticker, 3, 100, 303, 2, EUR, 1, -1); // Fees should be 3
+        ThrowsAny<Exception>(() => ProcessBuy(tickerEvent, [], 0, tickerState, TextWriter.Null));
     }
 
     // TODO: continue from here

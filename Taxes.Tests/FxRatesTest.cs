@@ -133,46 +133,46 @@ public class FxRatesTest
     }
 
     [TestMethod]
-    public void ParseAllCurrenciesFromContent_WithInvalidHeaderLines_RaisesException()
+    public void ParseMultiCurrenciesFromContent_WithInvalidHeaderLines_RaisesException()
     {
         // Including only the first header line
         AssertExtensions.ThrowsAny<InvalidDataException>(
-            () => ParseAllCurrenciesFromContent(BuildHeaderLines(CurrencyUSDHeader).Take(1).ToList()));
+            () => ParseMultiCurrenciesFromContent(BuildHeaderLines(CurrencyUSDHeader).Take(1).ToList()));
         // Including only the second header line
         AssertExtensions.ThrowsAny<InvalidDataException>(
-            () => ParseAllCurrenciesFromContent(BuildHeaderLines(CurrencyUSDHeader).Skip(1).Take(1).ToList()));
+            () => ParseMultiCurrenciesFromContent(BuildHeaderLines(CurrencyUSDHeader).Skip(1).Take(1).ToList()));
         // Including only the first three header lines
         AssertExtensions.ThrowsAny<InvalidDataException>(
-            () => ParseAllCurrenciesFromContent(BuildHeaderLines(CurrencyUSDHeader).Take(3).ToList()));
+            () => ParseMultiCurrenciesFromContent(BuildHeaderLines(CurrencyUSDHeader).Take(3).ToList()));
         // With one of the header lines wrong (different prefix than expected)
         AssertExtensions.ThrowsAny<InvalidDataException>(
-            () => ParseAllCurrenciesFromContent(BuildHeaderLines(CurrencyUSDHeader)
+            () => ParseMultiCurrenciesFromContent(BuildHeaderLines(CurrencyUSDHeader)
                 .Select((s, i) => i != 3 ? s : $"Invalid Prefix{s}").ToList()));
         // With header lines in the wrong order
         AssertExtensions.ThrowsAny<InvalidDataException>(
-            () => ParseAllCurrenciesFromContent(BuildHeaderLines(CurrencyUSDHeader).Reverse().ToList()));
+            () => ParseMultiCurrenciesFromContent(BuildHeaderLines(CurrencyUSDHeader).Reverse().ToList()));
 
         // With currency with invalid format
-        AssertExtensions.ThrowsAny<Exception>(() => ParseAllCurrenciesFromContent(BuildHeaderLines("")));
-        AssertExtensions.ThrowsAny<Exception>(() => ParseAllCurrenciesFromContent(BuildHeaderLines("Dollar")));
-        AssertExtensions.ThrowsAny<Exception>(() => ParseAllCurrenciesFromContent(BuildHeaderLines("Dollar(USD")));
-        AssertExtensions.ThrowsAny<Exception>(() => ParseAllCurrenciesFromContent(BuildHeaderLines("DollarUSD)")));
-        AssertExtensions.ThrowsAny<Exception>(() => ParseAllCurrenciesFromContent(BuildHeaderLines("(USD)")));
+        AssertExtensions.ThrowsAny<Exception>(() => ParseMultiCurrenciesFromContent(BuildHeaderLines("")));
+        AssertExtensions.ThrowsAny<Exception>(() => ParseMultiCurrenciesFromContent(BuildHeaderLines("Dollar")));
+        AssertExtensions.ThrowsAny<Exception>(() => ParseMultiCurrenciesFromContent(BuildHeaderLines("Dollar(USD")));
+        AssertExtensions.ThrowsAny<Exception>(() => ParseMultiCurrenciesFromContent(BuildHeaderLines("DollarUSD)")));
+        AssertExtensions.ThrowsAny<Exception>(() => ParseMultiCurrenciesFromContent(BuildHeaderLines("(USD)")));
     }
 
     [TestMethod]
-    public void ParseAllCurrenciesFromContent_WithSingleCurrencyAndNoData_ReturnsDictionaryOfTheEmptyCurrency()
+    public void ParseMultiCurrenciesFromContent_WithSingleCurrencyAndNoData_ReturnsDictionaryOfTheEmptyCurrency()
     {
-        var fxRates = ParseAllCurrenciesFromContent(BuildHeaderLines(CurrencyUSDHeader));
+        var fxRates = ParseMultiCurrenciesFromContent(BuildHeaderLines(CurrencyUSDHeader));
         Assert.AreEqual(1, fxRates.Rates.Count);
         Assert.IsTrue(fxRates.Rates.ContainsKey(CurrencyUSD));
         Assert.AreEqual(0, fxRates.Rates[CurrencyUSD].Count);
     }
 
     [TestMethod]
-    public void ParseAllCurrenciesFromContent_WithMultipleCurrenciesAndNoData_ReturnsDictionaryOfTheEmptyCurrencies()
+    public void ParseMultiCurrenciesFromContent_WithMultipleCurrenciesAndNoData_ReturnsDictionaryOfTheEmptyCurrencies()
     {
-        var fxRates = ParseAllCurrenciesFromContent(BuildHeaderLines(CurrencyUSDHeader, CurrencyCHFHeader, CurrencyGBPHeader));
+        var fxRates = ParseMultiCurrenciesFromContent(BuildHeaderLines(CurrencyUSDHeader, CurrencyCHFHeader, CurrencyGBPHeader));
         Assert.AreEqual(3, fxRates.Rates.Count);
         Assert.IsTrue(fxRates.Rates.ContainsKey(CurrencyUSD));
         Assert.IsTrue(fxRates.Rates.ContainsKey(CurrencyCHF));
@@ -183,35 +183,47 @@ public class FxRatesTest
     }
 
     [TestMethod]
-    public void ParseAllCurrenciesFromContent_WithDifferentNumberOfDataFieldsThanCurrencies_RaisesException()
+    public void ParseMultiCurrenciesFromContent_WithDifferentNumberOfDataFieldsThanCurrencies_RaisesException()
     {
         // Less data than currencies
-        AssertExtensions.ThrowsAny<InvalidDataException>(() => ParseAllCurrenciesFromContent(
+        AssertExtensions.ThrowsAny<InvalidDataException>(() => ParseMultiCurrenciesFromContent(
             [.. BuildHeaderLines(CurrencyUSDHeader, CurrencyCHFHeader), "01/01/2021;1,23"]));
         // More data than currencies
-        AssertExtensions.ThrowsAny<InvalidDataException>(() => ParseAllCurrenciesFromContent(
+        AssertExtensions.ThrowsAny<InvalidDataException>(() => ParseMultiCurrenciesFromContent(
             [.. BuildHeaderLines(CurrencyUSDHeader, CurrencyCHFHeader), "01/01/2021;1,23;1,24;1,25"]));
     }
 
     [TestMethod]
-    public void ParseAllCurrenciesFromContent_WithInvalidDayFormat_RaisesException()
+    public void ParseMultiCurrenciesFromContent_WithInvalidDayFormat_RaisesException()
     {
-        AssertExtensions.ThrowsAny<FormatException>(() => ParseAllCurrenciesFromContent(
+        AssertExtensions.ThrowsAny<FormatException>(() => ParseMultiCurrenciesFromContent(
             [.. BuildHeaderLines(CurrencyUSDHeader, CurrencyCHFHeader), "1/1/2021;1,23;1,24"]));
-        AssertExtensions.ThrowsAny<FormatException>(() => ParseAllCurrenciesFromContent(
+        AssertExtensions.ThrowsAny<FormatException>(() => ParseMultiCurrenciesFromContent(
             [.. BuildHeaderLines(CurrencyUSDHeader, CurrencyCHFHeader), "01/1/2021;1,23;1,24"]));
-        AssertExtensions.ThrowsAny<FormatException>(() => ParseAllCurrenciesFromContent(
+        AssertExtensions.ThrowsAny<FormatException>(() => ParseMultiCurrenciesFromContent(
             [.. BuildHeaderLines(CurrencyUSDHeader, CurrencyCHFHeader), "01/01/21;1,23;1,24"]));
     }
 
     [TestMethod]
-    public void ParseAllCurrenciesFromContent_WithInvalidNumber_RaisesException()
+    public void ParseMultiCurrenciesFromContent_WithInvalidNumber_RaisesException()
     {
-        AssertExtensions.ThrowsAny<FormatException>(() => ParseAllCurrenciesFromContent(
+        AssertExtensions.ThrowsAny<FormatException>(() => ParseMultiCurrenciesFromContent(
             [.. BuildHeaderLines(CurrencyUSDHeader), "01/01/2021;1.23"]));
-        AssertExtensions.ThrowsAny<FormatException>(() => ParseAllCurrenciesFromContent(
+        AssertExtensions.ThrowsAny<FormatException>(() => ParseMultiCurrenciesFromContent(
             [.. BuildHeaderLines(CurrencyUSDHeader), "01/01/2021;1,24.0"]));
-        AssertExtensions.ThrowsAny<FormatException>(() => ParseAllCurrenciesFromContent(
+        AssertExtensions.ThrowsAny<FormatException>(() => ParseMultiCurrenciesFromContent(
             [.. BuildHeaderLines(CurrencyUSDHeader), "01/01/2021;1,23a"]));
+    }
+
+    [TestMethod]
+    public void ParseMultiCurrenciesWithRoupieIndienneInHeader()
+    {
+        var fxRates = ParseMultiCurrenciesFromContent(
+            [.. BuildHeaderLines("Roupie indienne(100 paise)"), "01/01/2021;11,2", "02/01/2021;11,3" ]);
+        Assert.AreEqual(1, fxRates.Rates.Count);
+        Assert.IsTrue(fxRates.Rates.ContainsKey("100 paise"));
+        Assert.AreEqual(2, fxRates.Rates["100 paise"].Count);
+        Assert.AreEqual(11.2m, fxRates.Rates["100 paise"][new(2021, 01, 01)]);
+        Assert.AreEqual(11.3m, fxRates.Rates["100 paise"][new(2021, 01, 02)]);
     }
 }

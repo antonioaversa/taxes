@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 
 namespace Taxes;
+public enum FXRatesInputType { SingleCurrency, MultiCurrency }
 
 public static partial class Basics
 {
@@ -21,8 +22,8 @@ public static partial class Basics
     public static readonly ReadOnlyCollection<string> CryptoEventsFilePaths;
     public static readonly string CryptoPortfolioValuesCurrency;
     public static readonly string CryptoPortfolioValuesFilePath;
-
-    // Derived
+    public static readonly FXRatesInputType FXRatesInputType;
+    public static readonly string FXRatesSingleCurrency;
     public static readonly string FXRatesFilePath;
 
     static Basics()
@@ -53,6 +54,7 @@ public static partial class Basics
             ?? throw new Exception($"Invalid {nameof(ISINs)} in {BasicsFileName}"));
         StockEventsFilePaths = (basicsFile.StockEventsFilePaths
             ?? throw new Exception($"Invalid {nameof(StockEventsFilePaths)} in {BasicsFileName}")).AsReadOnly();
+        
         CryptoEventsFilePaths = (basicsFile.CryptoEventsFilePaths
             ?? throw new Exception($"Invalid {nameof(CryptoEventsFilePaths)} in {BasicsFileName}")).AsReadOnly();
         CryptoPortfolioValuesCurrency = basicsFile.CryptoPortfolioValuesCurrency
@@ -60,7 +62,13 @@ public static partial class Basics
         CryptoPortfolioValuesFilePath = basicsFile.CryptoPortfolioValuesFilePath
             ?? throw new Exception($"Invalid {nameof(CryptoPortfolioValuesFilePath)} in {BasicsFileName}");
 
-        FXRatesFilePath = $"BCE-FXRate-{BaseCurrency}-USD.txt";
+        FXRatesInputType = Enum.Parse<FXRatesInputType>(basicsFile.FXRatesInputType
+            ?? throw new Exception($"Invalid {nameof(FXRatesInputType)} in {BasicsFileName}"));
+        FXRatesSingleCurrency = FXRatesInputType == FXRatesInputType.MultiCurrency == string.IsNullOrEmpty(basicsFile.FXRatesSingleCurrency)
+            ? basicsFile.FXRatesSingleCurrency!
+            : throw new Exception($"Inconsistent {nameof(FXRatesInputType)} and {nameof(FXRatesSingleCurrency)} in {BasicsFileName}");
+        FXRatesFilePath = basicsFile.FXRatesFilePath
+            ?? throw new Exception($"Invalid {nameof(FXRatesFilePath)} in {BasicsFileName}");
 
         static decimal RoundingWithNumberOfDigits(decimal value, int numberOfDigits) =>
             Math.Round(value, numberOfDigits);
@@ -85,6 +93,7 @@ public static partial class Basics
     [GeneratedRegex(@"^Fixed_(?<numberOfDigits>\d+)_(?<resolutionAroundZero>[\d\.]+)$")]
     private static partial Regex Regex_RoundingWithResolutionAroundZero();
 
+    // This class is used to deserialize the Basics.json file
     private sealed class BasicsFile
     {
         public string? Rounding { get; set; }
@@ -92,8 +101,13 @@ public static partial class Basics
         public string? BaseCurrency { get; set; }
         public Dictionary<string, string>? ISINs { get; set; }
         public List<string>? StockEventsFilePaths { get; set; }
+        
         public List<string>? CryptoEventsFilePaths { get; set; }
         public string? CryptoPortfolioValuesCurrency { get; set; }
         public string? CryptoPortfolioValuesFilePath { get; set; }
+        
+        public string? FXRatesInputType { get; set; }
+        public string? FXRatesSingleCurrency { get; set; }
+        public string? FXRatesFilePath { get; set; }
     }
 }

@@ -1,7 +1,9 @@
 ﻿using Taxes;
 
-// TODO: for the time being only FX rates of BCE for USD are supported
-var fxRates = FxRates.ParseSingleCurrencyFromFile("USD", Basics.FXRatesFilePath);
+var fxRatesFilePath = Path.Combine(Basics.ReportsDirectoryPath, Basics.FXRatesFilePath);
+var fxRates = Basics.FXRatesInputType == FXRatesInputType.SingleCurrency
+    ? FxRates.ParseSingleCurrencyFromFile(Basics.FXRatesSingleCurrency, fxRatesFilePath)
+    : FxRates.ParseMultiCurrenciesFromFile(fxRatesFilePath);
 
 var stockEvents = Basics.StockEventsFilePaths
     .SelectMany(pattern => Directory.GetFiles(Basics.ReportsDirectoryPath, pattern))
