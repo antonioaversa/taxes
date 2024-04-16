@@ -118,8 +118,12 @@ public partial record FxRates(Dictionary<string, Dictionary<DateTime, decimal>> 
                 if (lineFields[fieldIndex] == string.Empty)
                     continue;
 
+                var currency = currencies[fieldIndex - 1];
                 var fxRate = decimal.Parse(lineFields[fieldIndex], CultureInfo.GetCultureInfo("fr-FR"));
-                currencyFxRates[currencies[fieldIndex - 1]][day] = fxRate;
+                if (currencyFxRates[currency].ContainsKey(day))
+                    throw new InvalidDataException($"Multiple FX Rates for currency {currency} and day {day}");
+                
+                currencyFxRates[currency][day] = fxRate;
             }
         }
         return new(currencyFxRates);
