@@ -112,6 +112,11 @@ public partial record FxRates(Dictionary<string, Dictionary<DateTime, decimal>> 
             var day = DateTime.ParseExact(lineFields[0], "dd/MM/yyyy", DefaultCulture);
             for (int fieldIndex = 1; fieldIndex < lineFields.Length; fieldIndex++)
             {
+                // The difference between dash and empty string is that the dash means no data for that day, but 
+                // general availability of data for that currency, while the empty string means no data for the
+                // currency in general. So, when a column has dashes for some days, it also has valid data for other
+                // days, whereas when a column has empty strings, it has it for all days.
+
                 if (lineFields[fieldIndex] == "-")
                     continue;
 
