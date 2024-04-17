@@ -24,44 +24,64 @@ public class FxRatesTest
         ];
 
     [TestMethod]
+    public void ParseSingleCurrencyFromFile_ReadsDataCorrectly()
+    { 
+        var path = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllLines(path, ["1/1/2021\t1.23", "1/2/2021\t1.24"]);
+
+            var fxRates = ParseSingleCurrencyFromFile(CurrencyUSD, path);
+            Assert.AreEqual(2, fxRates[CurrencyUSD].Count);
+            Assert.AreEqual(1.23m, fxRates[CurrencyUSD, new(2021, 01, 01)]);
+            Assert.AreEqual(1.24m, fxRates[CurrencyUSD, new(2021, 01, 02)]);
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [TestMethod]
     public void ParseSingleCurrencyFromContent_WithEmptyContent_ReturnEmptyFxRates()
     {
         var fxRates = ParseSingleCurrencyFromContent(CurrencyUSD, []);
         Assert.AreEqual(1, fxRates.Rates.Count);
         Assert.IsTrue(fxRates.Rates.ContainsKey(CurrencyUSD));
-        Assert.AreEqual(0, fxRates.Rates[CurrencyUSD].Count);
+        Assert.AreEqual(0, fxRates[CurrencyUSD].Count);
     }
 
     [TestMethod]
     public void ParseSingleCurrencyFromContent_WithSingleRate_ReturnThatFxRate()
     {
         var fxRates = ParseSingleCurrencyFromContent(CurrencyUSD, ["1/1/2021\t1.23"]);
-        Assert.AreEqual(1, fxRates.Rates[CurrencyUSD].Count);
-        Assert.AreEqual(1.23m, fxRates.Rates[CurrencyUSD][new(2021, 01, 01)]);
+        Assert.AreEqual(1, fxRates[CurrencyUSD].Count);
+        Assert.AreEqual(1.23m, fxRates[CurrencyUSD, new(2021, 01, 01)]);
     }
 
     [TestMethod]
     public void ParseSingleCurrencyFromContent_WithMultipleRates_ReturnAllFxRates()
     {
         var fxRates = ParseSingleCurrencyFromContent(CurrencyUSD, ["1/1/2021\t1.23", "1/2/2021\t1.24"]);
-        Assert.AreEqual(2, fxRates.Rates[CurrencyUSD].Count);
-        Assert.AreEqual(1.23m, fxRates.Rates[CurrencyUSD][new(2021, 01, 01)]);
-        Assert.AreEqual(1.24m, fxRates.Rates[CurrencyUSD][new(2021, 01, 02)]);
+        Assert.AreEqual(2, fxRates[CurrencyUSD].Count);
+        Assert.AreEqual(1.23m, fxRates[CurrencyUSD, new(2021, 01, 01)]);
+        Assert.AreEqual(1.24m, fxRates[CurrencyUSD, new(2021, 01, 02)]);
     }
 
     [TestMethod]
     public void ParseSingleCurrencyFromContent_IgnoresSingleComment()
     {
         var fxRates = ParseSingleCurrencyFromContent(CurrencyUSD, ["// 1/1/2021\t1.23", "1/2/2021\t1.24"]);
-        Assert.AreEqual(1, fxRates.Rates[CurrencyUSD].Count);
-        Assert.AreEqual(1.24m, fxRates.Rates[CurrencyUSD][new(2021, 01, 02)]);
+        Assert.AreEqual(1, fxRates[CurrencyUSD].Count);
+        Assert.AreEqual(1.24m, fxRates[CurrencyUSD, new(2021, 01, 02)]);
     }
 
     [TestMethod]
     public void ParseSingleCurrencyFromContent_IgnoresMultipleComment()
     {
         var fxRates = ParseSingleCurrencyFromContent(CurrencyUSD, ["// 1/1/2021\t1.23", "// 1/2/2021\t1.24"]);
-        Assert.AreEqual(0, fxRates.Rates[CurrencyUSD].Count);
+        Assert.AreEqual(0, fxRates[CurrencyUSD].Count);
     }
 
     [TestMethod]
@@ -86,8 +106,8 @@ public class FxRatesTest
     public void ParseSingleCurrencyFromContent_WhenFXRateIsDash_SkipsTheLine()
     {
         var fxRates = ParseSingleCurrencyFromContent(CurrencyUSD, ["1/1/2021\t-", "1/2/2021\t1.24"]);
-        Assert.AreEqual(1, fxRates.Rates[CurrencyUSD].Count);
-        Assert.AreEqual(1.24m, fxRates.Rates[CurrencyUSD][new(2021, 01, 02)]);
+        Assert.AreEqual(1, fxRates[CurrencyUSD].Count);
+        Assert.AreEqual(1.24m, fxRates[CurrencyUSD, new(2021, 01, 02)]);
     }
 
     [TestMethod]
@@ -121,9 +141,42 @@ public class FxRatesTest
             File.WriteAllLines(path, ["1/1/2021\t1.23", "1/2/2021\t1.24"]);
 
             var fxRates = ParseSingleCurrencyFromFile(CurrencyUSD, path);
-            Assert.AreEqual(2, fxRates.Rates[CurrencyUSD].Count);
-            Assert.AreEqual(1.23m, fxRates.Rates[CurrencyUSD][new(2021, 01, 01)]);
-            Assert.AreEqual(1.24m, fxRates.Rates[CurrencyUSD][new(2021, 01, 02)]);
+            Assert.AreEqual(2, fxRates[CurrencyUSD].Count);
+            Assert.AreEqual(1.23m, fxRates[CurrencyUSD, new(2021, 01, 01)]);
+            Assert.AreEqual(1.24m, fxRates[CurrencyUSD, new(2021, 01, 02)]);
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [TestMethod]
+    public void ParseMultiCurrenciesFromFile_ReadsDataCorrectly()
+    {
+        var path = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllLines(
+                path, 
+                BuildHeaderLines(CurrencyUSDHeader, CurrencyCHFHeader, CurrencyGBPHeader)
+                    .Concat(["01/01/2021;1,23;1,24;1,25", "02/01/2021;1,26;1,27;1,28"]));
+
+            var fxRates = ParseMultiCurrenciesFromFile(path);
+            Assert.AreEqual(3, fxRates.Rates.Count);
+            Assert.IsTrue(fxRates.Rates.ContainsKey(CurrencyUSD));
+            Assert.IsTrue(fxRates.Rates.ContainsKey(CurrencyCHF));
+            Assert.IsTrue(fxRates.Rates.ContainsKey(CurrencyGBP));
+            Assert.AreEqual(2, fxRates[CurrencyUSD].Count);
+            Assert.AreEqual(2, fxRates[CurrencyCHF].Count);
+            Assert.AreEqual(2, fxRates[CurrencyGBP].Count);
+            Assert.AreEqual(1.23m, fxRates[CurrencyUSD, new(2021, 01, 01)]);
+            Assert.AreEqual(1.26m, fxRates[CurrencyUSD, new(2021, 01, 02)]);
+            Assert.AreEqual(1.24m, fxRates[CurrencyCHF, new(2021, 01, 01)]);
+            Assert.AreEqual(1.27m, fxRates[CurrencyCHF, new(2021, 01, 02)]);
+            Assert.AreEqual(1.25m, fxRates[CurrencyGBP, new(2021, 01, 01)]);
+            Assert.AreEqual(1.28m, fxRates[CurrencyGBP, new(2021, 01, 02)]);
         }
         finally
         {
@@ -166,7 +219,7 @@ public class FxRatesTest
         var fxRates = ParseMultiCurrenciesFromContent(BuildHeaderLines(CurrencyUSDHeader));
         Assert.AreEqual(1, fxRates.Rates.Count);
         Assert.IsTrue(fxRates.Rates.ContainsKey(CurrencyUSD));
-        Assert.AreEqual(0, fxRates.Rates[CurrencyUSD].Count);
+        Assert.AreEqual(0, fxRates[CurrencyUSD].Count);
     }
 
     [TestMethod]
@@ -177,9 +230,9 @@ public class FxRatesTest
         Assert.IsTrue(fxRates.Rates.ContainsKey(CurrencyUSD));
         Assert.IsTrue(fxRates.Rates.ContainsKey(CurrencyCHF));
         Assert.IsTrue(fxRates.Rates.ContainsKey(CurrencyGBP));
-        Assert.AreEqual(0, fxRates.Rates[CurrencyUSD].Count);
-        Assert.AreEqual(0, fxRates.Rates[CurrencyCHF].Count);
-        Assert.AreEqual(0, fxRates.Rates[CurrencyGBP].Count);
+        Assert.AreEqual(0, fxRates[CurrencyUSD].Count);
+        Assert.AreEqual(0, fxRates[CurrencyCHF].Count);
+        Assert.AreEqual(0, fxRates[CurrencyGBP].Count);
     }
 
     [TestMethod]
@@ -188,9 +241,15 @@ public class FxRatesTest
         // Less data than currencies
         AssertExtensions.ThrowsAny<InvalidDataException>(() => ParseMultiCurrenciesFromContent(
             [.. BuildHeaderLines(CurrencyUSDHeader, CurrencyCHFHeader), "01/01/2021;1,23"]));
+        // Two rows, one with the correct number of data fields, the other with less
+        AssertExtensions.ThrowsAny<InvalidDataException>(() => ParseMultiCurrenciesFromContent(
+            [.. BuildHeaderLines(CurrencyUSDHeader, CurrencyCHFHeader), "01/01/2021;1,23;1,24", "01/02/2021;1,25"]));
         // More data than currencies
         AssertExtensions.ThrowsAny<InvalidDataException>(() => ParseMultiCurrenciesFromContent(
             [.. BuildHeaderLines(CurrencyUSDHeader, CurrencyCHFHeader), "01/01/2021;1,23;1,24;1,25"]));
+        // Two rows, one with the correct number of data fields, the other with more
+        AssertExtensions.ThrowsAny<InvalidDataException>(() => ParseMultiCurrenciesFromContent(
+            [.. BuildHeaderLines(CurrencyUSDHeader, CurrencyCHFHeader), "01/01/2021;1,23;1,24", "01/02/2021;1,25;1,26;1,27"]));
     }
 
     [TestMethod]
@@ -216,59 +275,60 @@ public class FxRatesTest
     }
 
     [TestMethod]
-    public void ParseMultiCurrencies_WithRoupieIndienneInHeader()
+    public void ParseMultiCurrenciesFromContent_WithRoupieIndienneInHeader()
     {
+        // "Roupie indienne" is the only currency with digits, small letters and a space in the name
         var fxRates = ParseMultiCurrenciesFromContent(
             [.. BuildHeaderLines("Roupie indienne(100 paise)"), "01/01/2021;11,2", "02/01/2021;11,3" ]);
         Assert.AreEqual(1, fxRates.Rates.Count);
         Assert.IsTrue(fxRates.Rates.ContainsKey("100 paise"));
-        Assert.AreEqual(2, fxRates.Rates["100 paise"].Count);
-        Assert.AreEqual(11.2m, fxRates.Rates["100 paise"][new(2021, 01, 01)]);
-        Assert.AreEqual(11.3m, fxRates.Rates["100 paise"][new(2021, 01, 02)]);
+        Assert.AreEqual(2, fxRates["100 paise"].Count);
+        Assert.AreEqual(11.2m, fxRates["100 paise", new(2021, 01, 01)]);
+        Assert.AreEqual(11.3m, fxRates["100 paise", new(2021, 01, 02)]);
     }
 
     [TestMethod]
-    public void ParseMultiCurrencies_WithMultipleRowsForTheSameDay_RaisesException()
+    public void ParseMultiCurrenciesFromContent_WithMultipleRowsForTheSameDay_RaisesException()
     {
         AssertExtensions.ThrowsAny<InvalidDataException>(() => ParseMultiCurrenciesFromContent(
             [.. BuildHeaderLines(CurrencyUSDHeader, CurrencyCHFHeader), "01/01/2021;1,23;1,24", "01/01/2021;1,25;1,26"]));
     }
 
     [TestMethod]
-    public void ParseMultiCurrencies_WithRowsHavingDashForAGivenCurrencyAndDay_IgnoresThat()
+    public void ParseMultiCurrenciesFromContent_WithRowsHavingDashForAGivenCurrencyAndDay_IgnoresThat()
     {
         var fxRates = ParseMultiCurrenciesFromContent(
             [.. BuildHeaderLines(CurrencyUSDHeader, CurrencyCHFHeader), "01/01/2021;1,23;1,24", "02/01/2021;-;1,26"]);
-        Assert.AreEqual(1, fxRates.Rates[CurrencyUSD].Count);
-        Assert.AreEqual(2, fxRates.Rates[CurrencyCHF].Count);
-        Assert.AreEqual(1.23m, fxRates.Rates[CurrencyUSD][new(2021, 01, 01)]);
-        Assert.AreEqual(1.24m, fxRates.Rates[CurrencyCHF][new(2021, 01, 01)]);
-        Assert.AreEqual(1.26m, fxRates.Rates[CurrencyCHF][new(2021, 01, 02)]);
+        Assert.AreEqual(1, fxRates[CurrencyUSD].Count);
+        Assert.AreEqual(2, fxRates[CurrencyCHF].Count);
+        Assert.AreEqual(1.23m, fxRates[CurrencyUSD, new(2021, 01, 01)]);
+        Assert.AreEqual(1.24m, fxRates[CurrencyCHF, new(2021, 01, 01)]);
+        Assert.AreEqual(1.26m, fxRates[CurrencyCHF, new(2021, 01, 02)]);
     }
 
     [TestMethod]
-    public void ParseMultiCurrencies_WithRowsHavingEmptyStringForAGivenCurrencyAndDay_IgnoresThat()
+    public void ParseMultiCurrenciesFromContent_WithRowsHavingEmptyStringForAGivenCurrencyAndDay_IgnoresThat()
     {
         var fxRates = ParseMultiCurrenciesFromContent(
         [.. BuildHeaderLines(CurrencyUSDHeader, CurrencyCHFHeader), "01/01/2021;1,23;1,24", "02/01/2021;;1,26"]);
-        Assert.AreEqual(1, fxRates.Rates[CurrencyUSD].Count);
-        Assert.AreEqual(2, fxRates.Rates[CurrencyCHF].Count);
-        Assert.AreEqual(1.23m, fxRates.Rates[CurrencyUSD][new(2021, 01, 01)]);
-        Assert.AreEqual(1.24m, fxRates.Rates[CurrencyCHF][new(2021, 01, 01)]);
-        Assert.AreEqual(1.26m, fxRates.Rates[CurrencyCHF][new(2021, 01, 02)]);
+        Assert.AreEqual(1, fxRates[CurrencyUSD].Count);
+        Assert.AreEqual(2, fxRates[CurrencyCHF].Count);
+        Assert.AreEqual(1.23m, fxRates[CurrencyUSD, new(2021, 01, 01)]);
+        Assert.AreEqual(1.24m, fxRates[CurrencyCHF, new(2021, 01, 01)]);
+        Assert.AreEqual(1.26m, fxRates[CurrencyCHF, new(2021, 01, 02)]);
     }
 
     [TestMethod]
-    public void ParseMultiCurrencies_WithMixOfDashesAndEmptyStrings_IgnoresEachOfThoseIndependently()
+    public void ParseMultiCurrenciesFromContent_WithMixOfDashesAndEmptyStrings_IgnoresEachOfThoseIndependently()
     {
         var fxRates = ParseMultiCurrenciesFromContent(
             [.. BuildHeaderLines(CurrencyUSDHeader, CurrencyCHFHeader, CurrencyGBPHeader), 
             "01/01/2021;1,23;1,24;", "02/01/2021;-;;1,25"]);
-        Assert.AreEqual(1, fxRates.Rates[CurrencyUSD].Count);
-        Assert.AreEqual(1, fxRates.Rates[CurrencyCHF].Count);
-        Assert.AreEqual(1, fxRates.Rates[CurrencyGBP].Count);
-        Assert.AreEqual(1.23m, fxRates.Rates[CurrencyUSD][new(2021, 01, 01)]);
-        Assert.AreEqual(1.24m, fxRates.Rates[CurrencyCHF][new(2021, 01, 01)]);
-        Assert.AreEqual(1.25m, fxRates.Rates[CurrencyGBP][new(2021, 01, 02)]);
+        Assert.AreEqual(1, fxRates[CurrencyUSD].Count);
+        Assert.AreEqual(1, fxRates[CurrencyCHF].Count);
+        Assert.AreEqual(1, fxRates[CurrencyGBP].Count);
+        Assert.AreEqual(1.23m, fxRates[CurrencyUSD, new(2021, 01, 01)]);
+        Assert.AreEqual(1.24m, fxRates[CurrencyCHF, new(2021, 01, 01)]);
+        Assert.AreEqual(1.25m, fxRates[CurrencyGBP, new(2021, 01, 02)]);
     }
 }
