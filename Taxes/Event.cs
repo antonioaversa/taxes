@@ -118,7 +118,7 @@ record Event(
     public bool IsBuy => Type is EventType.BuyMarket or EventType.BuyLimit;
     public bool IsSell => Type is EventType.SellMarket or EventType.SellLimit;
 
-    private static readonly Basics basics = new(); // TODO: remove
+    private static readonly Basics basics = new(); // TODO: remove it after checking where ToString is used
 
     public override string ToString() => 
         $"{Date:yyyy-MM-dd HH:mm:ss} {Type} " +

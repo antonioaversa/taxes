@@ -1,7 +1,6 @@
 ﻿namespace Taxes;
 
 using System.Reflection;
-using static Basics;
 
 internal static class TickerStateListExtensions
 {

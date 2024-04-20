@@ -1,6 +1,5 @@
 namespace Taxes.Test;
 
-using static TickerProcessing;
 using static EventType;
 using static AssertExtensions;
 

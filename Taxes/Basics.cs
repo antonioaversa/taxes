@@ -9,11 +9,11 @@ public enum FXRatesInputType { SingleCurrency, MultiCurrency }
 
 public partial class Basics
 {
+    public string ReportsDirectoryPath { get; }
+
+    public string BasicsFileName { get; }
+
     // Hardcoded
-    public string ReportsDirectoryPath { get; } = "Reports";
-
-    public string BasicsFileName { get; } = "Basics.json";
-
     public Dictionary<string, EventType> StringToEventType { get; } = new()
     {
         ["RESET"] = EventType.Reset,
@@ -38,26 +38,35 @@ public partial class Basics
     public CultureInfo FxRatesMultiCurrenciesCulture { get; } = CultureInfo.GetCultureInfo("fr-FR");
 
     // Read from Basics.json
-    public Func<decimal, decimal> Rounding { get; }
-    public decimal Precision { get; }
-    public string BaseCurrency { get; }
-    public ReadOnlyDictionary<string, string> ISINs { get; }
-    public ReadOnlyCollection<string> StockEventsFilePaths { get; }
-    public ReadOnlyCollection<string> CryptoEventsFilePaths { get; }
-    public string CryptoPortfolioValuesCurrency { get; }
-    public string CryptoPortfolioValuesFilePath { get; }
-    public FXRatesInputType FXRatesInputType { get; }
-    public string FXRatesSingleCurrency { get; }
-    public string FXRatesFilePath { get; }
+    public Func<decimal, decimal> Rounding { get; init; }
+    public decimal Precision { get; init; }
+    public string BaseCurrency { get; init; }
+    public ReadOnlyDictionary<string, string> ISINs { get; init; }
+    public ReadOnlyCollection<string> StockEventsFilePaths { get; init; }
+    public ReadOnlyCollection<string> CryptoEventsFilePaths { get; init; }
+    public string CryptoPortfolioValuesCurrency { get; init; }
+    public string CryptoPortfolioValuesFilePath { get; init; }
+    public FXRatesInputType FXRatesInputType { get; init; }
+    public string FXRatesSingleCurrency { get; init; }
+    public string FXRatesFilePath { get; init; }
 
-    public Basics()
+    public Basics(string reportsDirectoryPath = "Reports", string basicsFileName = "Basics.json")
     {
-        var basicsFileContentStr = File.ReadAllText(Path.Combine(ReportsDirectoryPath, BasicsFileName));
+        ReportsDirectoryPath = Directory.Exists(reportsDirectoryPath)
+            ? reportsDirectoryPath
+            : throw new DirectoryNotFoundException(reportsDirectoryPath);
+        BasicsFileName = basicsFileName;
+
+        var basicsFilePath = Path.Combine(reportsDirectoryPath, basicsFileName);
+        if (!File.Exists(basicsFilePath))
+            throw new FileNotFoundException(basicsFilePath);
+
+        var basicsFileContentStr = File.ReadAllText(Path.Combine(reportsDirectoryPath, basicsFileName));
         var basicsFile = JsonConvert.DeserializeObject<BasicsFile>(basicsFileContentStr) 
-            ?? throw new Exception($"Invalid {BasicsFileName}");
+            ?? throw new Exception($"Invalid {basicsFileName}");
 
         Rounding = (basicsFile.Rounding
-            ?? throw new Exception($"Invalid {nameof(Rounding)} in {BasicsFileName}")) switch
+            ?? throw new Exception($"Invalid {nameof(Rounding)} in {basicsFileName}")) switch
             {
                 var r when Regex_RoundingWithNumberOfDigits().Match(r) is { Success: true, Groups: var groups } =>
                     value => RoundingWithNumberOfDigits(
@@ -68,31 +77,31 @@ public partial class Basics
                         value, 
                         int.Parse(groups["numberOfDigits"].Value, DefaultCulture),
                         decimal.Parse(groups["resolutionAroundZero"].Value, DefaultCulture)),
-                var r => throw new Exception($"Invalid {nameof(Rounding)} value in {BasicsFileName}: {r}")
+                var r => throw new Exception($"Invalid {nameof(Rounding)} value in {basicsFileName}: {r}")
             };
         Precision = basicsFile.Precision 
-            ?? throw new Exception($"Invalid {nameof(Precision)} in {BasicsFileName}");
+            ?? throw new Exception($"Invalid {nameof(Precision)} in {basicsFileName}");
         BaseCurrency = basicsFile.BaseCurrency
-            ?? throw new Exception($"Invalid {nameof(BaseCurrency)} in {BasicsFileName}");
+            ?? throw new Exception($"Invalid {nameof(BaseCurrency)} in {basicsFileName}");
         ISINs = new ReadOnlyDictionary<string, string>(basicsFile.ISINs
-            ?? throw new Exception($"Invalid {nameof(ISINs)} in {BasicsFileName}"));
+            ?? throw new Exception($"Invalid {nameof(ISINs)} in {basicsFileName}"));
         StockEventsFilePaths = (basicsFile.StockEventsFilePaths
-            ?? throw new Exception($"Invalid {nameof(StockEventsFilePaths)} in {BasicsFileName}")).AsReadOnly();
+            ?? throw new Exception($"Invalid {nameof(StockEventsFilePaths)} in {basicsFileName}")).AsReadOnly();
         
         CryptoEventsFilePaths = (basicsFile.CryptoEventsFilePaths
-            ?? throw new Exception($"Invalid {nameof(CryptoEventsFilePaths)} in {BasicsFileName}")).AsReadOnly();
+            ?? throw new Exception($"Invalid {nameof(CryptoEventsFilePaths)} in {basicsFileName}")).AsReadOnly();
         CryptoPortfolioValuesCurrency = basicsFile.CryptoPortfolioValuesCurrency
-            ?? throw new Exception($"Invalid {nameof(CryptoPortfolioValuesCurrency)} in {BasicsFileName}");
+            ?? throw new Exception($"Invalid {nameof(CryptoPortfolioValuesCurrency)} in {basicsFileName}");
         CryptoPortfolioValuesFilePath = basicsFile.CryptoPortfolioValuesFilePath
-            ?? throw new Exception($"Invalid {nameof(CryptoPortfolioValuesFilePath)} in {BasicsFileName}");
+            ?? throw new Exception($"Invalid {nameof(CryptoPortfolioValuesFilePath)} in {basicsFileName}");
 
         FXRatesInputType = Enum.Parse<FXRatesInputType>(basicsFile.FXRatesInputType
-            ?? throw new Exception($"Invalid {nameof(FXRatesInputType)} in {BasicsFileName}"));
+            ?? throw new Exception($"Invalid {nameof(FXRatesInputType)} in {basicsFileName}"));
         FXRatesSingleCurrency = FXRatesInputType == FXRatesInputType.MultiCurrency == string.IsNullOrEmpty(basicsFile.FXRatesSingleCurrency)
             ? basicsFile.FXRatesSingleCurrency!
-            : throw new Exception($"Inconsistent {nameof(FXRatesInputType)} and {nameof(FXRatesSingleCurrency)} in {BasicsFileName}");
+            : throw new Exception($"Inconsistent {nameof(FXRatesInputType)} and {nameof(FXRatesSingleCurrency)} in {basicsFileName}");
         FXRatesFilePath = basicsFile.FXRatesFilePath
-            ?? throw new Exception($"Invalid {nameof(FXRatesFilePath)} in {BasicsFileName}");
+            ?? throw new Exception($"Invalid {nameof(FXRatesFilePath)} in {basicsFileName}");
 
         static decimal RoundingWithNumberOfDigits(decimal value, int numberOfDigits) =>
             Math.Round(value, numberOfDigits);
@@ -132,9 +141,4 @@ public partial class Basics
         public string? FXRatesSingleCurrency { get; set; }
         public string? FXRatesFilePath { get; set; }
     }
-}
-
-public static class DecimalExtensions
-{
-    public static decimal R(this decimal value, Basics basics) => basics.Rounding(value);
 }

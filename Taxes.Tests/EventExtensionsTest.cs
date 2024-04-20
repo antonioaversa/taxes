@@ -1,7 +1,7 @@
 ﻿namespace Taxes.Test;
 
 [TestClass]
-public class EventExtensionsTests
+public class EventExtensionsTest
 {
     private const string Ticker = "AAPL";
     private const string Currency = "USD";

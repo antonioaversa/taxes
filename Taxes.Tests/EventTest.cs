@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace Taxes.Tests;
+﻿namespace Taxes.Tests;
 
 [TestClass]
 public class EventTest
