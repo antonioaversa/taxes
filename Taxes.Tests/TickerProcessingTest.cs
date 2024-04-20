@@ -341,33 +341,33 @@ public class TickerProcessingTest
     }
 
     [TestMethod]
-    public void ProcessBuy_PrintsSteps()
+    public void ProcessBuy_CalculatesAndPrintsSteps()
     {
-        var writer = new StringWriter();
-        var tickerState = new TickerState(Ticker, Isin);
-        var localCurrency = USD;
-        // First buy of 3 shares at 100.10002 USD, with fees of 3.20003 USD => Total Amount Local of 303.50009 USD
-        var tickerEvent = new Event(T0, BuyLimit, Ticker, 3, 100.10002m, 303.50009m, 3.20003m, localCurrency, 2m, -1);
         var tickerProcessing = new TickerProcessing(new Basics() { Rounding = x => decimal.Round(x, 2) });
-        tickerProcessing.ProcessBuy(tickerEvent, [], 0, tickerState, writer);
+        var writer = new StringWriter();
+        var localCurrency = USD; // FX Rate is 2 USD for 1 EUR
+        var initialState = new TickerState(Ticker, Isin);
+        // First buy 3 shares at 100.10002 USD, with fees of 3.20003 USD => Total Amount Local of 300.30006 USD + 3.20003 USD = 303.50009 USD
+        var tickerEvent = new Event(T0, BuyLimit, Ticker, 3, 100.10002m, 303.50009m, 3.20003m, localCurrency, 2m, -1);
+        tickerProcessing.ProcessBuy(tickerEvent, [], 0, initialState, writer);
         var output = writer.ToString();
 
         // Prints Total Buy Price in local currency as rounded value
-        Assert.IsTrue(output.Contains($"Total Buy Price ({localCurrency}) = 303.50"));
+        Assert.IsTrue(output.Contains($"Total Buy Price ({localCurrency}) = 303.50")); // Given by the event
         // Prints Total Buy Price in base currency as rounded value
-        Assert.IsTrue(output.Contains($"Total Buy Price ({Instance.Basics.BaseCurrency}) = 151.75"));  
+        Assert.IsTrue(output.Contains($"Total Buy Price ({Instance.Basics.BaseCurrency}) = 151.75")); // ~ (303.50 USD) / (2 USD/EUR)
         // Prints Shares Buy Price in local currency as rounded value
-        Assert.IsTrue(output.Contains($"Shares Buy Price ({localCurrency}) = 300.30"));
+        Assert.IsTrue(output.Contains($"Shares Buy Price ({localCurrency}) = 300.30")); // ~ (3 shares) * (100.10 USD/share)
         // Prints Shares Buy Price in base currency as rounded value
-        Assert.IsTrue(output.Contains($"Shares Buy Price ({Instance.Basics.BaseCurrency}) = 150.15"));
+        Assert.IsTrue(output.Contains($"Shares Buy Price ({Instance.Basics.BaseCurrency}) = 150.15")); // ~ (300.30 USD) / (2 USD/EUR)
         // Prints PerShare Buy Price in local currency as rounded value
-        Assert.IsTrue(output.Contains($"PerShare Buy Price ({localCurrency}) = 100.10"));
+        Assert.IsTrue(output.Contains($"PerShare Buy Price ({localCurrency}) = 100.10")); // Given by the event
         // Prints PerShare Buy Price in base currency as rounded value
-        Assert.IsTrue(output.Contains($"PerShare Buy Price ({Instance.Basics.BaseCurrency}) = 50.05"));
+        Assert.IsTrue(output.Contains($"PerShare Buy Price ({Instance.Basics.BaseCurrency}) = 50.05")); // ~ (100.10 USD/share) / (2 USD/EUR)
         // Prints Buy Fees in local currency as rounded value
-        Assert.IsTrue(output.Contains($"Buy Fees ({localCurrency}) = 3.20"));
+        Assert.IsTrue(output.Contains($"Buy Fees ({localCurrency}) = 3.20")); // Given by the event
         // Prints Buy Fees in base currency as rounded value
-        Assert.IsTrue(output.Contains($"Buy Fees ({Instance.Basics.BaseCurrency}) = 1.60"));
+        Assert.IsTrue(output.Contains($"Buy Fees ({Instance.Basics.BaseCurrency}) = 1.60")); // ~ (3.20 USD) / (2 USD/EUR)
     }
 
     [TestMethod]
@@ -468,17 +468,68 @@ public class TickerProcessingTest
     }
 
     [TestMethod]
-    public void ProcessSell_PassingCustomTextWrites_WritesOnTotalSellPriceOnThatTextWriter()
+    public void ProcessSell_CalculatesAndPrintsSteps()
     {
-        // Selling 3 shares at 2.1 EUR, with fees of 0.3 EUR => Total Amount Local of 6.0 EUR
-        var tickerEvent = new Event(T0, SellLimit, Ticker, 3, 2.1m, 6.0m, 0.3m, EUR, 1, -1);
-        // While owning 3 shares for a total of 5.5 EUR
-        var tickerState = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
-        var tickerEvents = new[] { new Event(T0, BuyLimit, Ticker, 3, 0, 0, 0, EUR, 1, -1) };
-        var outWriter = new StringWriter();
-        Instance.ProcessSell(tickerEvent, tickerEvents, 0, tickerState, outWriter);
-        var output = outWriter.ToString();
-        Assert.IsTrue(output.Contains($"Total Sell Price ({Instance.Basics.BaseCurrency}) = 6.0"));
+        var tickerProcessing = new TickerProcessing(new Basics() { Rounding = x => decimal.Round(x, 2) });
+        var localCurrency = USD; // FX rate between USD and EUR stays stable at 4 USD for 1 EUR across events
+        var initialState = new TickerState(Ticker, Isin);
+        
+        // First buy 3 shares at 100.10002 USD, with fees of 3.20003 USD => Total Amount Local of 303.50009 USD
+        var buyEvent = new Event(T0, BuyLimit, Ticker, 3, 100.10002m, 303.50009m, 3.20003m, localCurrency, 4m, -1);
+        var tickerStateAfterBuy = tickerProcessing.ProcessBuy(buyEvent, [buyEvent], 0, initialState, new StringWriter());
+        // Then sell 2 shares at 150.15003 USD, with fees of 2.50005 USD => Total Amount Local of 300.30006 USD - 2.50005 USD = 297.80001 USD
+        var sellEvent = new Event(T0 + D, SellLimit, Ticker, 2, 150.15003m, 297.80001m, 2.50005m, localCurrency, 4m, -1);
+        var writer = new StringWriter();
+        var tickerStateAfterSell = tickerProcessing.ProcessSell(sellEvent, [buyEvent, sellEvent], 0, tickerStateAfterBuy, writer);
+        var output = writer.ToString();
+
+        // Prints Total Sell Price in local currency as rounded value
+        Assert.IsTrue(output.Contains($"Total Sell Price ({localCurrency}) = 297.80")); // Given by the event
+        // Prints Total Sell Price in base currency as rounded value
+        Assert.IsTrue(output.Contains($"Shares Sell Price ({localCurrency}) = 300.30")); // ~ (2 shares) * (150.15 USD/share)
+        // Prints PerShare Average Buy Price in base currency as rounded value
+        // All shares have been bought at once at ~ 100.10 USD/share with fees of 3.20 USD = ~ (303.50 USD) / (3 shares) / (4 USD/EUR) in base currency
+        Assert.IsTrue(output.Contains($"PerShare Average Buy Price ({Instance.Basics.BaseCurrency}) = 25.29"));
+        // Prints Total Average Buy Price in base currency as rounded value (relevant for CUMP)
+        Assert.IsTrue(output.Contains($"Total Average Buy Price ({Instance.Basics.BaseCurrency}) = 50.58")); // ~ (25.29 USD/share) * (2 shares)
+
+        // Prints PerShare Sell Price in base currency as rounded value
+        Assert.IsTrue(output.Contains($"PerShare Sell Price ({Instance.Basics.BaseCurrency}) = 37.54")); // ~ (150.15 USD/share) / (4 USD/EUR)
+        // Prints Shares Sell Price in local currency as rounded value
+        Assert.IsTrue(output.Contains($"Shares Sell Price ({Instance.Basics.BaseCurrency}) = 75.08")); // ~ (300.30 USD) / (4 USD/EUR)
+        // Prints Shares Sell Price in base currency as rounded value
+        // Lower than Shares Sell Price because of the fees
+        Assert.IsTrue(output.Contains($"Total Sell Price ({Instance.Basics.BaseCurrency}) = 74.45")); // ~ (297.80 USD) / (4 USD/EUR)
+
+        // Prints Sell Fees in local currency as rounded value
+        Assert.IsTrue(output.Contains($"Sell Fees ({Instance.Basics.BaseCurrency}) = 0.63")); // ~ (2.50 USD) / (4 USD/EUR)
+    }
+
+    [TestMethod]
+    public void ProcessSell_UpdatesTickerStateCorrectly()
+    {
+        var tickerProcessing = new TickerProcessing(new Basics() { Rounding = x => decimal.Round(x, 2) });
+        var localCurrency = USD; // FX rate between USD and EUR stays stable at 4 USD for 1 EUR across events
+        var initialState = new TickerState(Ticker, Isin);
+
+        // First buy 3 shares at 100.10002 USD, with fees of 3.20003 USD => Total Amount Local of 303.50009 USD
+        var buyEvent = new Event(T0, BuyLimit, Ticker, 3, 100.10002m, 303.50009m, 3.20003m, localCurrency, 4m, -1);
+        var tickerStateAfterBuy = tickerProcessing.ProcessBuy(buyEvent, [buyEvent], 0, initialState, new StringWriter());
+        
+        // Then sell 2 shares at 150.15003 USD, with fees of 2.50005 USD => Total Amount Local of 300.30006 USD - 2.50005 USD = 297.80001 USD
+        var sellEvent = new Event(T0 + D, SellLimit, Ticker, 2, 150.15003m, 297.80001m, 2.50005m, localCurrency, 4m, -1);
+        var tickerStateAfterSell = tickerProcessing.ProcessSell(sellEvent, [buyEvent, sellEvent], 0, tickerStateAfterBuy, new StringWriter());
+        
+        // Only 1 share left
+        Assert.AreEqual(1, tickerStateAfterSell.TotalQuantity);
+        // The share left has the same average buy price as before
+        var averageBuyPricePerShare = 303.50009m / 3 / 4m;
+        Assert.AreEqual(averageBuyPricePerShare, tickerStateAfterSell.TotalAmountBase, Instance.Basics.Precision);
+        // The plus value CUMP is the difference between the sell price and the average buy price for the two shares sold
+        Assert.AreEqual(297.80001m / 4m - averageBuyPricePerShare * 2, tickerStateAfterSell.PlusValueCumpBase, Instance.Basics.Precision);
+        // The plus value PEPS is the difference between the sell price and the buy price of the first two shares bought
+        var buyPriceFirstTwoShares = (2 * 303.50009m / 3) / 4m;
+        Assert.AreEqual(297.80001m / 4m - buyPriceFirstTwoShares, tickerStateAfterSell.PlusValuePepsBase, Instance.Basics.Precision);
     }
 
 }

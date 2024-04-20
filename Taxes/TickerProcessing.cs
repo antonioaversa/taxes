@@ -243,7 +243,7 @@ class TickerProcessing(Basics basics)
         return tickerState with
         {
             TotalQuantity = tickerState.TotalQuantity - tickerEvent.Quantity.Value,
-            TotalAmountBase = tickerState.TotalAmountBase - totalSellPriceBase,
+            TotalAmountBase = tickerState.TotalAmountBase - totalAvgBuyPriceBase, // And not - totalSellPriceBase
             PlusValueCumpBase = tickerState.PlusValueCumpBase + (plusValueCumpBase >= 0 ? plusValueCumpBase : 0),
             PlusValuePepsBase = tickerState.PlusValuePepsBase + (plusValuePepsBase >= 0 ? plusValuePepsBase : 0),
             PlusValueCryptoBase = tickerState.PlusValueCryptoBase + (plusValueCryptoBase >= 0 ? plusValueCryptoBase : 0),
@@ -305,7 +305,14 @@ class TickerProcessing(Basics basics)
                 pepsCurrentIndexBoughtQuantity += boughtQuantity;
                 remainingQuantity -= boughtQuantity;
 
-                totalPepsBuyPriceBase += boughtQuantity * pepsBuyEvent.PricePerShareLocal.Value / pepsBuyEvent.FXRate;
+                var pepsBuyEventShareOfFeesLocal = (boughtQuantity / pepsBuyEvent.Quantity.Value) * pepsBuyEvent.FeesLocal!.Value;
+                var pepsBuyEventBuyPriceBase1 = 
+                    (boughtQuantity * pepsBuyEvent.PricePerShareLocal.Value + pepsBuyEventShareOfFeesLocal) / pepsBuyEvent.FXRate;
+                var pepsBuyEventBuyPriceBase2 =
+                    (boughtQuantity / pepsBuyEvent.Quantity.Value) * pepsBuyEvent.TotalAmountLocal / pepsBuyEvent.FXRate;
+                if (Math.Abs(pepsBuyEventBuyPriceBase1 - pepsBuyEventBuyPriceBase2) >= basics.Precision)
+                    throw new InvalidDataException($"PEPS Buy Price Base is inconsistent");
+                totalPepsBuyPriceBase += pepsBuyEventBuyPriceBase1;
 
                 if (pepsCurrentIndexBoughtQuantity < pepsBuyEventQuantity)
                 {
