@@ -1,14 +1,14 @@
 ﻿namespace Taxes;
 
-using static Basics;
-
-static class TickerProcessing
+class TickerProcessing(Basics basics)
 {
-    public static TickerState ProcessTicker(string ticker, IList<Event> tickerEvents, TextWriter? outWriter = null)
+    public Basics Basics => basics;
+
+    public TickerState ProcessTicker(string ticker, IList<Event> tickerEvents, TextWriter? outWriter = null)
     {
         outWriter ??= TextWriter.Null;
 
-        var isin = (string.IsNullOrWhiteSpace(ticker) ? "" : ISINs[ticker]);
+        var isin = (string.IsNullOrWhiteSpace(ticker) ? "" : basics.ISINs[ticker]);
         if (string.IsNullOrWhiteSpace(ticker))
             outWriter.WriteLine($"PROCESS NON-TICKER-RELATED EVENTS");
         else 
@@ -44,7 +44,7 @@ static class TickerProcessing
         return tickerState;
     }
 
-    internal /* for testing */ static TickerState ProcessReset(
+    internal /* for testing */ TickerState ProcessReset(
         Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter)
     {
         if (tickerEvent.Type is not EventType.Reset)
@@ -69,13 +69,13 @@ static class TickerProcessing
         };
     }
 
-    internal /* for testing */ static TickerState ProcessNoop(
+    internal /* for testing */ TickerState ProcessNoop(
         Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter)
     {
         return tickerState;
     }
 
-    internal /* for testing */ static TickerState ProcessBuy(
+    internal /* for testing */ TickerState ProcessBuy(
         Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter)
     {
         if (tickerEvent.Type is not (EventType.BuyMarket or EventType.BuyLimit))
@@ -98,33 +98,33 @@ static class TickerProcessing
         var tickerCurrency = tickerEvent.Currency;
 
         var totalBuyPriceLocal = tickerEvent.TotalAmountLocal;
-        outWriter.WriteLine($"\tTotal Buy Price ({tickerCurrency}) = {totalBuyPriceLocal.R()}");
+        outWriter.WriteLine($"\tTotal Buy Price ({tickerCurrency}) = {totalBuyPriceLocal.R(basics)}");
 
         // Reminder: FXRate is the amount of LocalCurrency per BaseCurrency:
         // e.g. FXRate = 1.2 means 1.2 USD = 1 EUR, where USD is the LocalCurrency and EUR is the BaseCurrency 
 
         var totalBuyPriceBase = totalBuyPriceLocal / tickerEvent.FXRate;
-        outWriter.WriteLine($"\tTotal Buy Price ({BaseCurrency}) = {totalBuyPriceBase.R()}");
+        outWriter.WriteLine($"\tTotal Buy Price ({basics.BaseCurrency}) = {totalBuyPriceBase.R(basics)}");
 
         var sharesBuyPriceLocal = tickerEvent.PricePerShareLocal.Value * tickerEvent.Quantity.Value;
-        outWriter.WriteLine($"\tShares Buy Price ({tickerCurrency}) = {sharesBuyPriceLocal.R()}");
+        outWriter.WriteLine($"\tShares Buy Price ({tickerCurrency}) = {sharesBuyPriceLocal.R(basics)}");
 
         var sharesBuyPriceBase = sharesBuyPriceLocal / tickerEvent.FXRate;
-        outWriter.WriteLine($"\tShares Buy Price ({BaseCurrency}) = {sharesBuyPriceBase.R()}");
+        outWriter.WriteLine($"\tShares Buy Price ({basics.BaseCurrency}) = {sharesBuyPriceBase.R(basics)}");
 
         var perShareBuyPriceLocal = tickerEvent.PricePerShareLocal.Value;
-        outWriter.WriteLine($"\tPerShare Buy Price ({tickerCurrency}) = {perShareBuyPriceLocal.R()}");
+        outWriter.WriteLine($"\tPerShare Buy Price ({tickerCurrency}) = {perShareBuyPriceLocal.R(basics)}");
 
         var perShareBuyPriceBase = perShareBuyPriceLocal / tickerEvent.FXRate;
-        outWriter.WriteLine($"\tPerShare Buy Price ({BaseCurrency}) = {perShareBuyPriceBase.R()}");
+        outWriter.WriteLine($"\tPerShare Buy Price ({basics.BaseCurrency}) = {perShareBuyPriceBase.R(basics)}");
 
         var buyFees1Base = Math.Abs(sharesBuyPriceBase - totalBuyPriceBase);
-        outWriter.WriteLine($"\tBuy Fees 1 ({BaseCurrency}) = {buyFees1Base.R()}");
+        outWriter.WriteLine($"\tBuy Fees 1 ({basics.BaseCurrency}) = {buyFees1Base.R(basics)}");
 
         var buyFees2Base = tickerEvent.FeesLocal.Value / tickerEvent.FXRate;
-        outWriter.WriteLine($"\tBuy Fees 2 ({BaseCurrency}) = {buyFees2Base.R()}");
+        outWriter.WriteLine($"\tBuy Fees 2 ({basics.BaseCurrency}) = {buyFees2Base.R(basics)}");
 
-        if (Math.Abs(buyFees1Base - buyFees2Base) >= Precision)
+        if (Math.Abs(buyFees1Base - buyFees2Base) >= basics.Precision)
             throw new InvalidDataException($"Invalid event - Fees are inconsistent");
 
         return tickerState with
@@ -135,7 +135,7 @@ static class TickerProcessing
         };
     }
 
-    internal /* for testing */ static TickerState ProcessStockSplit(
+    internal /* for testing */ TickerState ProcessStockSplit(
         Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter)
     {
         if (tickerEvent.Type is not EventType.StockSplit)
@@ -179,7 +179,7 @@ static class TickerProcessing
         };
     }
 
-    internal /* for testing */ static TickerState ProcessSell(
+    internal /* for testing */ TickerState ProcessSell(
         Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter)
     {
         if (tickerEvent.Type is not (EventType.SellMarket or EventType.SellLimit))
@@ -192,7 +192,7 @@ static class TickerProcessing
             throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.Quantity)} null");
         if (tickerEvents.FirstOrDefault(e => e.Currency != tickerEvent.Currency) is { } previousEvent)
             throw new NotSupportedException($"Etherogenous currencies: {previousEvent} vs {tickerEvent}");
-        if (tickerState.TotalQuantity - tickerEvent.Quantity.Value < -Precision)
+        if (tickerState.TotalQuantity - tickerEvent.Quantity.Value < -basics.Precision)
             throw new InvalidDataException($"Invalid event - Cannot sell more than owned");
         if (tickerEvent.TotalAmountLocal <= 0)
             throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.TotalAmountLocal)} non-positive");
@@ -204,34 +204,34 @@ static class TickerProcessing
         var tickerCurrency = tickerEvent.Currency;
 
         var totalSellPriceLocal = tickerEvent.TotalAmountLocal;
-        outWriter.WriteLine($"\tTotal Sell Price ({tickerCurrency}) = {totalSellPriceLocal.R()}");
+        outWriter.WriteLine($"\tTotal Sell Price ({tickerCurrency}) = {totalSellPriceLocal.R(basics)}");
 
         var sharesSellPriceLocal = tickerEvent.PricePerShareLocal.Value * tickerEvent.Quantity.Value;
-        outWriter.WriteLine($"\tShares Sell Price ({tickerCurrency}) = {sharesSellPriceLocal.R()}");
+        outWriter.WriteLine($"\tShares Sell Price ({tickerCurrency}) = {sharesSellPriceLocal.R(basics)}");
 
         var perShareAvgBuyPriceBase = tickerState.TotalAmountBase / tickerState.TotalQuantity;
-        outWriter.WriteLine($"\tPerShare Average Buy Price ({BaseCurrency}) = {perShareAvgBuyPriceBase.R()}");
+        outWriter.WriteLine($"\tPerShare Average Buy Price ({basics.BaseCurrency}) = {perShareAvgBuyPriceBase.R(basics)}");
 
         var totalAvgBuyPriceBase = perShareAvgBuyPriceBase * tickerEvent.Quantity.Value;
-        outWriter.WriteLine($"\tTotal Average Buy Price ({BaseCurrency}) = {totalAvgBuyPriceBase.R()}");
+        outWriter.WriteLine($"\tTotal Average Buy Price ({basics.BaseCurrency}) = {totalAvgBuyPriceBase.R(basics)}");
 
         // Reminder: FXRate is the amount of LocalCurrency per BaseCurrency:
         // e.g. FXRate = 1.2 means 1.2 USD = 1 EUR, where USD is the LocalCurrency and EUR is the BaseCurrency
 
         var perShareSellPriceBase = tickerEvent.PricePerShareLocal.Value / tickerEvent.FXRate;
-        outWriter.WriteLine($"\tPerShare Sell Price ({BaseCurrency}) = {perShareSellPriceBase.R()}");
+        outWriter.WriteLine($"\tPerShare Sell Price ({basics.BaseCurrency}) = {perShareSellPriceBase.R(basics)}");
 
         var sharesSellPriceBase = perShareSellPriceBase * tickerEvent.Quantity.Value;
-        outWriter.WriteLine($"\tShares Sell Price ({BaseCurrency}) = {sharesSellPriceBase.R()}");
+        outWriter.WriteLine($"\tShares Sell Price ({basics.BaseCurrency}) = {sharesSellPriceBase.R(basics)}");
 
         var totalSellPriceBase = totalSellPriceLocal / tickerEvent.FXRate;
-        outWriter.WriteLine($"\tTotal Sell Price ({BaseCurrency}) = {totalSellPriceBase.R()}");
+        outWriter.WriteLine($"\tTotal Sell Price ({basics.BaseCurrency}) = {totalSellPriceBase.R(basics)}");
 
         var sellFees1Base = Math.Abs(sharesSellPriceBase - totalSellPriceBase);
-        outWriter.WriteLine($"\tSell Fees 1 ({BaseCurrency}) = {sellFees1Base.R()}");
+        outWriter.WriteLine($"\tSell Fees 1 ({basics.BaseCurrency}) = {sellFees1Base.R(basics)}");
 
         var sellFees2Base = tickerEvent.FeesLocal.Value / tickerEvent.FXRate;
-        outWriter.WriteLine($"\tSell Fees 2 ({BaseCurrency}) = {sellFees2Base.R()}");
+        outWriter.WriteLine($"\tSell Fees 2 ({basics.BaseCurrency}) = {sellFees2Base.R(basics)}");
 
         // TODO: ensure that buyFees1Base and buyFees2Base are consistent with each other, which is currently not the case
 
@@ -263,9 +263,9 @@ static class TickerProcessing
             var plusValueCumpBase = totalSellPriceBase - totalAvgBuyPriceBase;
 
             if (plusValueCumpBase >= 0)
-                outWriter.WriteLine($"\tPlus Value CUMP ({BaseCurrency}) = {plusValueCumpBase.R()}");
+                outWriter.WriteLine($"\tPlus Value CUMP ({basics.BaseCurrency}) = {plusValueCumpBase.R(basics)}");
             else
-                outWriter.WriteLine($"\tMinus Value CUMP ({BaseCurrency}) = {-plusValueCumpBase.R()}");
+                outWriter.WriteLine($"\tMinus Value CUMP ({basics.BaseCurrency}) = {-plusValueCumpBase.R(basics)}");
 
             return plusValueCumpBase;
         }
@@ -284,11 +284,11 @@ static class TickerProcessing
             {
                 if (remainingQuantity > 0m)
                 {
-                    outWriter.WriteLine($"\tPEPS Remaining Quantity to match: {remainingQuantity.R()} => FIND Buy Event");
+                    outWriter.WriteLine($"\tPEPS Remaining Quantity to match: {remainingQuantity.R(basics)} => FIND Buy Event");
                 }
                 else
                 {
-                    outWriter.WriteLine($"\tPEPS Remaining Quantity to match: {remainingQuantity.R()} => DONE");
+                    outWriter.WriteLine($"\tPEPS Remaining Quantity to match: {remainingQuantity.R(basics)} => DONE");
                     break;
                 }
 
@@ -329,9 +329,9 @@ static class TickerProcessing
             var plusValuePepsBase = totalSellPriceBase - totalPepsBuyPriceBase;
 
             if (plusValuePepsBase >= 0)
-                outWriter.WriteLine($"\tPlus Value PEPS ({BaseCurrency}) = {plusValuePepsBase.R()}");
+                outWriter.WriteLine($"\tPlus Value PEPS ({basics.BaseCurrency}) = {plusValuePepsBase.R(basics)}");
             else
-                outWriter.WriteLine($"\tMinus Value PEPS ({BaseCurrency}) = {-plusValuePepsBase.R()}");
+                outWriter.WriteLine($"\tMinus Value PEPS ({basics.BaseCurrency}) = {-plusValuePepsBase.R(basics)}");
 
             return (plusValuePepsBase, pepsCurrentIndex, pepsCurrentIndexBoughtQuantity);
         }
@@ -347,37 +347,37 @@ static class TickerProcessing
                 return (0m, 0m);
             }
 
-            outWriter.WriteLine($"\tPortfolio Current Value ({BaseCurrency}) = {portfolioCurrentValueBase.R()}");
+            outWriter.WriteLine($"\tPortfolio Current Value ({basics.BaseCurrency}) = {portfolioCurrentValueBase.R(basics)}");
 
             var portfolioAcquisitionValueBase = tickerState.PortfolioAcquisitionValueBase;
-            outWriter.WriteLine($"\tPortfolio Acquisition Value ({BaseCurrency}) = {portfolioAcquisitionValueBase.R()}");
+            outWriter.WriteLine($"\tPortfolio Acquisition Value ({basics.BaseCurrency}) = {portfolioAcquisitionValueBase.R(basics)}");
 
             var currentCryptoFractionInitialCapital = tickerState.CryptoFractionOfInitialCapital;
-            outWriter.WriteLine($"\tCurrent Fraction of Initial Capital CRYPTO ({BaseCurrency}) = {currentCryptoFractionInitialCapital}");
+            outWriter.WriteLine($"\tCurrent Fraction of Initial Capital CRYPTO ({basics.BaseCurrency}) = {currentCryptoFractionInitialCapital}");
 
             var portfolioNetAcquisitionValueBase = portfolioAcquisitionValueBase - tickerState.CryptoFractionOfInitialCapital;
-            outWriter.WriteLine($"\tPortfolio Net Acquisition Value ({BaseCurrency}) = {portfolioNetAcquisitionValueBase.R()}");
+            outWriter.WriteLine($"\tPortfolio Net Acquisition Value ({basics.BaseCurrency}) = {portfolioNetAcquisitionValueBase.R(basics)}");
 
             var totalNetSellPriceBase = totalSellPriceBase - sellFeesBase; // TODO: Check it should be equal to sharesSellPriceBase
 
             var deltaCryptoFractionInitialCapital = portfolioNetAcquisitionValueBase * totalSellPriceBase / portfolioCurrentValueBase;
-            outWriter.WriteLine($"\tDelta Fraction of Initial Capital CRYPTO ({BaseCurrency}) = {deltaCryptoFractionInitialCapital}");
+            outWriter.WriteLine($"\tDelta Fraction of Initial Capital CRYPTO ({basics.BaseCurrency}) = {deltaCryptoFractionInitialCapital}");
 
             var nextCryptoFractionInitialCapital = currentCryptoFractionInitialCapital + deltaCryptoFractionInitialCapital;
-            outWriter.WriteLine($"\tNext Fraction of Initial Capital CRYPTO ({BaseCurrency}) = {nextCryptoFractionInitialCapital}");
+            outWriter.WriteLine($"\tNext Fraction of Initial Capital CRYPTO ({basics.BaseCurrency}) = {nextCryptoFractionInitialCapital}");
 
             var plusValueCryptoBase = totalNetSellPriceBase - deltaCryptoFractionInitialCapital;
 
             if (plusValueCryptoBase >= 0)
-                outWriter.WriteLine($"\tPlus Value CRYPTO ({BaseCurrency}) = {plusValueCryptoBase.R()}");
+                outWriter.WriteLine($"\tPlus Value CRYPTO ({basics.BaseCurrency}) = {plusValueCryptoBase.R(basics)}");
             else
-                outWriter.WriteLine($"\tMinus Value CRYPTO ({BaseCurrency}) = {-plusValueCryptoBase.R()}");
+                outWriter.WriteLine($"\tMinus Value CRYPTO ({basics.BaseCurrency}) = {-plusValueCryptoBase.R(basics)}");
             
             return (plusValueCryptoBase, nextCryptoFractionInitialCapital);
         }
     }
 
-    internal static /* for testing */ TickerState ProcessDividend(
+    internal /* for testing */ TickerState ProcessDividend(
         Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter)
     {
         if (tickerEvent.Type is not EventType.Dividend)
@@ -390,16 +390,16 @@ static class TickerProcessing
             throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.TotalAmountLocal)} zero");
 
         var netDividendLocal = tickerEvent.TotalAmountLocal;
-        outWriter.WriteLine($"\tNet Dividend ({tickerEvent.Currency}) = {netDividendLocal.R()}");
+        outWriter.WriteLine($"\tNet Dividend ({tickerEvent.Currency}) = {netDividendLocal.R(basics)}");
 
         var netDividendBase = netDividendLocal / tickerEvent.FXRate;
-        outWriter.WriteLine($"\tNet Dividend ({BaseCurrency}) = {netDividendBase.R()}");
+        outWriter.WriteLine($"\tNet Dividend ({basics.BaseCurrency}) = {netDividendBase.R(basics)}");
 
-        var whtDividendBase = netDividendBase * WitholdingTaxFor(tickerState.Isin) / (1m - WitholdingTaxFor(tickerState.Isin));
-        outWriter.WriteLine($"\tWHT Dividend ({BaseCurrency}) = {whtDividendBase.R()}");
+        var whtDividendBase = netDividendBase * basics.WitholdingTaxFor(tickerState.Isin) / (1m - basics.WitholdingTaxFor(tickerState.Isin));
+        outWriter.WriteLine($"\tWHT Dividend ({basics.BaseCurrency}) = {whtDividendBase.R(basics)}");
 
         var grossDividendBase = netDividendBase + whtDividendBase;
-        outWriter.WriteLine($"\tGross Dividend ({BaseCurrency}) = {grossDividendBase.R()}");
+        outWriter.WriteLine($"\tGross Dividend ({basics.BaseCurrency}) = {grossDividendBase.R(basics)}");
 
         return tickerState with
         {

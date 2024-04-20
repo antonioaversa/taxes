@@ -4,36 +4,60 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 
 namespace Taxes;
+
 public enum FXRatesInputType { SingleCurrency, MultiCurrency }
 
-public static partial class Basics
+public partial class Basics
 {
-    public const string ReportsDirectoryPath = "Reports";
-    public const string BasicsFileName = "Basics.json";
+    // Hardcoded
+    public string ReportsDirectoryPath { get; } = "Reports";
 
-    public static CultureInfo DefaultCulture => CultureInfo.InvariantCulture;
+    public string BasicsFileName { get; } = "Basics.json";
+
+    public Dictionary<string, EventType> StringToEventType { get; } = new()
+    {
+        ["RESET"] = EventType.Reset,
+        ["CASH TOP-UP"] = EventType.CashTopUp,
+        ["CASH WITHDRAWAL"] = EventType.CashWithdrawal,
+        ["BUY - MARKET"] = EventType.BuyMarket,
+        ["BUY - LIMIT"] = EventType.BuyLimit,
+        ["SELL - MARKET"] = EventType.SellMarket,
+        ["SELL - LIMIT"] = EventType.SellLimit,
+        ["CUSTODY FEE"] = EventType.CustodyFee,
+        ["TRANSFER FROM REVOLUT BANK UAB TO REVOLUT SECURITIES EUROPE UAB"] = EventType.CustodyChange,
+        ["TRANSFER FROM REVOLUT TRADING LTD TO REVOLUT SECURITIES EUROPE UAB"] = EventType.CustodyChange,
+        ["STOCK SPLIT"] = EventType.StockSplit,
+        ["DIVIDEND"] = EventType.Dividend,
+    };
+
+    public string[] FxRatesHeaderLinesFirstWord { get; } =
+        ["Titre", "Code série", "Unité", "Magnitude", "Méthode", "Source"];
+
+    public CultureInfo DefaultCulture { get; } = CultureInfo.InvariantCulture;
+
+    public CultureInfo FxRatesMultiCurrenciesCulture { get; } = CultureInfo.GetCultureInfo("fr-FR");
 
     // Read from Basics.json
-    public static readonly Func<decimal, decimal> Rounding;
-    public static readonly decimal Precision;
-    public static readonly string BaseCurrency;
-    public static readonly ReadOnlyDictionary<string, string> ISINs;
-    public static readonly ReadOnlyCollection<string> StockEventsFilePaths;
-    public static readonly ReadOnlyCollection<string> CryptoEventsFilePaths;
-    public static readonly string CryptoPortfolioValuesCurrency;
-    public static readonly string CryptoPortfolioValuesFilePath;
-    public static readonly FXRatesInputType FXRatesInputType;
-    public static readonly string FXRatesSingleCurrency;
-    public static readonly string FXRatesFilePath;
+    public Func<decimal, decimal> Rounding { get; }
+    public decimal Precision { get; }
+    public string BaseCurrency { get; }
+    public ReadOnlyDictionary<string, string> ISINs { get; }
+    public ReadOnlyCollection<string> StockEventsFilePaths { get; }
+    public ReadOnlyCollection<string> CryptoEventsFilePaths { get; }
+    public string CryptoPortfolioValuesCurrency { get; }
+    public string CryptoPortfolioValuesFilePath { get; }
+    public FXRatesInputType FXRatesInputType { get; }
+    public string FXRatesSingleCurrency { get; }
+    public string FXRatesFilePath { get; }
 
-    static Basics()
+    public Basics()
     {
         var basicsFileContentStr = File.ReadAllText(Path.Combine(ReportsDirectoryPath, BasicsFileName));
         var basicsFile = JsonConvert.DeserializeObject<BasicsFile>(basicsFileContentStr) 
             ?? throw new Exception($"Invalid {BasicsFileName}");
 
         Rounding = (basicsFile.Rounding
-            ?? throw new Exception($"Invalid {nameof(R)} in {BasicsFileName}")) switch
+            ?? throw new Exception($"Invalid {nameof(Rounding)} in {BasicsFileName}")) switch
             {
                 var r when Regex_RoundingWithNumberOfDigits().Match(r) is { Success: true, Groups: var groups } =>
                     value => RoundingWithNumberOfDigits(
@@ -44,7 +68,7 @@ public static partial class Basics
                         value, 
                         int.Parse(groups["numberOfDigits"].Value, DefaultCulture),
                         decimal.Parse(groups["resolutionAroundZero"].Value, DefaultCulture)),
-                var r => throw new Exception($"Invalid {nameof(R)} value in {BasicsFileName}: {r}")
+                var r => throw new Exception($"Invalid {nameof(Rounding)} value in {BasicsFileName}: {r}")
             };
         Precision = basicsFile.Precision 
             ?? throw new Exception($"Invalid {nameof(Precision)} in {BasicsFileName}");
@@ -77,9 +101,7 @@ public static partial class Basics
             Math.Abs(Math.Round(value, numberOfDigits)) < resolutionAroundZero ? 0m : Math.Round(value, numberOfDigits);
     }
 
-    public static decimal R(this decimal value) => Rounding(value);
-
-    public static decimal WitholdingTaxFor(string isin) => 
+    public decimal WitholdingTaxFor(string isin) => 
         isin switch
         {
             var s when s.StartsWith("US") && s[2] - '0' <= 9 => 0.15m,
@@ -110,4 +132,9 @@ public static partial class Basics
         public string? FXRatesSingleCurrency { get; set; }
         public string? FXRatesFilePath { get; set; }
     }
+}
+
+public static class DecimalExtensions
+{
+    public static decimal R(this decimal value, Basics basics) => basics.Rounding(value);
 }

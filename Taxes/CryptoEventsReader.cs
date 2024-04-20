@@ -3,15 +3,16 @@ using CsvHelper.Configuration.Attributes;
 
 namespace Taxes;
 
-using static Basics;
-static class CryptoEventsReader
+class CryptoEventsReader(Basics basics)
 {
     const string Type_Transfer = "TRANSFER";
     const string Type_Exchange = "EXCHANGE";
     const string Product_Current = "Current";
     const string State_Completed = "COMPLETED";
 
-    public static IList<Event> Parse(string pattern, string portfolioValuesCurrency, string portfolioValuesPath, FxRates fxRates)
+    public Basics Basics => basics;
+
+    public IList<Event> Parse(string pattern, string portfolioValuesCurrency, string portfolioValuesPath, FxRates fxRates)
     {
         var portfolioValuesLocal = ParsePortfolioValues(portfolioValuesPath);
 
@@ -20,7 +21,7 @@ static class CryptoEventsReader
         foreach (var path in Directory.GetFiles(".", pattern))
         {
             using var eventsReader = new StreamReader(path);
-            using var eventsCsv = new CsvReader(eventsReader, DefaultCulture);
+            using var eventsCsv = new CsvReader(eventsReader, basics.DefaultCulture);
 
             foreach (var record in eventsCsv.GetRecords<EventStr>())
             {
@@ -45,7 +46,7 @@ static class CryptoEventsReader
                 if (record.BaseCurrency != Basics.BaseCurrency)
                     throw new NotSupportedException($"Record base currency {record.BaseCurrency}: {record}");
 
-                var date = DateTime.ParseExact(record.StartedDate, "yyyy-MM-dd HH:mm:ss", DefaultCulture);
+                var date = DateTime.ParseExact(record.StartedDate, "yyyy-MM-dd HH:mm:ss", basics.DefaultCulture);
                 var amount = decimal.Parse(record.Amount);
                 var quantity = Math.Abs(amount);
                 var type = amount >= 0 ? EventType.BuyMarket : EventType.SellMarket;
@@ -111,13 +112,13 @@ static class CryptoEventsReader
             currencyFxRates.TryGetValue(date.Date.AddDays(2), out fxRate);
     }
 
-    private static Dictionary<DateTime, decimal> ParsePortfolioValues(string portfolioValuesPath)
+    private Dictionary<DateTime, decimal> ParsePortfolioValues(string portfolioValuesPath)
     {
         using var tpvReader = new StreamReader(portfolioValuesPath);
-        using var tpvCsv = new CsvReader(tpvReader, DefaultCulture);
+        using var tpvCsv = new CsvReader(tpvReader, basics.DefaultCulture);
         return tpvCsv.GetRecords<PortfolioValueStr>().ToDictionary(
-            record => DateTime.ParseExact(record.Date, "yyyy-MM-dd", DefaultCulture),
-            record => decimal.Parse(record.PortfolioValue, DefaultCulture));
+            record => DateTime.ParseExact(record.Date, "yyyy-MM-dd", basics.DefaultCulture),
+            record => decimal.Parse(record.PortfolioValue, basics.DefaultCulture));
     }
 
     [Delimiter(",")]

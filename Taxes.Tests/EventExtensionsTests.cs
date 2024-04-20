@@ -37,4 +37,11 @@ public class EventExtensionsTests
         tickerEvent.AssertEvent(fxRate: 1.2m);
         tickerEvent.AssertEvent(portfolioCurrentValueBase: 1000m);
     }
+
+    [TestMethod]
+    public void AssertEvent_DoesNotThrowWhenNoPropertyIsAsserted()
+    {
+        var tickerEvent = new Event(new DateTime(2022, 01, 01), EventType.BuyMarket, Ticker, 2, 20m, 22m, 2m, Currency, 1.2m, 1000m);
+        tickerEvent.AssertEvent();
+    }
 }

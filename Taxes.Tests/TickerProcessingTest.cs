@@ -3,7 +3,6 @@ namespace Taxes.Test;
 using static TickerProcessing;
 using static EventType;
 using static AssertExtensions;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 [TestClass]
 public class TickerProcessingTest
@@ -17,10 +16,12 @@ public class TickerProcessingTest
     private static readonly DateTime T0 = new(2022, 01, 01, 00, 00, 00);
     private static readonly TimeSpan D = TimeSpan.FromDays(1);
 
+    private readonly TickerProcessing Instance = new(new());
+
     [TestMethod]
     public void ProcessTicker_NoEvents()
     {
-        ProcessTicker(Ticker, []).AssertZeroExceptFor();
+        Instance.ProcessTicker(Ticker, []).AssertZeroExceptFor();
     }
 
     [TestMethod]
@@ -28,16 +29,16 @@ public class TickerProcessingTest
     {
         // Quantity, PricePerShareLocal, TotalAmountLocal, FeesLocal
         List<Event> e = [new(T0, BuyLimit, Ticker, 3, 100, 303, 3, EUR, 1, -1)];
-        ProcessTicker(Ticker, e).AssertZeroExceptFor(
+        Instance.ProcessTicker(Ticker, e).AssertZeroExceptFor(
             totalQuantity: 3, totalAmountBase: 303, portfolioAcquisitionValueBase: 303);
         e.Add(new(T0 + D, BuyLimit, Ticker, 2, 110, 222, 2, EUR, 1, -1));
-        ProcessTicker(Ticker, e).AssertZeroExceptFor(
+        Instance.ProcessTicker(Ticker, e).AssertZeroExceptFor(
             totalQuantity: 5, totalAmountBase: 525, portfolioAcquisitionValueBase: 525);
         e.Add(new(T0 + 2 * D, BuyLimit, Ticker, 1, 90, 91, 1, EUR, 1, -1));
-        ProcessTicker(Ticker, e).AssertZeroExceptFor(
+        Instance.ProcessTicker(Ticker, e).AssertZeroExceptFor(
             totalQuantity: 6, totalAmountBase: 616, portfolioAcquisitionValueBase: 616);
         e.Add(new(T0 + 2 * D, BuyLimit, Ticker, 1, 90, 92, 2, EUR, 1, -1));
-        ProcessTicker(Ticker, e).AssertZeroExceptFor(
+        Instance.ProcessTicker(Ticker, e).AssertZeroExceptFor(
             totalQuantity: 7, totalAmountBase: 708, portfolioAcquisitionValueBase: 708);
     }
 
@@ -45,15 +46,15 @@ public class TickerProcessingTest
     public void ProcessTicker_BuyLimit_DifferentCurrency_ConvertsToBase()
     {
         List<Event> e = [new(T0, BuyLimit, Ticker, 3, 100, 303, 3, USD, 1.2m, -1)];
-        ProcessTicker(Ticker, e).AssertZeroExceptFor(
+        Instance.ProcessTicker(Ticker, e).AssertZeroExceptFor(
             totalQuantity: 3, totalAmountBase: 303 / 1.2m, portfolioAcquisitionValueBase: 303 / 1.2m);
     }
 
     [TestMethod]
     public void ProcessTicker_BuyLimit_NonPositiveQuantity_RaisesException()
     {
-        ThrowsAny<Exception>(() => ProcessTicker(Ticker, [new(T0, BuyLimit, Ticker, -3, 100, 303, 3, EUR, 1, -1)]));
-        ThrowsAny<Exception>(() => ProcessTicker(Ticker, [new(T0, BuyLimit, Ticker, 0, 100, 303, 3, EUR, 1, -1)]));
+        ThrowsAny<Exception>(() => Instance.ProcessTicker(Ticker, [new(T0, BuyLimit, Ticker, -3, 100, 303, 3, EUR, 1, -1)]));
+        ThrowsAny<Exception>(() => Instance.ProcessTicker(Ticker, [new(T0, BuyLimit, Ticker, 0, 100, 303, 3, EUR, 1, -1)]));
     }
 
     [TestMethod]
@@ -67,12 +68,12 @@ public class TickerProcessingTest
     [TestMethod]
     [ExpectedException(typeof(Exception), AllowDerivedTypes = true)]
     public void ProcessTicker_SellWithoutBuying() => 
-        ProcessTicker(Ticker, [new(T0, SellLimit, Ticker, 3, 100, 303, 3, EUR, 1, -1)]);
+        Instance.ProcessTicker(Ticker, [new(T0, SellLimit, Ticker, 3, 100, 303, 3, EUR, 1, -1)]);
 
     [TestMethod]
     [ExpectedException(typeof(Exception), AllowDerivedTypes = true)]
     public void ProcessTicker_SellMoreThanBuying() =>
-         ProcessTicker(Ticker, [
+         Instance.ProcessTicker(Ticker, [
              new(T0, BuyLimit, Ticker, 3, 100, 303, 3, EUR, 1,  -1),
              new(T0, SellLimit, Ticker, 4, 100, 404, 4, EUR, 1, -1)]);
 
@@ -87,7 +88,7 @@ public class TickerProcessingTest
     //         new(T0 + D, SellLimit, Ticker, 
     //             Quantity: 3, PricePerShareLocal: 110, TotalAmountLocal: 330, FeesLocal: 3, 
     //             EUR, 1, -1)];
-    //     ProcessTicker(Ticker, e).AssertZeroExceptFor(
+    //     Instance.ProcessTicker(Ticker, e).AssertZeroExceptFor(
     //         plusValueCumpBase: 27, plusValuePepsBase: 27, plusValueCryptoBase: 0);
     // }
 
@@ -102,7 +103,7 @@ public class TickerProcessingTest
     {
         var tickerState = new TickerState(Ticker, Isin);
         var tickerEvent = new Event(T0, eventType, Ticker, null, null, 100, null, EUR, 1, -1);
-        var tickerStateAfterTopUp = ProcessTicker(Ticker, [tickerEvent], TextWriter.Null);
+        var tickerStateAfterTopUp = Instance.ProcessTicker(Ticker, [tickerEvent], TextWriter.Null);
         Assert.AreEqual(tickerState, tickerStateAfterTopUp);
     }
 
@@ -111,7 +112,7 @@ public class TickerProcessingTest
     {
         var tickerEvent = new Event(T0, Reset, Ticker, null, null, 0m, null, EUR, 1, -1);
         var tickerState = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
-        var tickerStateAfterReset = ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null);
+        var tickerStateAfterReset = Instance.ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null);
         Assert.AreEqual(Ticker, tickerStateAfterReset.Ticker);
         Assert.AreEqual(Isin, tickerStateAfterReset.Isin);
     }
@@ -121,7 +122,7 @@ public class TickerProcessingTest
     {
         var tickerEvent = new Event(T0, CustodyFee, Ticker, 0, 0, 0, 12.0m, EUR, 1, -1);
         var tickerState = new TickerState(Ticker, Isin);
-        ThrowsAny<Exception>(() => ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null));
+        ThrowsAny<Exception>(() => Instance.ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null));
     }
 
     [TestMethod]
@@ -129,7 +130,7 @@ public class TickerProcessingTest
     {
         var tickerState = new TickerState(Ticker, Isin);
         var tickerEvent = new Event(T0, Reset, Ticker, null, null, TotalAmountLocal: 303, null, EUR, 1, -1);
-        ThrowsAny<Exception>(() => ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null));
+        ThrowsAny<Exception>(() => Instance.ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null));
     }
 
     [TestMethod]
@@ -137,11 +138,11 @@ public class TickerProcessingTest
     {
         var tickerState = new TickerState(Ticker, Isin);
         var tickerEvent = new Event(T0, Reset, Ticker, Quantity: 4, null, 0m, null, EUR, 1, -1);
-        ThrowsAny<Exception>(() => ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null));
+        ThrowsAny<Exception>(() => Instance.ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null));
         tickerEvent = new Event(T0, Reset, Ticker, null, PricePerShareLocal: 100, 0m, null, EUR, 1, -1);
-        ThrowsAny<Exception>(() => ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null));
+        ThrowsAny<Exception>(() => Instance.ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null));
         tickerEvent = new Event(T0, Reset, Ticker, null, null, 0m, FeesLocal: 3, EUR, 1, -1);
-        ThrowsAny<Exception>(() => ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null));
+        ThrowsAny<Exception>(() => Instance.ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null));
     }
 
     [TestMethod]
@@ -149,7 +150,7 @@ public class TickerProcessingTest
     {
         var tickerEvent = new Event(T0, Reset, Ticker, null, null, 0m, null, EUR, 1, -1);
         var tickerState = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
-        var tickerStateAfterReset = ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null);
+        var tickerStateAfterReset = Instance.ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null);
         Assert.AreEqual(3, tickerStateAfterReset.TotalQuantity);
         Assert.AreEqual(5.5m, tickerStateAfterReset.TotalAmountBase);
     }
@@ -159,7 +160,7 @@ public class TickerProcessingTest
     {
         var tickerEvent = new Event(T0, Reset, Ticker, null, null, 0m, null, EUR, 1, -1);
         var tickerState = new TickerState(Ticker, Isin, PepsCurrentIndex: 3, PepsCurrentIndexBoughtQuantity: 5.5m);
-        var tickerStateAfterReset = ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null);
+        var tickerStateAfterReset = Instance.ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null);
         Assert.AreEqual(3, tickerStateAfterReset.PepsCurrentIndex);
         Assert.AreEqual(5.5m, tickerStateAfterReset.PepsCurrentIndexBoughtQuantity);
     }
@@ -170,7 +171,7 @@ public class TickerProcessingTest
         var tickerEvent = new Event(T0, Reset, Ticker, null, null, 0m, null, EUR, 1, -1);
         var tickerState = new TickerState(Ticker, Isin, 
             PortfolioAcquisitionValueBase: 5.5m, CryptoFractionOfInitialCapital: 0.75m);
-        var tickerStateAfterReset = ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null);
+        var tickerStateAfterReset = Instance.ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null);
         Assert.AreEqual(5.5m, tickerStateAfterReset.PortfolioAcquisitionValueBase);
         Assert.AreEqual(0.75m, tickerStateAfterReset.CryptoFractionOfInitialCapital);
     }
@@ -181,7 +182,7 @@ public class TickerProcessingTest
         var tickerEvent = new Event(T0, Reset, Ticker, null, null, 0m, null, EUR, 1, -1);
         var tickerState = new TickerState(Ticker, Isin, 
             PlusValueCumpBase: 5.5m, PlusValuePepsBase: 5.5m, PlusValueCryptoBase: 5.5m);
-        var tickerStateAfterReset = ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null);
+        var tickerStateAfterReset = Instance.ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null);
         Assert.AreEqual(0, tickerStateAfterReset.PlusValueCumpBase);
         Assert.AreEqual(0, tickerStateAfterReset.PlusValuePepsBase);
         Assert.AreEqual(0, tickerStateAfterReset.PlusValueCryptoBase);
@@ -193,7 +194,7 @@ public class TickerProcessingTest
         var tickerEvent = new Event(T0, Reset, Ticker, null, null, 0m, null, EUR, 1, -1);
         var tickerState = new TickerState(Ticker, Isin, 
                        MinusValueCumpBase: 5.5m, MinusValuePepsBase: 5.5m, MinusValueCryptoBase: 5.5m);
-        var tickerStateAfterReset = ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null);
+        var tickerStateAfterReset = Instance.ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null);
         Assert.AreEqual(0, tickerStateAfterReset.MinusValueCumpBase);
         Assert.AreEqual(0, tickerStateAfterReset.MinusValuePepsBase);
         Assert.AreEqual(0, tickerStateAfterReset.MinusValueCryptoBase);
@@ -205,7 +206,7 @@ public class TickerProcessingTest
         var tickerEvent = new Event(T0, Reset, Ticker, null, null, 0m, null, EUR, 1, -1);
         var tickerState = new TickerState(Ticker, Isin, 
                        NetDividendsBase: 5.5m, WhtDividendsBase: 5.5m, GrossDividendsBase: 5.5m);
-        var tickerStateAfterReset = ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null);
+        var tickerStateAfterReset = Instance.ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null);
         Assert.AreEqual(0, tickerStateAfterReset.NetDividendsBase);
         Assert.AreEqual(0, tickerStateAfterReset.WhtDividendsBase);
         Assert.AreEqual(0, tickerStateAfterReset.GrossDividendsBase);
@@ -222,7 +223,7 @@ public class TickerProcessingTest
             NetDividendsBase: 4.5m, WhtDividendsBase: 0.2m, GrossDividendsBase: 4.7m,
             PepsCurrentIndex: 3, PepsCurrentIndexBoughtQuantity: 2.1m,
             PortfolioAcquisitionValueBase: 23.3m, CryptoFractionOfInitialCapital: 0.75m);
-        var tickerStateAfterNoop = ProcessNoop(tickerEvent, [], 0, tickerState, TextWriter.Null);
+        var tickerStateAfterNoop = Instance.ProcessNoop(tickerEvent, [], 0, tickerState, TextWriter.Null);
         Assert.AreEqual(tickerState, tickerStateAfterNoop);
     }
 
@@ -231,7 +232,7 @@ public class TickerProcessingTest
     {
         var tickerEvent = new Event(T0, CustodyFee, Ticker, null, null, 12.0m, null, EUR, 1, -1);
         var tickerState = new TickerState(Ticker, Isin);
-        ThrowsAny<Exception>(() => ProcessBuy(tickerEvent, [], 0, tickerState, TextWriter.Null));
+        ThrowsAny<Exception>(() => Instance.ProcessBuy(tickerEvent, [], 0, tickerState, TextWriter.Null));
     }
 
     [TestMethod]
@@ -239,7 +240,7 @@ public class TickerProcessingTest
     {
         var tickerEvent = new Event(T0, BuyLimit, null, 3, 100, 303, 3, EUR, 1, -1);
         var tickerState = new TickerState(Ticker, Isin);
-        ThrowsAny<Exception>(() => ProcessBuy(tickerEvent, [], 0, tickerState, TextWriter.Null));
+        ThrowsAny<Exception>(() => Instance.ProcessBuy(tickerEvent, [], 0, tickerState, TextWriter.Null));
     }
 
     [TestMethod]
@@ -247,7 +248,7 @@ public class TickerProcessingTest
     {
         var tickerEvent = new Event(T0, BuyLimit, Ticker, 3, null, 303, 3, EUR, 1, -1);
         var tickerState = new TickerState(Ticker, Isin);
-        ThrowsAny<Exception>(() => ProcessBuy(tickerEvent, [], 0, tickerState, TextWriter.Null));
+        ThrowsAny<Exception>(() => Instance.ProcessBuy(tickerEvent, [], 0, tickerState, TextWriter.Null));
     }
 
     [TestMethod]
@@ -255,7 +256,7 @@ public class TickerProcessingTest
     {
         var tickerEvent = new Event(T0, BuyLimit, Ticker, null, 100, 303, 3, EUR, 1, -1);
         var tickerState = new TickerState(Ticker, Isin);
-        ThrowsAny<Exception>(() => ProcessBuy(tickerEvent, [], 0, tickerState, TextWriter.Null));
+        ThrowsAny<Exception>(() => Instance.ProcessBuy(tickerEvent, [], 0, tickerState, TextWriter.Null));
     }
 
     [TestMethod]
@@ -264,11 +265,11 @@ public class TickerProcessingTest
         // Buying 3 shares at 100 EUR, with fees of 3 EUR => Total Amount Local of 0 EUR
         var tickerEvent = new Event(T0, BuyLimit, Ticker, 3, 100, 0m, 3, EUR, 1, -1);
         var tickerState = new TickerState(Ticker, Isin);
-        ThrowsAny<Exception>(() => ProcessBuy(tickerEvent, [], 0, tickerState, TextWriter.Null));
+        ThrowsAny<Exception>(() => Instance.ProcessBuy(tickerEvent, [], 0, tickerState, TextWriter.Null));
 
         // Buying 3 shares at 100 EUR, with fees of 3 EUR => Total Amount Local of -1 EUR
         tickerEvent = new Event(T0, BuyLimit, Ticker, 3, 100, -1m, 3, EUR, 1, -1);
-        ThrowsAny<Exception>(() => ProcessBuy(tickerEvent, [], 0, tickerState, TextWriter.Null));
+        ThrowsAny<Exception>(() => Instance.ProcessBuy(tickerEvent, [], 0, tickerState, TextWriter.Null));
     }
 
     [TestMethod]
@@ -276,7 +277,7 @@ public class TickerProcessingTest
     {
         var tickerEvent = new Event(T0, BuyLimit, Ticker, 3, 100, 303, null, EUR, 1, -1);
         var tickerState = new TickerState(Ticker, Isin);
-        ThrowsAny<Exception>(() => ProcessBuy(tickerEvent, [], 0, tickerState, TextWriter.Null));
+        ThrowsAny<Exception>(() => Instance.ProcessBuy(tickerEvent, [], 0, tickerState, TextWriter.Null));
     }
 
     [TestMethod]
@@ -285,7 +286,7 @@ public class TickerProcessingTest
         var tickerEvent = new Event(T0, BuyLimit, Ticker, 3, 100, 303, 3, USD, 1, -1);
         var tickerState = new TickerState(Ticker, Isin);
         var tickerEvents = new[] { new Event(T0, BuyLimit, Ticker, 0, 0, 0, 0, EUR, 1, -1) };
-        ThrowsAny<Exception>(() => ProcessBuy(tickerEvent, tickerEvents, 0, tickerState, TextWriter.Null));
+        ThrowsAny<Exception>(() => Instance.ProcessBuy(tickerEvent, tickerEvents, 0, tickerState, TextWriter.Null));
     }
 
     [TestMethod]
@@ -293,7 +294,15 @@ public class TickerProcessingTest
     {
         var tickerEvent = new Event(T0, BuyLimit, Ticker, 3, 100, 303, 3, EUR, 1, -1);
         var tickerState = new TickerState(AnotherTicker, AnotherIsin);
-        ThrowsAny<Exception>(() => ProcessBuy(tickerEvent, [], 0, tickerState, TextWriter.Null));
+        ThrowsAny<Exception>(() => Instance.ProcessBuy(tickerEvent, [], 0, tickerState, TextWriter.Null));
+    }
+
+    [TestMethod]
+    public void ProcessBuy_WhenFeesDontMatch_RaisesException()
+    {
+        var tickerState = new TickerState(Ticker, Isin);
+        var tickerEvent = new Event(T0, BuyLimit, Ticker, 3, 100, 303, 2, EUR, 1, -1); // Fees should be 3
+        ThrowsAny<Exception>(() => Instance.ProcessBuy(tickerEvent, [], 0, tickerState, TextWriter.Null));
     }
 
     [TestMethod]
@@ -302,15 +311,15 @@ public class TickerProcessingTest
         var tickerState = new TickerState(Ticker, Isin);
         // First buy of 3 shares
         var tickerEvent = new Event(T0, BuyLimit, Ticker, 3, 100, 303, 3, EUR, 1, -1);
-        var tickerStateAfterBuy = ProcessBuy(tickerEvent, [], 0, tickerState, TextWriter.Null);
+        var tickerStateAfterBuy = Instance.ProcessBuy(tickerEvent, [], 0, tickerState, TextWriter.Null);
         Assert.AreEqual(3, tickerStateAfterBuy.TotalQuantity);
         // Second buy of 2 shares
         tickerEvent = new Event(T0 + D, BuyLimit, Ticker, 2, 110, 222, 2, EUR, 1, -1);
-        tickerStateAfterBuy = ProcessBuy(tickerEvent, [], 0, tickerStateAfterBuy, TextWriter.Null);
+        tickerStateAfterBuy = Instance.ProcessBuy(tickerEvent, [], 0, tickerStateAfterBuy, TextWriter.Null);
         Assert.AreEqual(5, tickerStateAfterBuy.TotalQuantity);
         // Third buy of 2.5 shares
         tickerEvent = new Event(T0 + 2 * D, BuyLimit, Ticker, 2.5m, 90, 227.5m, 2.5m, EUR, 1, -1);
-        tickerStateAfterBuy = ProcessBuy(tickerEvent, [], 0, tickerStateAfterBuy, TextWriter.Null);
+        tickerStateAfterBuy = Instance.ProcessBuy(tickerEvent, [], 0, tickerStateAfterBuy, TextWriter.Null);
         Assert.AreEqual(7.5m, tickerStateAfterBuy.TotalQuantity);
     }
 
@@ -320,27 +329,33 @@ public class TickerProcessingTest
         var tickerState = new TickerState(Ticker, Isin);
         // First buy of 3 shares at 100 EUR, with fees of 3 EUR => Total Amount Local of 303 EUR
         var tickerEvent = new Event(T0, BuyLimit, Ticker, 3, 100, 303, 3, EUR, 1, -1);
-        var tickerStateAfterBuy = ProcessBuy(tickerEvent, [], 0, tickerState, TextWriter.Null);
+        var tickerStateAfterBuy = Instance.ProcessBuy(tickerEvent, [], 0, tickerState, TextWriter.Null);
         Assert.AreEqual(303, tickerStateAfterBuy.TotalAmountBase);
         // Second buy of 2 shares at 110 EUR, with fees of 2 EUR => Total Amount Local of 222 EUR
         tickerEvent = new Event(T0 + D, BuyLimit, Ticker, 2, 110, 222, 2, EUR, 1, -1);
-        tickerStateAfterBuy = ProcessBuy(tickerEvent, [], 0, tickerStateAfterBuy, TextWriter.Null);
+        tickerStateAfterBuy = Instance.ProcessBuy(tickerEvent, [], 0, tickerStateAfterBuy, TextWriter.Null);
         Assert.AreEqual(525, tickerStateAfterBuy.TotalAmountBase);
         // Third buy of 2.5 shares at 90 EUR, with fees of 2.5 EUR => Total Amount Local of 227.5 EUR
         tickerEvent = new Event(T0 + 2 * D, BuyLimit, Ticker, 2.5m, 90, 227.5m, 2.5m, EUR, 1, -1);
-        tickerStateAfterBuy = ProcessBuy(tickerEvent, [], 0, tickerStateAfterBuy, TextWriter.Null);
+        tickerStateAfterBuy = Instance.ProcessBuy(tickerEvent, [], 0, tickerStateAfterBuy, TextWriter.Null);
         Assert.AreEqual(752.5m, tickerStateAfterBuy.TotalAmountBase);
     }
 
     [TestMethod]
-    public void ProcessBuy_WhenFeesDontMatch_RaisesException()
+    public void ProcessBuy_PrintsSteps()
     {
+        var writer = new StringWriter();
         var tickerState = new TickerState(Ticker, Isin);
-        var tickerEvent = new Event(T0, BuyLimit, Ticker, 3, 100, 303, 2, EUR, 1, -1); // Fees should be 3
-        ThrowsAny<Exception>(() => ProcessBuy(tickerEvent, [], 0, tickerState, TextWriter.Null));
-    }
+        // First buy of 3 shares at 100.10002 EUR, with fees of 3.20003 EUR => Total Amount Local of 303.50009 EUR
+        var tickerEvent = new Event(T0, BuyLimit, Ticker, 3, 100.10002m, 303.50009m, 3.20003m, EUR, 1m, -1);
+        Instance.ProcessBuy(tickerEvent, [], 0, tickerState, writer);
+        var output = writer.ToString();
 
-    // TODO: continue from here
+        // Prints Total Buy Price in local currency as rounded value
+        Assert.IsTrue(output.Contains($"Total Buy Price ({EUR}) = 303.50"));
+        // Prints Total Buy Price in base currency as rounded value
+        Assert.IsTrue(output.Contains($"Total Buy Price ({Instance.Basics.BaseCurrency}) = 303.50"));
+    }
 
     [TestMethod]
     public void ProcessSell_WhenPassingNotSupportedType_RaisesException()
@@ -349,7 +364,7 @@ public class TickerProcessingTest
         var tickerEvent = new Event(T0, CustodyFee, Ticker, 0, 0, 0, 12.0m, EUR, 1, -1);
         // While owning no shares
         var tickerState = new TickerState(Ticker, Isin);
-        ThrowsAny<Exception>(() => ProcessSell(tickerEvent, [], 0, tickerState, TextWriter.Null));
+        ThrowsAny<Exception>(() => Instance.ProcessSell(tickerEvent, [], 0, tickerState, TextWriter.Null));
     }
 
     [TestMethod]
@@ -359,7 +374,7 @@ public class TickerProcessingTest
         var tickerEvent = new Event(T0, SellLimit, null, 1, 2.0m, 1.8m, 0.2m, EUR, 1, -1);
         // While owning 3 shares for a total of 5.5 EUR
         var tickerState = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
-        ThrowsAny<Exception>(() => ProcessSell(tickerEvent, [], 0, tickerState, TextWriter.Null));
+        ThrowsAny<Exception>(() => Instance.ProcessSell(tickerEvent, [], 0, tickerState, TextWriter.Null));
     }
 
     [TestMethod]
@@ -369,11 +384,11 @@ public class TickerProcessingTest
         var tickerEvent = new Event(T0, SellLimit, Ticker, 1, 2.0m, 0m, 0.2m, EUR, 1, -1);
         // While owning 3 shares for a total of 5.5 EUR
         var tickerState = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
-        ThrowsAny<Exception>(() => ProcessSell(tickerEvent, [], 0, tickerState, TextWriter.Null));
+        ThrowsAny<Exception>(() => Instance.ProcessSell(tickerEvent, [], 0, tickerState, TextWriter.Null));
 
         // Selling 1 share at 2.0 EUR, with fees of 0.2 EUR => Total Amount Local of -1 EUR
         tickerEvent = new Event(T0, SellLimit, Ticker, 1, 2.0m, -1m, 0.2m, EUR, 1, -1);
-        ThrowsAny<Exception>(() => ProcessSell(tickerEvent, [], 0, tickerState, TextWriter.Null));
+        ThrowsAny<Exception>(() => Instance.ProcessSell(tickerEvent, [], 0, tickerState, TextWriter.Null));
     }
 
     [TestMethod]
@@ -383,7 +398,7 @@ public class TickerProcessingTest
         var tickerEvent = new Event(T0, SellLimit, Ticker, 1, 2.0m, 1.8m, null, EUR, 1, -1);
         // While owning 3 shares for a total of 5.5 EUR
         var tickerState = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
-        ThrowsAny<Exception>(() => ProcessSell(tickerEvent, [], 0, tickerState, TextWriter.Null));
+        ThrowsAny<Exception>(() => Instance.ProcessSell(tickerEvent, [], 0, tickerState, TextWriter.Null));
     }
 
     [TestMethod]
@@ -393,7 +408,7 @@ public class TickerProcessingTest
         var tickerEvent = new Event(T0, SellLimit, Ticker, 1, 2.0m, 1.8m, 0.2m, EUR, 1, -1);
         // While owning 3 shares of B for a total of 5.5 EUR
         var tickerState = new TickerState(AnotherTicker, AnotherIsin, TotalQuantity: 3, TotalAmountBase: 5.5m);
-        ThrowsAny<Exception>(() => ProcessSell(tickerEvent, [], 0, tickerState, TextWriter.Null));
+        ThrowsAny<Exception>(() => Instance.ProcessSell(tickerEvent, [], 0, tickerState, TextWriter.Null));
     }
 
     [TestMethod]
@@ -403,7 +418,7 @@ public class TickerProcessingTest
         var tickerEvent = new Event(T0, SellLimit, Ticker, 1, null, 1.8m, 0.2m, EUR, 1, -1);
         // While owning 3 shares for a total of 5.5 EUR
         var tickerState = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
-        ThrowsAny<Exception>(() => ProcessSell(tickerEvent, [], 0, tickerState, TextWriter.Null));
+        ThrowsAny<Exception>(() => Instance.ProcessSell(tickerEvent, [], 0, tickerState, TextWriter.Null));
     }
 
     [TestMethod]
@@ -413,7 +428,7 @@ public class TickerProcessingTest
         var tickerEvent = new Event(T0, SellLimit, Ticker, null, 2.0m, 1.8m, 0.2m, EUR, 1, -1);
         // While owning 3 shares for a total of 5.5 EUR
         var tickerState = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
-        ThrowsAny<Exception>(() => ProcessSell(tickerEvent, [], 0, tickerState, TextWriter.Null));
+        ThrowsAny<Exception>(() => Instance.ProcessSell(tickerEvent, [], 0, tickerState, TextWriter.Null));
 
     }
 
@@ -425,7 +440,7 @@ public class TickerProcessingTest
         // While owning 3 shares for a total of 5.5 EUR
         var tickerState = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
         var tickerEvents = new[] { new Event(T0, BuyLimit, Ticker, 0, 0, 0, 0, EUR, 1, -1) };
-        ThrowsAny<Exception>(() => ProcessSell(tickerEvent, tickerEvents, 0, tickerState, TextWriter.Null));
+        ThrowsAny<Exception>(() => Instance.ProcessSell(tickerEvent, tickerEvents, 0, tickerState, TextWriter.Null));
     }
 
     [TestMethod]
@@ -436,7 +451,7 @@ public class TickerProcessingTest
         // While owning 3 shares for a total of 5.5 EUR
         var tickerState = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
         var tickerEvents = new[] { new Event(T0, BuyLimit, Ticker, 3, 0, 0, 0, EUR, 1, -1) };
-        ThrowsAny<Exception>(() => ProcessSell(tickerEvent, tickerEvents, 0, tickerState, TextWriter.Null));
+        ThrowsAny<Exception>(() => Instance.ProcessSell(tickerEvent, tickerEvents, 0, tickerState, TextWriter.Null));
     }
 
     [TestMethod]
@@ -448,9 +463,9 @@ public class TickerProcessingTest
         var tickerState = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
         var tickerEvents = new[] { new Event(T0, BuyLimit, Ticker, 3, 0, 0, 0, EUR, 1, -1) };
         var outWriter = new StringWriter();
-        ProcessSell(tickerEvent, tickerEvents, 0, tickerState, outWriter);
+        Instance.ProcessSell(tickerEvent, tickerEvents, 0, tickerState, outWriter);
         var output = outWriter.ToString();
-        Assert.IsTrue(output.Contains($"Total Sell Price ({Basics.BaseCurrency}) = 6.0"));
+        Assert.IsTrue(output.Contains($"Total Sell Price ({Instance.Basics.BaseCurrency}) = 6.0"));
     }
 
 }

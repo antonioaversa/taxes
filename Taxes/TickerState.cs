@@ -1,7 +1,5 @@
 ﻿namespace Taxes;
 
-using static Basics;
-
 [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
 class MetricAttribute(string description) : Attribute
 {
@@ -65,11 +63,13 @@ record TickerState(
     decimal PortfolioAcquisitionValueBase = 0m, 
     decimal CryptoFractionOfInitialCapital = 0m)
 {
+    private static readonly Basics basics = new(); // TODO: remove it after checking where ToString is used
+
     public override string ToString() =>
-        $"{TotalQuantity.R()} shares => {TotalAmountBase.R()} {BaseCurrency}, " +
-        $"+V = CUMP {PlusValueCumpBase.R()} {BaseCurrency}, PEPS {PlusValuePepsBase.R()} {BaseCurrency}, CRYP {PlusValueCryptoBase.R()} {BaseCurrency}, " +
-        $"-V = CUMP {MinusValueCumpBase.R()} {BaseCurrency}, PEPS {MinusValuePepsBase.R()} {BaseCurrency}, CRYP {MinusValueCryptoBase.R()} {BaseCurrency}, " +
-        $"Dividends = {NetDividendsBase.R()} {BaseCurrency} + WHT {WhtDividendsBase.R()} {BaseCurrency} = {GrossDividendsBase.R()} {BaseCurrency}";  
+        $"{TotalQuantity.R(basics)} shares => {TotalAmountBase.R(basics)} {basics.BaseCurrency}, " +
+        $"+V = CUMP {PlusValueCumpBase.R(basics)} {basics.BaseCurrency}, PEPS {PlusValuePepsBase.R(basics)} {basics.BaseCurrency}, CRYP {PlusValueCryptoBase.R(basics)} {basics.BaseCurrency}, " +
+        $"-V = CUMP {MinusValueCumpBase.R(basics)} {basics.BaseCurrency}, PEPS {MinusValuePepsBase.R(basics)} {basics.BaseCurrency}, CRYP {MinusValueCryptoBase.R(basics)} {basics.BaseCurrency}, " +
+        $"Dividends = {NetDividendsBase.R(basics)} {basics.BaseCurrency} + WHT {WhtDividendsBase.R(basics)} {basics.BaseCurrency} = {GrossDividendsBase.R(basics)} {basics.BaseCurrency}";  
 }
 
 delegate TickerState TickerAction(

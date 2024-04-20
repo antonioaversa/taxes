@@ -6,35 +6,19 @@ using System.Text.RegularExpressions;
 
 namespace Taxes;
 
-using static Basics;
-
-static partial class StockEventsReader
+partial class StockEventsReader(Basics basics)
 {
-    private readonly static Dictionary<string, EventType> StringToEventType = new()
-    {
-        ["RESET"] = EventType.Reset,
-        ["CASH TOP-UP"] = EventType.CashTopUp,
-        ["CASH WITHDRAWAL"] = EventType.CashWithdrawal,
-        ["BUY - MARKET"] = EventType.BuyMarket,
-        ["BUY - LIMIT"] = EventType.BuyLimit,
-        ["SELL - MARKET"] = EventType.SellMarket,
-        ["SELL - LIMIT"] = EventType.SellLimit,
-        ["CUSTODY FEE"] = EventType.CustodyFee,
-        ["TRANSFER FROM REVOLUT BANK UAB TO REVOLUT SECURITIES EUROPE UAB"] = EventType.CustodyChange,
-        ["TRANSFER FROM REVOLUT TRADING LTD TO REVOLUT SECURITIES EUROPE UAB"] = EventType.CustodyChange,
-        ["STOCK SPLIT"] = EventType.StockSplit,
-        ["DIVIDEND"] = EventType.Dividend,
-    };
+    public Basics Basics => basics;
 
-    public static IList<Event> Parse(string path, FxRates fxRates)
+    public IList<Event> Parse(string path, FxRates fxRates)
     {
         using var reader = new StreamReader(path);
         return Parse(reader, fxRates);
     }
 
-    public static IList<Event> Parse(TextReader textReader, FxRates fxRates)
+    public IList<Event> Parse(TextReader textReader, FxRates fxRates)
     {
-        var csvConfiguration = new CsvConfiguration(DefaultCulture)
+        var csvConfiguration = new CsvConfiguration(basics.DefaultCulture)
         {
             Delimiter = ",",
             DetectColumnCountChanges = true,
@@ -51,8 +35,8 @@ static partial class StockEventsReader
 
             if (string.IsNullOrWhiteSpace(record.TotalAmount))
                 throw new InvalidOperationException("Invalid Total Amount");
-            if (currency == BaseCurrency && recordFxRate != 1.0m)
-                throw new InvalidOperationException($"Invalid FX Rate {record.FXRate} for base currency {BaseCurrency}");
+            if (currency == basics.BaseCurrency && recordFxRate != 1.0m)
+                throw new InvalidOperationException($"Invalid FX Rate {record.FXRate} for base currency {basics.BaseCurrency}");
 
             var date = ReadDateTime(record);
 
@@ -73,7 +57,7 @@ static partial class StockEventsReader
 
             events.Add(new(
                 Date: date,
-                Type: StringToEventType[record.Type],
+                Type: basics.StringToEventType[record.Type],
                 Ticker: string.IsNullOrWhiteSpace(record.Ticker) ? null : record.Ticker,
                 Quantity: quantity,
                 PricePerShareLocal: pricePerShareLocal,
@@ -88,12 +72,12 @@ static partial class StockEventsReader
         return events;
     }
 
-    private static DateTime ReadDateTime(EventStr record)
+    private DateTime ReadDateTime(EventStr record)
     {
-        if (DateTime.TryParseExact(record.Date, "yyyy-MM-ddTHH:mm:ss.ffffffK", DefaultCulture, 
+        if (DateTime.TryParseExact(record.Date, "yyyy-MM-ddTHH:mm:ss.ffffffK", basics.DefaultCulture, 
             DateTimeStyles.RoundtripKind, out var sixDecimalsDate))
             return sixDecimalsDate;
-        if (DateTime.TryParseExact(record.Date, "yyyy-MM-ddTHH:mm:ss.fffK", DefaultCulture,
+        if (DateTime.TryParseExact(record.Date, "yyyy-MM-ddTHH:mm:ss.fffK", basics.DefaultCulture,
             DateTimeStyles.RoundtripKind, out var threeDecimalsDate))
             return threeDecimalsDate;
         throw new FormatException($"Unable to parse date: '{record.Date}'");

@@ -118,10 +118,12 @@ record Event(
     public bool IsBuy => Type is EventType.BuyMarket or EventType.BuyLimit;
     public bool IsSell => Type is EventType.SellMarket or EventType.SellLimit;
 
+    private static readonly Basics basics = new(); // TODO: remove
+
     public override string ToString() => 
         $"{Date:yyyy-MM-dd HH:mm:ss} {Type} " +
         (PricePerShareLocal != null && Quantity != null 
-            ? $"{Quantity.Value.R()} shares at {PricePerShareLocal.Value.R()} {Currency}/share " 
+            ? $"{Quantity.Value.R(basics)} shares at {PricePerShareLocal.Value.R(basics)} {Currency}/share " 
             : string.Empty) + 
-        $"=> {TotalAmountLocal.R()} {Currency} (FXRate = {FXRate})";
+        $"=> {TotalAmountLocal.R(basics)} {Currency} (FXRate = {FXRate})";
 }

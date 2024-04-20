@@ -1,27 +1,33 @@
 ﻿using Taxes;
 
-var fxRatesFilePath = Path.Combine(Basics.ReportsDirectoryPath, Basics.FXRatesFilePath);
-var fxRates = Basics.FXRatesInputType == FXRatesInputType.SingleCurrency
-    ? FxRates.ParseSingleCurrencyFromFile(Basics.FXRatesSingleCurrency, fxRatesFilePath)
-    : FxRates.ParseMultiCurrenciesFromFile(fxRatesFilePath);
+var basics = new Basics();
+var fxRatesFilePath = Path.Combine(basics.ReportsDirectoryPath, basics.FXRatesFilePath);
+var fxRatesReader = new FxRatesReader(basics);
+var fxRates = basics.FXRatesInputType == FXRatesInputType.SingleCurrency
+    ? fxRatesReader.ParseSingleCurrencyFromFile(basics.FXRatesSingleCurrency, fxRatesFilePath)
+    : fxRatesReader.ParseMultiCurrenciesFromFile(fxRatesFilePath);
 
-var stockEvents = Basics.StockEventsFilePaths
-    .SelectMany(pattern => Directory.GetFiles(Basics.ReportsDirectoryPath, pattern))
+var stockEventsReader = new StockEventsReader(basics);
+var stockEvents = basics.StockEventsFilePaths
+    .SelectMany(pattern => Directory.GetFiles(basics.ReportsDirectoryPath, pattern))
     .Order()
-    .SelectMany(filePath => StockEventsReader.Parse(filePath, fxRates))
+    .SelectMany(filePath => stockEventsReader.Parse(filePath, fxRates))
     .ToList();
-ProcessEvents(stockEvents);
+ProcessEvents(stockEvents, basics);
 
-var cryptoEvents = Basics.CryptoEventsFilePaths
-    .SelectMany(pattern => Directory.GetFiles(Basics.ReportsDirectoryPath, pattern))
+var cryptoEventsReader = new CryptoEventsReader(basics);
+var cryptoEvents = basics.CryptoEventsFilePaths
+    .SelectMany(pattern => Directory.GetFiles(basics.ReportsDirectoryPath, pattern))
     .Order()
-    .SelectMany(filePath => CryptoEventsReader.Parse(
-        filePath, Basics.CryptoPortfolioValuesCurrency, Basics.CryptoPortfolioValuesFilePath, fxRates))
+    .SelectMany(filePath => cryptoEventsReader.Parse(
+        filePath, basics.CryptoPortfolioValuesCurrency, basics.CryptoPortfolioValuesFilePath, fxRates))
     .ToList();
-ProcessEvents(cryptoEvents);
+ProcessEvents(cryptoEvents, basics);
 
-static void ProcessEvents(IList<Event> events)
+static void ProcessEvents(IList<Event> events, Basics basics)
 {
+    var tickerProcessing = new TickerProcessing(basics);
+
     var eventsByTicker = (
         from e in events
         group e by e.Ticker into g
@@ -31,8 +37,8 @@ static void ProcessEvents(IList<Event> events)
 
     var tickerStates = (
         from e in eventsByTicker
-        select TickerProcessing.ProcessTicker(e.ticker, e.tickerEvents))
+        select tickerProcessing.ProcessTicker(e.ticker, e.tickerEvents))
         .ToList();
 
-    tickerStates.PrintAggregatedMetrics(Console.Out);
+    tickerStates.PrintAggregatedMetrics(Console.Out, basics);
 }
