@@ -228,12 +228,10 @@ class TickerProcessing(Basics basics)
         outWriter.WriteLine($"\tTotal Sell Price ({basics.BaseCurrency}) = {totalSellPriceBase.R(basics)}");
 
         var sellFees1Base = Math.Abs(sharesSellPriceBase - totalSellPriceBase);
-        outWriter.WriteLine($"\tSell Fees 1 ({basics.BaseCurrency}) = {sellFees1Base.R(basics)}");
-
         var sellFees2Base = tickerEvent.FeesLocal.Value / tickerEvent.FXRate;
-        outWriter.WriteLine($"\tSell Fees 2 ({basics.BaseCurrency}) = {sellFees2Base.R(basics)}");
-
-        // TODO: ensure that buyFees1Base and buyFees2Base are consistent with each other, which is currently not the case
+        if (Math.Abs(sellFees1Base - sellFees2Base) >= basics.Precision)
+            throw new InvalidDataException($"Invalid event - Fees are inconsistent");
+        outWriter.WriteLine($"\tSell Fees ({basics.BaseCurrency}) = {sellFees2Base.R(basics)}");
 
         var plusValueCumpBase = 
             CalculatePlusValueCumpBase(totalAvgBuyPriceBase, totalSellPriceBase);
