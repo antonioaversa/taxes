@@ -1,4 +1,6 @@
-﻿namespace Taxes.Test;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+namespace Taxes.Test;
 
 [TestClass]
 public class FxRatesReaderTest
@@ -21,6 +23,14 @@ public class FxRatesReaderTest
             "Méthode d'observation : ... not relevant for the parsing",
             "Source : ... not relevant for the parsing",
         ];
+
+    [TestMethod]
+    public void Basics_GivesBackTheSameObjectPassedInConstruction()
+    {
+        var basics = new Basics();
+        var instance = new FxRatesReader(basics);
+        Assert.AreSame(basics, instance.Basics);
+    }
 
     [TestMethod]
     public void ParseSingleCurrencyFromFile_ReadsDataCorrectly()
