@@ -158,10 +158,10 @@ public class TickerProcessingTest
     public void ProcessReset_PreservesPepsIndexes()
     {
         var tickerEvent = new Event(T0, Reset, Ticker, null, null, 0m, null, EUR, 1, -1);
-        var tickerState = new TickerState(Ticker, Isin, PepsCurrentIndex: 3, PepsCurrentIndexBoughtQuantity: 5.5m);
+        var tickerState = new TickerState(Ticker, Isin, PepsCurrentIndex: 3, PepsCurrentIndexSoldQuantity: 5.5m);
         var tickerStateAfterReset = Instance.ProcessReset(tickerEvent, [], 0, tickerState, TextWriter.Null);
         Assert.AreEqual(3, tickerStateAfterReset.PepsCurrentIndex);
-        Assert.AreEqual(5.5m, tickerStateAfterReset.PepsCurrentIndexBoughtQuantity);
+        Assert.AreEqual(5.5m, tickerStateAfterReset.PepsCurrentIndexSoldQuantity);
     }
 
     [TestMethod]
@@ -220,7 +220,7 @@ public class TickerProcessingTest
             MinusValueCumpBase: 3.2m, MinusValuePepsBase: 0m, MinusValueCryptoBase: 3.9m,
             TotalQuantity: 3, TotalAmountBase: 25.46m,
             NetDividendsBase: 4.5m, WhtDividendsBase: 0.2m, GrossDividendsBase: 4.7m,
-            PepsCurrentIndex: 3, PepsCurrentIndexBoughtQuantity: 2.1m,
+            PepsCurrentIndex: 3, PepsCurrentIndexSoldQuantity: 2.1m,
             PortfolioAcquisitionValueBase: 23.3m, CryptoFractionOfInitialCapital: 0.75m);
         var tickerStateAfterNoop = Instance.ProcessNoop(tickerEvent, [], 0, tickerState, TextWriter.Null);
         Assert.AreEqual(tickerState, tickerStateAfterNoop);
@@ -347,6 +347,7 @@ public class TickerProcessingTest
         var writer = new StringWriter();
         var localCurrency = USD; // FX Rate is 2 USD for 1 EUR
         var initialState = new TickerState(Ticker, Isin);
+
         // First buy 3 shares at 100.10002 USD, with fees of 3.20003 USD => Total Amount Local of 300.30006 USD + 3.20003 USD = 303.50009 USD
         var tickerEvent = new Event(T0, BuyLimit, Ticker, 3, 100.10002m, 303.50009m, 3.20003m, localCurrency, 2m, -1);
         tickerProcessing.ProcessBuy(tickerEvent, [], 0, initialState, writer);
@@ -506,30 +507,99 @@ public class TickerProcessingTest
     }
 
     [TestMethod]
-    public void ProcessSell_UpdatesTickerStateCorrectly()
+    public void ProcessBuyAndSell_UpdateTickerStateCorrectly()
     {
         var tickerProcessing = new TickerProcessing(new Basics() { Rounding = x => decimal.Round(x, 2) });
         var localCurrency = USD; // FX rate between USD and EUR stays stable at 4 USD for 1 EUR across events
         var initialState = new TickerState(Ticker, Isin);
 
-        // First buy 3 shares at 100.10002 USD, with fees of 3.20003 USD => Total Amount Local of 303.50009 USD
-        var buyEvent = new Event(T0, BuyLimit, Ticker, 3, 100.10002m, 303.50009m, 3.20003m, localCurrency, 4m, -1);
-        var tickerStateAfterBuy = tickerProcessing.ProcessBuy(buyEvent, [buyEvent], 0, initialState, new StringWriter());
+        // -------
+        // First buy 3 shares at 100 USD, with fees of 3.20 USD => Total Amount Local of 300 USD + 3.20 USD = 303.20 USD
+        var buyEvent1 = new Event(T0, BuyLimit, Ticker, 3, 100m, 303.20m, 3.20m, localCurrency, 4m, -1);
+        var tickerStateAfterBuy1 = tickerProcessing.ProcessBuy(
+            buyEvent1, [buyEvent1], 0, initialState, new StringWriter());
         
-        // Then sell 2 shares at 150.15003 USD, with fees of 2.50005 USD => Total Amount Local of 300.30006 USD - 2.50005 USD = 297.80001 USD
-        var sellEvent = new Event(T0 + D, SellLimit, Ticker, 2, 150.15003m, 297.80001m, 2.50005m, localCurrency, 4m, -1);
-        var tickerStateAfterSell = tickerProcessing.ProcessSell(sellEvent, [buyEvent, sellEvent], 0, tickerStateAfterBuy, new StringWriter());
+        // 3 shares available
+        Assert.AreEqual(3, tickerStateAfterBuy1.TotalQuantity);
+        // The total amount corresponds to the total amount of the buy event 1
+        var totalAmountBaseAfterBuy1 = tickerStateAfterBuy1.TotalAmountBase;
+        Assert.AreEqual(303.20m / 4m, totalAmountBaseAfterBuy1);
+
+        // -------
+        // Then sell 2 shares at 150 USD, with fees of 2.50 USD => Total Amount Local of 300 USD - 2.50 USD = 297.50 USD
+        var sellEvent1 = new Event(T0 + D, SellLimit, Ticker, 2, 150m, 297.50m, 2.50m, localCurrency, 4m, -1);
+        var tickerStateAfterSell1 = tickerProcessing.ProcessSell(
+            sellEvent1, [buyEvent1, sellEvent1], 0, tickerStateAfterBuy1, new StringWriter());
         
         // Only 1 share left
-        Assert.AreEqual(1, tickerStateAfterSell.TotalQuantity);
+        Assert.AreEqual(1, tickerStateAfterSell1.TotalQuantity);
         // The share left has the same average buy price as before
-        var averageBuyPricePerShare = 303.50009m / 3 / 4m;
-        Assert.AreEqual(averageBuyPricePerShare, tickerStateAfterSell.TotalAmountBase, Instance.Basics.Precision);
+        var totalAmountBaseAfterSell1 = totalAmountBaseAfterBuy1 / 3;
+        Assert.AreEqual(totalAmountBaseAfterSell1, tickerStateAfterSell1.TotalAmountBase, Instance.Basics.Precision);
+        
         // The plus value CUMP is the difference between the sell price and the average buy price for the two shares sold
-        Assert.AreEqual(297.80001m / 4m - averageBuyPricePerShare * 2, tickerStateAfterSell.PlusValueCumpBase, Instance.Basics.Precision);
+        var averageBuyPriceTwoShares = totalAmountBaseAfterSell1 * 2;
+        var plusValueCumpSell1 = 297.50m / 4m - averageBuyPriceTwoShares;
+        Assert.AreEqual(plusValueCumpSell1, tickerStateAfterSell1.PlusValueCumpBase, Instance.Basics.Precision);
         // The plus value PEPS is the difference between the sell price and the buy price of the first two shares bought
-        var buyPriceFirstTwoShares = (2 * 303.50009m / 3) / 4m;
-        Assert.AreEqual(297.80001m / 4m - buyPriceFirstTwoShares, tickerStateAfterSell.PlusValuePepsBase, Instance.Basics.Precision);
+        var buyPriceFirstTwoShares = (2 * 303.20m / 3) / 4m;
+        var plusValuePepsSell1 = 297.50m / 4m - buyPriceFirstTwoShares;
+        Assert.AreEqual(plusValuePepsSell1, tickerStateAfterSell1.PlusValuePepsBase, Instance.Basics.Precision);
+        // TODO: calculate the plus value crypto
+        
+        // The minus value CUMP is 0, since no minus value has been realized
+        Assert.AreEqual(0, tickerStateAfterSell1.MinusValueCumpBase);
+        // The minus value PEPS is 0, since no minus value has been realized
+        Assert.AreEqual(0, tickerStateAfterSell1.MinusValuePepsBase);
+        // TODO: calculate the minus value crypto
+        
+        // The PEPS current index is 0, since only 2 shares out of 3 have been sold
+        Assert.AreEqual(0, tickerStateAfterSell1.PepsCurrentIndex);
+        // The PEPS current index sold quantity is 2, since 2 shares out of 3 have been sold
+        Assert.AreEqual(2, tickerStateAfterSell1.PepsCurrentIndexSoldQuantity);
+
+        // -------
+        // Buy 3 shares at 110 USD, with fees of 4 USD => Total Amount Local of 330 USD + 4 USD = 334 USD
+        var buyEvent2 = new Event(T0 + 2 * D, BuyLimit, Ticker, 3, 110m, 334m, 4m, localCurrency, 4m, -1);
+        var tickerStateAfterBuy2 = tickerProcessing.ProcessBuy(
+            buyEvent2, [buyEvent1, sellEvent1, buyEvent2], 0, tickerStateAfterSell1, new StringWriter());
+
+        // The total quantity is increased by 3
+        Assert.AreEqual(4, tickerStateAfterBuy2.TotalQuantity);
+        // The total amount is increased by the total amount of the buy event 2
+        var totalAmountBaseAfterBuy2 = totalAmountBaseAfterSell1 + 334m / 4m;
+        Assert.AreEqual(totalAmountBaseAfterBuy2, tickerStateAfterBuy2.TotalAmountBase);
+
+        // -------
+        // Buy 2 shares at 120 USD, with fees of 3 USD => Total Amount Local of 240 USD + 3 USD = 243 USD
+        var buyEvent3 = new Event(T0 + 3 * D, BuyLimit, Ticker, 2, 120m, 243m, 3m, localCurrency, 4m, -1);
+        var tickerStateAfterBuy3 = tickerProcessing.ProcessBuy(
+            buyEvent3, [buyEvent1, sellEvent1, buyEvent2, buyEvent3], 0, tickerStateAfterBuy2, new StringWriter());
+
+        // The total quantity is increased by 2
+        Assert.AreEqual(6, tickerStateAfterBuy3.TotalQuantity);
+        // The total amount is increased by the total amount of the buy event 3
+        var totalAmountBaseAfterBuy3 = totalAmountBaseAfterBuy2 + 243m / 4m;
+        Assert.AreEqual(totalAmountBaseAfterBuy3, tickerStateAfterBuy3.TotalAmountBase);
+
+        // -------
+        // Sell 3 shares at 130 USD, with fees of 3 USD => Total Amount Local of 390 USD - 3 USD = 387 USD
+        var sellEvent2 = new Event(T0 + 4 * D, SellLimit, Ticker, 3, 130m, 387m, 3m, localCurrency, 4m, -1);
+        var tickerStateAfterSell2 = tickerProcessing.ProcessSell(
+            sellEvent2, [buyEvent1, sellEvent1, buyEvent2, buyEvent3, sellEvent2], 0, tickerStateAfterBuy3, new StringWriter());
+
+        // Only 3 shares left
+        Assert.AreEqual(3, tickerStateAfterSell2.TotalQuantity);
+        // The total amount is decreased by half (3 shares out of 6 sold), and not by the total amount of the sell event 2
+        var totalAmountBaseAfterSell2 = totalAmountBaseAfterBuy3 * (3m / 6m);
+        Assert.AreEqual(totalAmountBaseAfterSell2, tickerStateAfterSell2.TotalAmountBase);
+        // The plus value CUMP for the event is the difference between the sell price and the average buy price for the three shares sold
+        // This value is added to the plus value CUMP accumulated so far (first sell event)
+        var averageBuyPriceThreeShares = totalAmountBaseAfterBuy3 - totalAmountBaseAfterSell2;
+        var plusValueCumpSell2 = 387m / 4m - averageBuyPriceThreeShares;
+        Assert.AreEqual(plusValueCumpSell1 + plusValueCumpSell2, tickerStateAfterSell2.PlusValueCumpBase, Instance.Basics.Precision);
+
+        // TODO: continue
     }
 
 }

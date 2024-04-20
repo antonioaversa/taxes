@@ -63,7 +63,7 @@ class TickerProcessing(Basics basics)
             TotalQuantity = tickerState.TotalQuantity,
             TotalAmountBase = tickerState.TotalAmountBase,
             PepsCurrentIndex = tickerState.PepsCurrentIndex,
-            PepsCurrentIndexBoughtQuantity = tickerState.PepsCurrentIndexBoughtQuantity,
+            PepsCurrentIndexSoldQuantity = tickerState.PepsCurrentIndexSoldQuantity,
             PortfolioAcquisitionValueBase = tickerState.PortfolioAcquisitionValueBase,
             CryptoFractionOfInitialCapital = tickerState.CryptoFractionOfInitialCapital,
         };
@@ -235,7 +235,7 @@ class TickerProcessing(Basics basics)
 
         var plusValueCumpBase = 
             CalculatePlusValueCumpBase(totalAvgBuyPriceBase, totalSellPriceBase);
-        var (plusValuePepsBase, pepsCurrentIndex, pepsCurrentIndexBoughtQuantity) = 
+        var (plusValuePepsBase, pepsCurrentIndex, pepsCurrentIndexSoldQuantity) = 
             CalculatePlusValuePepsBase(tickerEvent, tickerEvents, tickerState, totalSellPriceBase);
         var (plusValueCryptoBase, cryptoFractionInitialCapital) =
             CalculatePlusValueCryptoBase(tickerEvent, tickerState, totalSellPriceBase, Math.Max(sellFees1Base, sellFees2Base));
@@ -251,7 +251,7 @@ class TickerProcessing(Basics basics)
             MinusValuePepsBase = tickerState.MinusValuePepsBase + (plusValuePepsBase < 0 ? -plusValuePepsBase : 0),
             MinusValueCryptoBase = tickerState.MinusValueCryptoBase + (plusValueCryptoBase < 0 ? -plusValueCryptoBase : 0),
             PepsCurrentIndex = pepsCurrentIndex,
-            PepsCurrentIndexBoughtQuantity = pepsCurrentIndexBoughtQuantity,
+            PepsCurrentIndexSoldQuantity = pepsCurrentIndexSoldQuantity,
             CryptoFractionOfInitialCapital = cryptoFractionInitialCapital,
         };
 
@@ -276,7 +276,7 @@ class TickerProcessing(Basics basics)
 
             var remainingQuantity = tickerEvent.Quantity.Value;
             var pepsCurrentIndex = tickerState.PepsCurrentIndex;
-            var pepsCurrentIndexBoughtQuantity = tickerState.PepsCurrentIndexBoughtQuantity;
+            var pepsCurrentIndexSoldQuantity = tickerState.PepsCurrentIndexSoldQuantity;
             var totalPepsBuyPriceBase = 0m;
             while (remainingQuantity >= 0m)
             {
@@ -298,14 +298,15 @@ class TickerProcessing(Basics basics)
                     throw new InvalidDataException($"PEPS Current Index not pointing to a Buy event");
                 var pepsBuyEventQuantity = pepsBuyEvent.Quantity.Value;
 
-                if (pepsCurrentIndexBoughtQuantity > pepsBuyEventQuantity)
-                    throw new InvalidDataException($"PEPS Current Index Bought Quantity > Total Event Quantity");
+                if (pepsCurrentIndexSoldQuantity > pepsBuyEventQuantity)
+                    throw new InvalidDataException($"PEPS Current Index Sold Quantity > Total Event Quantity");
                 
-                var boughtQuantity = Math.Min(remainingQuantity, pepsBuyEventQuantity - pepsCurrentIndexBoughtQuantity);
-                pepsCurrentIndexBoughtQuantity += boughtQuantity;
+                var boughtQuantity = Math.Min(remainingQuantity, pepsBuyEventQuantity - pepsCurrentIndexSoldQuantity);
+                pepsCurrentIndexSoldQuantity += boughtQuantity;
                 remainingQuantity -= boughtQuantity;
 
-                var pepsBuyEventShareOfFeesLocal = (boughtQuantity / pepsBuyEvent.Quantity.Value) * pepsBuyEvent.FeesLocal!.Value;
+                var pepsBuyEventShareOfFeesLocal = 
+                    (boughtQuantity / pepsBuyEvent.Quantity.Value) * pepsBuyEvent.FeesLocal!.Value;
                 var pepsBuyEventBuyPriceBase1 = 
                     (boughtQuantity * pepsBuyEvent.PricePerShareLocal.Value + pepsBuyEventShareOfFeesLocal) / pepsBuyEvent.FXRate;
                 var pepsBuyEventBuyPriceBase2 =
@@ -314,20 +315,20 @@ class TickerProcessing(Basics basics)
                     throw new InvalidDataException($"PEPS Buy Price Base is inconsistent");
                 totalPepsBuyPriceBase += pepsBuyEventBuyPriceBase1;
 
-                if (pepsCurrentIndexBoughtQuantity < pepsBuyEventQuantity)
+                if (pepsCurrentIndexSoldQuantity < pepsBuyEventQuantity)
                 {
                     outWriter.WriteLine(
                         $"\tPEPS Buy Event {pepsBuyEvent} at index {pepsCurrentIndex} bought partially");
 
                 }
-                else if (pepsCurrentIndexBoughtQuantity == pepsBuyEventQuantity)
+                else if (pepsCurrentIndexSoldQuantity == pepsBuyEventQuantity)
                 {
                     outWriter.WriteLine(
                         $"\tPEPS Buy Event {pepsBuyEvent} at index {pepsCurrentIndex} bought entirely => move to next");
 
                     do { pepsCurrentIndex++; } 
                     while (pepsCurrentIndex < tickerEvents.Count && !tickerEvents[pepsCurrentIndex].IsBuy);
-                    pepsCurrentIndexBoughtQuantity = 0m;
+                    pepsCurrentIndexSoldQuantity = 0m;
                 }
             }
 
@@ -338,7 +339,7 @@ class TickerProcessing(Basics basics)
             else
                 outWriter.WriteLine($"\tMinus Value PEPS ({basics.BaseCurrency}) = {-plusValuePepsBase.R(basics)}");
 
-            return (plusValuePepsBase, pepsCurrentIndex, pepsCurrentIndexBoughtQuantity);
+            return (plusValuePepsBase, pepsCurrentIndex, pepsCurrentIndexSoldQuantity);
         }
     
         (decimal, decimal) CalculatePlusValueCryptoBase(

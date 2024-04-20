@@ -16,7 +16,7 @@ static class TickerStateExtensions
         decimal? whtDividendsBase = null,
         decimal? grossDividendsBase = null,
         int? pepsCurrentIndex = null,
-        decimal? pepsCurrentIndexBoughtQuantity = null,
+        decimal? pepsCurrentIndexSoldQuantity = null,
         decimal? portfolioAcquisitionValueBase = null,
         decimal? cryptoFractionOfInitialCapital = null)
     {
@@ -47,8 +47,8 @@ static class TickerStateExtensions
 
         if (pepsCurrentIndex is not null) 
             Assert.AreEqual(pepsCurrentIndex, tickerState.PepsCurrentIndex);
-        if (pepsCurrentIndexBoughtQuantity is not null) 
-            Assert.AreEqual(pepsCurrentIndexBoughtQuantity, tickerState.PepsCurrentIndexBoughtQuantity);
+        if (pepsCurrentIndexSoldQuantity is not null) 
+            Assert.AreEqual(pepsCurrentIndexSoldQuantity, tickerState.PepsCurrentIndexSoldQuantity);
         if (portfolioAcquisitionValueBase is not null) 
             Assert.AreEqual(portfolioAcquisitionValueBase, tickerState.PortfolioAcquisitionValueBase);
         if (cryptoFractionOfInitialCapital is not null) 
@@ -70,7 +70,7 @@ static class TickerStateExtensions
         decimal? whtDividendsBase = null,
         decimal? grossDividendsBase = null,
         int? pepsCurrentIndex = null,
-        decimal? pepsCurrentIndexBoughtQuantity = null,
+        decimal? pepsCurrentIndexSoldQuantity = null,
         decimal? portfolioAcquisitionValueBase = null,
         decimal? cryptoFractionOfInitialCapital = null) => 
         tickerState.AssertState(
@@ -89,7 +89,7 @@ static class TickerStateExtensions
             grossDividendsBase: grossDividendsBase ?? 0,
                 
             pepsCurrentIndex: pepsCurrentIndex ?? 0,
-            pepsCurrentIndexBoughtQuantity: pepsCurrentIndexBoughtQuantity ?? 0,
+            pepsCurrentIndexSoldQuantity: pepsCurrentIndexSoldQuantity ?? 0,
             portfolioAcquisitionValueBase: portfolioAcquisitionValueBase ?? 0,
             cryptoFractionOfInitialCapital: cryptoFractionOfInitialCapital ?? 0);
 }

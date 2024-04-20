@@ -99,7 +99,7 @@ record TickerState(
     /// ALGORITHM
     /// - This method requires keeping two state variables:
     ///   - the current index in the list of buy events for the ticker (PepsCurrentIndex)
-    ///   - the quantity of shares bought at the current index (PepsCurrentIndexBoughtQuantity)
+    ///   - the quantity of shares bought at the current index (PepsCurrentIndexSoldQuantity)
     /// - In the initial state of the ticker, the current index is zero and the quantity is zero.
     /// - Buy events don't change the two state variables
     /// - Sell events, on the other hand, update the two state variables as follows:
@@ -123,7 +123,7 @@ record TickerState(
     /// - Buy event for 2 shares at 105 USD per share => total quantity = 17 shares
     /// - Sell event for 16 share at 120 USD per share => total quantity = 17 - 16 = 1 share
     ///   - Total amount for the sell event = 120 * 16 = 1920 USD
-    ///   - Current PEPS index = 0, Current PEPS index bought quantity = 0
+    ///   - Current PEPS index = 0, Current PEPS index sold quantity = 0
     ///   - Remaining quantity to sell = 16
     ///   - Total buy price = 0
     ///   - The index points at a buy event, so we can start selling shares at this index
@@ -169,7 +169,7 @@ record TickerState(
     [property: Metric("Total WHT Dividends")] decimal WhtDividendsBase = 0m,
     [property: Metric("Total Gross Dividends")] decimal GrossDividendsBase = 0m,
     int PepsCurrentIndex = 0, 
-    decimal PepsCurrentIndexBoughtQuantity = 0m,
+    decimal PepsCurrentIndexSoldQuantity = 0m,
     decimal PortfolioAcquisitionValueBase = 0m, 
     decimal CryptoFractionOfInitialCapital = 0m)
 {
