@@ -345,15 +345,29 @@ public class TickerProcessingTest
     {
         var writer = new StringWriter();
         var tickerState = new TickerState(Ticker, Isin);
-        // First buy of 3 shares at 100.10002 EUR, with fees of 3.20003 EUR => Total Amount Local of 303.50009 EUR
-        var tickerEvent = new Event(T0, BuyLimit, Ticker, 3, 100.10002m, 303.50009m, 3.20003m, EUR, 1m, -1);
-        Instance.ProcessBuy(tickerEvent, [], 0, tickerState, writer);
+        var localCurrency = USD;
+        // First buy of 3 shares at 100.10002 USD, with fees of 3.20003 USD => Total Amount Local of 303.50009 USD
+        var tickerEvent = new Event(T0, BuyLimit, Ticker, 3, 100.10002m, 303.50009m, 3.20003m, localCurrency, 2m, -1);
+        var tickerProcessing = new TickerProcessing(new Basics() { Rounding = x => decimal.Round(x, 2) });
+        tickerProcessing.ProcessBuy(tickerEvent, [], 0, tickerState, writer);
         var output = writer.ToString();
 
         // Prints Total Buy Price in local currency as rounded value
-        Assert.IsTrue(output.Contains($"Total Buy Price ({EUR}) = 303.50"));
+        Assert.IsTrue(output.Contains($"Total Buy Price ({localCurrency}) = 303.50"));
         // Prints Total Buy Price in base currency as rounded value
-        Assert.IsTrue(output.Contains($"Total Buy Price ({Instance.Basics.BaseCurrency}) = 303.50"));
+        Assert.IsTrue(output.Contains($"Total Buy Price ({Instance.Basics.BaseCurrency}) = 151.75"));  
+        // Prints Shares Buy Price in local currency as rounded value
+        Assert.IsTrue(output.Contains($"Shares Buy Price ({localCurrency}) = 300.30"));
+        // Prints Shares Buy Price in base currency as rounded value
+        Assert.IsTrue(output.Contains($"Shares Buy Price ({Instance.Basics.BaseCurrency}) = 150.15"));
+        // Prints PerShare Buy Price in local currency as rounded value
+        Assert.IsTrue(output.Contains($"PerShare Buy Price ({localCurrency}) = 100.10"));
+        // Prints PerShare Buy Price in base currency as rounded value
+        Assert.IsTrue(output.Contains($"PerShare Buy Price ({Instance.Basics.BaseCurrency}) = 50.05"));
+        // Prints Buy Fees in local currency as rounded value
+        Assert.IsTrue(output.Contains($"Buy Fees ({localCurrency}) = 3.20"));
+        // Prints Buy Fees in base currency as rounded value
+        Assert.IsTrue(output.Contains($"Buy Fees ({Instance.Basics.BaseCurrency}) = 1.60"));
     }
 
     [TestMethod]

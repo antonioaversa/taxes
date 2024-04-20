@@ -118,14 +118,14 @@ class TickerProcessing(Basics basics)
         var perShareBuyPriceBase = perShareBuyPriceLocal / tickerEvent.FXRate;
         outWriter.WriteLine($"\tPerShare Buy Price ({basics.BaseCurrency}) = {perShareBuyPriceBase.R(basics)}");
 
+        var buyFeesLocal = tickerEvent.FeesLocal.Value;
+        outWriter.WriteLine($"\tBuy Fees ({tickerCurrency}) = {buyFeesLocal.R(basics)}");
+
         var buyFees1Base = Math.Abs(sharesBuyPriceBase - totalBuyPriceBase);
-        outWriter.WriteLine($"\tBuy Fees 1 ({basics.BaseCurrency}) = {buyFees1Base.R(basics)}");
-
         var buyFees2Base = tickerEvent.FeesLocal.Value / tickerEvent.FXRate;
-        outWriter.WriteLine($"\tBuy Fees 2 ({basics.BaseCurrency}) = {buyFees2Base.R(basics)}");
-
         if (Math.Abs(buyFees1Base - buyFees2Base) >= basics.Precision)
             throw new InvalidDataException($"Invalid event - Fees are inconsistent");
+        outWriter.WriteLine($"\tBuy Fees ({basics.BaseCurrency}) = {buyFees2Base.R(basics)}");
 
         return tickerState with
         {
