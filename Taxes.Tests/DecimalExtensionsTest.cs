@@ -22,5 +22,4 @@ public class DecimalExtensionsTest
         Assert.AreEqual(1.235m, 1.23499m.R(basics));
         Assert.AreEqual(1.235m, 1.23545m.R(basics));
     }
-
 }
