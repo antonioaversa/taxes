@@ -2,6 +2,7 @@
 
 static class AssertExtensions
 {
+    [AssertionMethod]
     public static void ThrowsAny<T>(Action action) where T : Exception
     {
         bool exceptionThrown = false;
@@ -28,3 +29,6 @@ static class AssertExtensions
             Assert.Fail($"Expected exception of type {typeof(T)} or derived, but no exception was thrown");
     }
 }
+
+[AttributeUsage(AttributeTargets.Method)]
+public class AssertionMethodAttribute : Attribute { }
