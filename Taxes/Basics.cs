@@ -63,10 +63,10 @@ public partial class Basics
 
         var basicsFileContentStr = File.ReadAllText(Path.Combine(reportsDirectoryPath, basicsFileName));
         var basicsFile = JsonConvert.DeserializeObject<BasicsFile>(basicsFileContentStr) 
-            ?? throw new Exception($"Invalid {basicsFileName}");
+            ?? throw new InvalidDataException($"Invalid {basicsFileName}");
 
         Rounding = (basicsFile.Rounding
-            ?? throw new Exception($"Invalid {nameof(Rounding)} in {basicsFileName}")) switch
+            ?? throw new InvalidDataException($"Invalid {nameof(Rounding)} in {basicsFileName}")) switch
             {
                 var r when Regex_RoundingWithNumberOfDigits().Match(r) is { Success: true, Groups: var groups } =>
                     value => RoundingWithNumberOfDigits(
@@ -80,28 +80,28 @@ public partial class Basics
                 var r => throw new Exception($"Invalid {nameof(Rounding)} value in {basicsFileName}: {r}")
             };
         Precision = basicsFile.Precision 
-            ?? throw new Exception($"Invalid {nameof(Precision)} in {basicsFileName}");
+            ?? throw new InvalidDataException($"Invalid {nameof(Precision)} in {basicsFileName}");
         BaseCurrency = basicsFile.BaseCurrency
-            ?? throw new Exception($"Invalid {nameof(BaseCurrency)} in {basicsFileName}");
+            ?? throw new InvalidDataException($"Invalid {nameof(BaseCurrency)} in {basicsFileName}");
         ISINs = new ReadOnlyDictionary<string, string>(basicsFile.ISINs
-            ?? throw new Exception($"Invalid {nameof(ISINs)} in {basicsFileName}"));
+            ?? throw new InvalidDataException($"Invalid {nameof(ISINs)} in {basicsFileName}"));
         StockEventsFilePaths = (basicsFile.StockEventsFilePaths
-            ?? throw new Exception($"Invalid {nameof(StockEventsFilePaths)} in {basicsFileName}")).AsReadOnly();
+            ?? throw new InvalidDataException($"Invalid {nameof(StockEventsFilePaths)} in {basicsFileName}")).AsReadOnly();
         
         CryptoEventsFilePaths = (basicsFile.CryptoEventsFilePaths
-            ?? throw new Exception($"Invalid {nameof(CryptoEventsFilePaths)} in {basicsFileName}")).AsReadOnly();
+            ?? throw new InvalidDataException($"Invalid {nameof(CryptoEventsFilePaths)} in {basicsFileName}")).AsReadOnly();
         CryptoPortfolioValuesCurrency = basicsFile.CryptoPortfolioValuesCurrency
-            ?? throw new Exception($"Invalid {nameof(CryptoPortfolioValuesCurrency)} in {basicsFileName}");
+            ?? throw new InvalidDataException($"Invalid {nameof(CryptoPortfolioValuesCurrency)} in {basicsFileName}");
         CryptoPortfolioValuesFilePath = basicsFile.CryptoPortfolioValuesFilePath
-            ?? throw new Exception($"Invalid {nameof(CryptoPortfolioValuesFilePath)} in {basicsFileName}");
+            ?? throw new InvalidDataException($"Invalid {nameof(CryptoPortfolioValuesFilePath)} in {basicsFileName}");
 
         FXRatesInputType = Enum.Parse<FXRatesInputType>(basicsFile.FXRatesInputType
-            ?? throw new Exception($"Invalid {nameof(FXRatesInputType)} in {basicsFileName}"));
+            ?? throw new InvalidDataException($"Invalid {nameof(FXRatesInputType)} in {basicsFileName}"));
         FXRatesSingleCurrency = FXRatesInputType == FXRatesInputType.MultiCurrency == string.IsNullOrEmpty(basicsFile.FXRatesSingleCurrency)
             ? basicsFile.FXRatesSingleCurrency!
-            : throw new Exception($"Inconsistent {nameof(FXRatesInputType)} and {nameof(FXRatesSingleCurrency)} in {basicsFileName}");
+            : throw new InvalidDataException($"Inconsistent {nameof(FXRatesInputType)} and {nameof(FXRatesSingleCurrency)} in {basicsFileName}");
         FXRatesFilePath = basicsFile.FXRatesFilePath
-            ?? throw new Exception($"Invalid {nameof(FXRatesFilePath)} in {basicsFileName}");
+            ?? throw new InvalidDataException($"Invalid {nameof(FXRatesFilePath)} in {basicsFileName}");
 
         static decimal RoundingWithNumberOfDigits(decimal value, int numberOfDigits) =>
             Math.Round(value, numberOfDigits);
