@@ -77,7 +77,7 @@ public partial class Basics
                         value, 
                         int.Parse(groups["numberOfDigits"].Value, DefaultCulture),
                         decimal.Parse(groups["resolutionAroundZero"].Value, DefaultCulture)),
-                var r => throw new Exception($"Invalid {nameof(Rounding)} value in {basicsFileName}: {r}")
+                var r => throw new InvalidDataException($"Invalid {nameof(Rounding)} value in {basicsFileName}: {r}")
             };
         Precision = basicsFile.Precision 
             ?? throw new InvalidDataException($"Invalid {nameof(Precision)} in {basicsFileName}");
@@ -110,7 +110,7 @@ public partial class Basics
             Math.Abs(Math.Round(value, numberOfDigits)) < resolutionAroundZero ? 0m : Math.Round(value, numberOfDigits);
     }
 
-    public decimal WitholdingTaxFor(string isin) => 
+    public static decimal WitholdingTaxFor(string isin) => 
         isin switch
         {
             var s when s.StartsWith("US") && s[2] - '0' <= 9 => 0.15m,

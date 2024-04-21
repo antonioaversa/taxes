@@ -414,7 +414,7 @@ class TickerProcessing(Basics basics)
         var netDividendBase = netDividendLocal / tickerEvent.FXRate;
         outWriter.WriteLine($"\tNet Dividend ({basics.BaseCurrency}) = {netDividendBase.R(basics)}");
 
-        var whtDividendBase = netDividendBase * basics.WitholdingTaxFor(tickerState.Isin) / (1m - basics.WitholdingTaxFor(tickerState.Isin));
+        var whtDividendBase = netDividendBase * Basics.WitholdingTaxFor(tickerState.Isin) / (1m - Basics.WitholdingTaxFor(tickerState.Isin));
         outWriter.WriteLine($"\tWHT Dividend ({basics.BaseCurrency}) = {whtDividendBase.R(basics)}");
 
         var grossDividendBase = netDividendBase + whtDividendBase;
