@@ -1,4 +1,4 @@
-﻿namespace Taxes.Tests;
+﻿namespace Taxes.Test;
 
 [TestClass]
 public class EventTest
