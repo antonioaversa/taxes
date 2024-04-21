@@ -127,18 +127,18 @@ public partial class Basics
     // This class is used to deserialize the Basics.json file
     private sealed class BasicsFile
     {
-        public string? Rounding { get; set; }
-        public decimal? Precision { get; set; }
-        public string? BaseCurrency { get; set; }
-        public Dictionary<string, string>? ISINs { get; set; }
-        public List<string>? StockEventsFilePaths { get; set; }
-        
-        public List<string>? CryptoEventsFilePaths { get; set; }
-        public string? CryptoPortfolioValuesCurrency { get; set; }
-        public string? CryptoPortfolioValuesFilePath { get; set; }
-        
-        public string? FXRatesInputType { get; set; }
-        public string? FXRatesSingleCurrency { get; set; }
-        public string? FXRatesFilePath { get; set; }
+        public string? Rounding { get; set; } = null;
+        public decimal? Precision { get; set; } = null;
+        public string? BaseCurrency { get; set; } = null;
+        public Dictionary<string, string>? ISINs { get; set; } = null;
+        public List<string>? StockEventsFilePaths { get; set; } = null;
+
+        public List<string>? CryptoEventsFilePaths { get; set; } = null;
+        public string? CryptoPortfolioValuesCurrency { get; set; } = null;
+        public string? CryptoPortfolioValuesFilePath { get; set; } = null;
+
+        public string? FXRatesInputType { get; set; } = null;
+        public string? FXRatesSingleCurrency { get; set; } = null;
+        public string? FXRatesFilePath { get; set; } = null;
     }
 }
