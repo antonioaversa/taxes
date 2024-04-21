@@ -236,9 +236,6 @@ class TickerProcessing(Basics basics)
         (decimal, int, decimal) CalculatePlusValuePepsBase(
             Event tickerEvent, IList<Event> tickerEvents, TickerState tickerState, decimal totalSellPriceBase)
         {
-            if (tickerEvent.Quantity == null)
-                throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.Quantity)} null");
-
             var remainingQuantity = tickerEvent.Quantity.Value;
             var pepsCurrentIndex = tickerState.PepsCurrentIndex;
             var pepsCurrentIndexSoldQuantity = tickerState.PepsCurrentIndexSoldQuantity;
