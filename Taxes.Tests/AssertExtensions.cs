@@ -29,6 +29,3 @@ static class AssertExtensions
             Assert.Fail($"Expected exception of type {typeof(T)} or derived, but no exception was thrown");
     }
 }
-
-[AttributeUsage(AttributeTargets.Method)]
-public class AssertionMethodAttribute : Attribute { }
