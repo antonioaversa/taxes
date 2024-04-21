@@ -581,8 +581,7 @@ public class TickerProcessingTest
         // 3 shares available
         Assert.AreEqual(3, tickerStateAfterBuy1.TotalQuantity);
         // The total amount corresponds to the total amount of the buy event 1
-        var totalAmountBaseAfterBuy1 = tickerStateAfterBuy1.TotalAmountBase;
-        Assert.AreEqual(303.20m / 4m, totalAmountBaseAfterBuy1);
+        Assert.AreEqual(303.20m / 4m, tickerStateAfterBuy1.TotalAmountBase, Instance.Basics.Precision);
 
         // -------
         // Then sell 2 shares at 150 USD, with fees of 2.50 USD => Total Amount Local of 300 USD - 2.50 USD = 297.50 USD
@@ -592,16 +591,17 @@ public class TickerProcessingTest
         
         // Only 1 share left
         Assert.AreEqual(1, tickerStateAfterSell1.TotalQuantity);
-        // The share left has the same average buy price as before
-        var totalAmountBaseAfterSell1 = totalAmountBaseAfterBuy1 / 3;
+        // The share left (1 remaining out of 3 shares) has the same average buy price as before
+        var totalAmountBaseAfterSell1 = tickerStateAfterBuy1.TotalAmountBase * (1m / 3m);
         Assert.AreEqual(totalAmountBaseAfterSell1, tickerStateAfterSell1.TotalAmountBase, Instance.Basics.Precision);
         
-        // The plus value CUMP is the difference between the sell price and the average buy price for the two shares sold
+        // The plus value CUMP is the difference between the sell price and the average buy price for the 2 shares sold
         // The minus value CUMP is 0, since no minus value has been realized
         var averageBuyPriceTwoShares = totalAmountBaseAfterSell1 * 2;
         var plusValueCumpSell1 = 297.50m / 4m - averageBuyPriceTwoShares;
         Assert.AreEqual(plusValueCumpSell1, tickerStateAfterSell1.PlusValueCumpBase, Instance.Basics.Precision);
         Assert.AreEqual(0, tickerStateAfterSell1.MinusValueCumpBase);
+        
         // The plus value PEPS is the difference between the sell price and the buy price of the first two shares bought
         // The minus value PEPS is 0, since no minus value has been realized
         var buyPriceFirstTwoShares = (2 * 303.20m / 3) / 4m;
@@ -609,12 +609,12 @@ public class TickerProcessingTest
         Assert.AreEqual(plusValuePepsSell1, tickerStateAfterSell1.PlusValuePepsBase, Instance.Basics.Precision);
         Assert.AreEqual(0, tickerStateAfterSell1.MinusValuePepsBase);
 
-        // TODO: calculate the plus value and minus value crypto
-
         // The PEPS current index is 0, since only 2 shares out of 3 have been sold
         Assert.AreEqual(0, tickerStateAfterSell1.PepsCurrentIndex);
         // The PEPS current index sold quantity is 2, since 2 shares out of 3 have been sold
         Assert.AreEqual(2, tickerStateAfterSell1.PepsCurrentIndexSoldQuantity);
+
+        // TODO: calculate the plus value and minus value crypto
 
         // -------
         // Buy 3 shares at 110 USD, with fees of 4 USD => Total Amount Local of 330 USD + 4 USD = 334 USD
@@ -625,8 +625,8 @@ public class TickerProcessingTest
         // The total quantity is increased by 3
         Assert.AreEqual(4, tickerStateAfterBuy2.TotalQuantity);
         // The total amount is increased by the total amount of the buy event 2
-        var totalAmountBaseAfterBuy2 = totalAmountBaseAfterSell1 + 334m / 4m;
-        Assert.AreEqual(totalAmountBaseAfterBuy2, tickerStateAfterBuy2.TotalAmountBase);
+        var totalAmountBaseAfterBuy2 = tickerStateAfterSell1.TotalAmountBase + 334m / 4m;
+        Assert.AreEqual(totalAmountBaseAfterBuy2, tickerStateAfterBuy2.TotalAmountBase, Instance.Basics.Precision);
 
         // -------
         // Buy 2 shares at 120 USD, with fees of 3 USD => Total Amount Local of 240 USD + 3 USD = 243 USD
@@ -637,8 +637,8 @@ public class TickerProcessingTest
         // The total quantity is increased by 2
         Assert.AreEqual(6, tickerStateAfterBuy3.TotalQuantity);
         // The total amount is increased by the total amount of the buy event 3
-        var totalAmountBaseAfterBuy3 = totalAmountBaseAfterBuy2 + 243m / 4m;
-        Assert.AreEqual(totalAmountBaseAfterBuy3, tickerStateAfterBuy3.TotalAmountBase);
+        var totalAmountBaseAfterBuy3 = tickerStateAfterBuy2.TotalAmountBase + 243m / 4m;
+        Assert.AreEqual(totalAmountBaseAfterBuy3, tickerStateAfterBuy3.TotalAmountBase, Instance.Basics.Precision);
 
         // -------
         // Sell 3 shares at 130 USD, with fees of 3 USD => Total Amount Local of 390 USD - 3 USD = 387 USD
@@ -649,11 +649,11 @@ public class TickerProcessingTest
 
         // Only 3 shares left
         Assert.AreEqual(3, tickerStateAfterSell2.TotalQuantity);
-        // The total amount is decreased by half (3 shares out of 6 sold), and not by the total amount of the sell event 2
-        var totalAmountBaseAfterSell2 = totalAmountBaseAfterBuy3 * (3m / 6m);
-        Assert.AreEqual(totalAmountBaseAfterSell2, tickerStateAfterSell2.TotalAmountBase);
+        // The total amount is decreased by half (3 remaining out of 6 shares), and not by the total amount of the sell event 2
+        var totalAmountBaseAfterSell2 = tickerStateAfterBuy3.TotalAmountBase * (3m / 6m);
+        Assert.AreEqual(totalAmountBaseAfterSell2, tickerStateAfterSell2.TotalAmountBase, Instance.Basics.Precision);
         
-        // The plus value CUMP for the event is the difference between the sell price and the average buy price for the three shares sold
+        // The plus value CUMP for the event is the difference between the sell price and the average buy price for the 3 shares sold
         // This value is added to the plus value CUMP accumulated so far (first sell event)
         // The minus value CUMP is 0, since no minus value has been realized
         var averageBuyPriceThreeShares = totalAmountBaseAfterBuy3 - totalAmountBaseAfterSell2;
@@ -673,13 +673,13 @@ public class TickerProcessingTest
         Assert.AreEqual(plusValuePepsSell1 + plusValuePepsSell2, tickerStateAfterSell2.PlusValuePepsBase, Instance.Basics.Precision);
         Assert.AreEqual(0, tickerStateAfterSell2.MinusValuePepsBase);
 
-        // TODO: calculate the plus value and minus value crypto
-
         // The PEPS current index is 2, since the only remaining share of the first buy has been sold, together with
         // the first two shares of the second buy, where the last share is left not sold for now
         Assert.AreEqual(2, tickerStateAfterSell2.PepsCurrentIndex);
         // The PEPS current index sold quantity is 2, since 2 shares out of 3 have been sold
         Assert.AreEqual(2, tickerStateAfterSell2.PepsCurrentIndexSoldQuantity);
+
+        // TODO: calculate the plus value and minus value crypto
 
         // -------
         // Sell 1 shares at 10 USD, with fees of 1 USD => Total Amount Local of 10 USD - 1 USD = 9 USD
@@ -690,11 +690,11 @@ public class TickerProcessingTest
 
         // Only 2 shares left
         Assert.AreEqual(2, tickerStateAfterSell3.TotalQuantity);
-        // The total amount is decreased to 2/3 (1 share out of 3 sold), and not by the total amount of the sell event 3
-        var totalAmountBaseAfterSell3 = totalAmountBaseAfterSell2 * (2m / 3m);
+        // The total amount is decreased to 2/3 (2 remaining out of 3 shares), and not by the total amount of the sell event 3
+        var totalAmountBaseAfterSell3 = tickerStateAfterSell2.TotalAmountBase * (2m / 3m);
         Assert.AreEqual(totalAmountBaseAfterSell3, tickerStateAfterSell3.TotalAmountBase, Instance.Basics.Precision);
         
-        // The plus value CUMP for the event is the difference between the sell price and the average buy price for the one share sold
+        // The plus value CUMP for the event is the difference between the sell price and the average buy price for the 1 share sold
         // This value is negative, so it is actually a minus value, taken with reversed sign
         // This value is the first CUMP minus value realized. The plus value CUMP doesn't change.
         var averageBuyPriceOneShare = totalAmountBaseAfterSell2 - totalAmountBaseAfterSell3;
@@ -713,13 +713,13 @@ public class TickerProcessingTest
         Assert.AreEqual(tickerStateAfterSell3.PlusValuePepsBase, tickerStateAfterSell2.PlusValuePepsBase);
         Assert.AreEqual(minusValuePepsSell3, tickerStateAfterSell3.MinusValuePepsBase, Instance.Basics.Precision);
 
-        // TODO: calculate the plus value and minus value crypto
-
         // The PEPS current index is 3, since the last share of the second buy has been sold, and the pointer moves
-        // one position forward
+        // forward to the next buy event, that is in position 3 in the list of events
         Assert.AreEqual(3, tickerStateAfterSell3.PepsCurrentIndex);
-        // The PEPS current index sold quantity is 3, since the current index has been moved forward
+        // The PEPS current index sold quantity is 0, since the current index has been moved forward
         Assert.AreEqual(0, tickerStateAfterSell3.PepsCurrentIndexSoldQuantity);
+
+        // TODO: calculate the plus value and minus value crypto
 
         // -------
         // Sell 2 shares at 10 USD, with fees of 1 USD => Total Amount Local of 20 USD - 1 USD = 19 USD
@@ -730,12 +730,11 @@ public class TickerProcessingTest
 
         // No shares left
         Assert.AreEqual(0, tickerStateAfterSell4.TotalQuantity);
-        // The total amount is decreased to 0 (all share sold), and not by the total amount of the sell event 4
-        var totalAmountBaseAfterSell4 = 0;
+        // The total amount is decreased to 0 (0 remaining out of 2 shares), and not by the total amount of the sell event 4
+        var totalAmountBaseAfterSell4 = tickerStateAfterSell3.TotalAmountBase * (0m / 2m);
         Assert.AreEqual(totalAmountBaseAfterSell4, tickerStateAfterSell4.TotalAmountBase, Instance.Basics.Precision);
 
-        // The plus value CUMP for the event is the difference between the sell price and the average buy price for the
-        // two shares sold
+        // The plus value CUMP for the event is the difference between the sell price and the average buy price for the 2 shares sold
         // This value is negative, so it is actually a minus value, taken with reversed sign
         // This value is the second CUMP minus value realized. The plus value CUMP doesn't change.
         var averageBuyPriceTwoSharesSell4 = totalAmountBaseAfterSell3 - totalAmountBaseAfterSell4;
@@ -751,6 +750,14 @@ public class TickerProcessingTest
         var minusValuePepsSell4 = buyPriceTwoOldestShares - 19m / 4m;
         Assert.AreEqual(tickerStateAfterSell4.PlusValuePepsBase, tickerStateAfterSell3.PlusValuePepsBase);
         Assert.AreEqual(minusValuePepsSell3 + minusValuePepsSell4, tickerStateAfterSell4.MinusValuePepsBase, Instance.Basics.Precision);
+
+        // The PEPS current index is 4, since the last two shares of the third buy have been sold, and the pointer moves
+        // to the next buy event, that is not present -> moved after the end of the list of events
+        Assert.AreEqual(7, tickerStateAfterSell4.PepsCurrentIndex);
+        // The PEPS current index sold quantity is 0, since the current index has been moved forward
+        Assert.AreEqual(0, tickerStateAfterSell4.PepsCurrentIndexSoldQuantity);
+
+        // TODO: calculate the plus value and minus value crypto
     }
 
     [TestMethod]
@@ -766,6 +773,156 @@ public class TickerProcessingTest
         var tickerStateAfterBuy1 = tickerProcessing.ProcessBuy(
             buyEvent1, [buyEvent1], 0, initialState, TextWriter.Null);
 
+        // --------
+        // Sell 5 shares at 150 USD, with fees of 10 USD => Total Amount Local of 750 USD - 10 USD = 740 USD
+        var sellEvent1 = new Event(T0 + D, SellLimit, Ticker, 5, 150m, 740m, 10m, localCurrency, 2m, -1);
+        var tickerStateAfterSell1 = tickerProcessing.ProcessSell(
+            sellEvent1, [buyEvent1, sellEvent1], 1, tickerStateAfterBuy1, TextWriter.Null);
+
+        // 5 shares left
+        Assert.AreEqual(5, tickerStateAfterSell1.TotalQuantity);
+        // The total amount is decreased by half (5 remaining out of 10 shares), and not by the total amount of the sell event 1
+        var totalAmountBaseAfterSell1 = tickerStateAfterBuy1.TotalAmountBase * (5m / 10m);
+        Assert.AreEqual(totalAmountBaseAfterSell1, tickerStateAfterSell1.TotalAmountBase, Instance.Basics.Precision);
+
+        // The plus value CUMP for the event is the difference between the sell price and the average buy price for the 5 shares sold
+        // The minus value CUMP is 0, since no minus value has been realized
+        var averageBuyPriceFiveShares = totalAmountBaseAfterSell1;
+        var plusValueCumpSell1 = 740m / 2m - averageBuyPriceFiveShares;
+        Assert.AreEqual(plusValueCumpSell1, tickerStateAfterSell1.PlusValueCumpBase, Instance.Basics.Precision);
+        Assert.AreEqual(0, tickerStateAfterSell1.MinusValueCumpBase);
+        
+        // The plus value PEPS for the event is the difference between the sell price and the buy price of the first 5 shares bought
+        // The minus value PEPS is 0, since no minus value has been realized
+        var buyPriceFirstFiveShares = 1020m / 2m / 2m;
+        var plusValuePepsSell1 = 740m / 2m - buyPriceFirstFiveShares;
+        Assert.AreEqual(plusValuePepsSell1, tickerStateAfterSell1.PlusValuePepsBase, Instance.Basics.Precision);
+        Assert.AreEqual(0, tickerStateAfterSell1.MinusValuePepsBase);
+
+        // The PEPS current index is 0, since only 5 shares out of 10 have been sold
+        Assert.AreEqual(0, tickerStateAfterSell1.PepsCurrentIndex);
+        // The PEPS current index sold quantity is 5, since 5 shares out of 10 have been sold
+        Assert.AreEqual(5, tickerStateAfterSell1.PepsCurrentIndexSoldQuantity);
+
+        // TODO: calculate the plus value and minus value crypto
+
+        // -------
+        // Reset the ticker state
+        var resetEvent1 = new Event(T0 + 2 * D, Reset, Ticker, null, null, 0, null, localCurrency, 2m, -1);
+        var tickerStateAfterReset1 = tickerProcessing.ProcessReset(
+            resetEvent1, [buyEvent1, sellEvent1, resetEvent1], 2, tickerStateAfterSell1, TextWriter.Null);
+
+        // The total quantity and amount are the same as before the reset
+        Assert.AreEqual(tickerStateAfterSell1.TotalQuantity, tickerStateAfterReset1.TotalQuantity);
+        Assert.AreEqual(tickerStateAfterSell1.TotalAmountBase, tickerStateAfterReset1.TotalAmountBase);
+
+        // The plus and minus values CUMP, PEPS and crypto are reset to 0
+        Assert.AreEqual(0, tickerStateAfterReset1.PlusValueCumpBase);
+        Assert.AreEqual(0, tickerStateAfterReset1.MinusValueCumpBase);
+        Assert.AreEqual(0, tickerStateAfterReset1.PlusValuePepsBase);
+        Assert.AreEqual(0, tickerStateAfterReset1.MinusValuePepsBase);
+        Assert.AreEqual(0, tickerStateAfterReset1.PlusValueCryptoBase);
+        Assert.AreEqual(0, tickerStateAfterReset1.MinusValueCryptoBase);
+
+        // The PEPS current index and sold quantity are the same as before the reset
+        Assert.AreEqual(tickerStateAfterSell1.PepsCurrentIndex, tickerStateAfterReset1.PepsCurrentIndex);
+        Assert.AreEqual(tickerStateAfterSell1.PepsCurrentIndexSoldQuantity, tickerStateAfterReset1.PepsCurrentIndexSoldQuantity);
+    
+        // -------
+        // Sell 2 shares at 80 USD, with fees of 6 USD => Total Amount Local of 160 USD - 6 USD = 154 USD
+        var sellEvent2 = new Event(T0 + 3 * D, SellLimit, Ticker, 2, 80m, 154m, 6m, localCurrency, 2m, -1);
+        var tickerStateAfterSell2 = tickerProcessing.ProcessSell(
+            sellEvent2, [buyEvent1, sellEvent1, resetEvent1, sellEvent2], 3, 
+            tickerStateAfterReset1, TextWriter.Null);
+
+        // 3 shares left
+        Assert.AreEqual(3, tickerStateAfterSell2.TotalQuantity);
+        // The total amount is decreased to 3/5 (2 shares out of 5 sold), and not by the total amount of the sell event 2
+        var totalAmountBaseAfterSell2 = tickerStateAfterSell1.TotalAmountBase * (3m / 5m);
+        Assert.AreEqual(totalAmountBaseAfterSell2, tickerStateAfterSell2.TotalAmountBase, Instance.Basics.Precision);
+
+        // The plus value CUMP for the event is the difference between the sell price and the average buy price for the 2 shares sold
+        // This value is negative, so it is actually a minus value, taken with reversed sign
+        // This value is the first CUMP minus value realized. The plus value CUMP doesn't change.
+        var averageBuyPriceTwoSharesSell2 = totalAmountBaseAfterSell1 - totalAmountBaseAfterSell2;
+        var minusValueCumpSell2 = averageBuyPriceTwoSharesSell2 - 154m / 2m;
+        Assert.AreEqual(0, tickerStateAfterSell2.PlusValueCumpBase);
+        Assert.AreEqual(minusValueCumpSell2, tickerStateAfterSell2.MinusValueCumpBase, Instance.Basics.Precision);
+
+        // The plus value PEPS for the event is the difference between the sell price and the buy price of the oldest
+        // 2 shares bought:
+        // - oldest 2 shares bought at 1020 USD / 10 shares (local currency)
+        // This value is negative, so it is actually a minus value, taken with reversed sign
+        // This value is the first PEPS minus value realized. The plus value PEPS doesn't change.
+        var buyPriceOldestTwoShares = 2 * 1020m / 10m / 2m;
+        var minusValuePepsSell2 = buyPriceOldestTwoShares - 154m / 2m;
+        Assert.AreEqual(0, tickerStateAfterSell2.PlusValuePepsBase);
+        Assert.AreEqual(minusValuePepsSell2, tickerStateAfterSell2.MinusValuePepsBase, Instance.Basics.Precision);
+    
+        // The PEPS current index is 0, since there are still 3 shares left of the first buy that have not been sold
+        Assert.AreEqual(0, tickerStateAfterSell2.PepsCurrentIndex);
+        // The PEPS current index sold quantity is 7, since 7 shares out of 10 have been sold
+        Assert.AreEqual(7, tickerStateAfterSell2.PepsCurrentIndexSoldQuantity);
+
+        // TODO: calculate the plus value and minus value crypto
+
+        // -------
+        // Buy 1 share at 100 USD, with fees of 2 USD => Total Amount Local of 100 USD + 2 USD = 102 USD
+        var buyEvent2 = new Event(T0 + 4 * D, BuyLimit, Ticker, 1, 100m, 102m, 2m, localCurrency, 2m, -1);
+        var tickerStateAfterBuy2 = tickerProcessing.ProcessBuy(
+            buyEvent2, [buyEvent1, sellEvent1, resetEvent1, sellEvent2, buyEvent2], 4, 
+            tickerStateAfterSell2, TextWriter.Null);
+
+        // Buy 2 shares at 110 USD, with fees of 4 USD => Total Amount Local of 220 USD + 4 USD = 224 USD
+        var buyEvent3 = new Event(T0 + 5 * D, BuyLimit, Ticker, 2, 110m, 224m, 4m, localCurrency, 2m, -1);
+        var tickerStateAfterBuy3 = tickerProcessing.ProcessBuy(
+            buyEvent3, [buyEvent1, sellEvent1, resetEvent1, sellEvent2, buyEvent2, buyEvent3], 5, 
+            tickerStateAfterBuy2, TextWriter.Null);
+
+        // Cash withdrawal of 50 USD, with fees of 1 USD => Total Amount Local of 49 USD
+        var cashWithdrawalEvent1 = new Event(T0 + 6 * D, CashWithdrawal, Ticker, null, null, 49m, 1m, localCurrency, 2m, -1);
+        var tickerStateAfterCashWithdrawal1 = tickerProcessing.ProcessNoop(
+            cashWithdrawalEvent1, [buyEvent1, sellEvent1, resetEvent1, sellEvent2, buyEvent2, buyEvent3, cashWithdrawalEvent1], 6, 
+            tickerStateAfterBuy3, TextWriter.Null);
+
+        // Sell 4 shares at 120 USD, with fees of 8 USD => Total Amount Local of 480 USD - 8 USD = 472 USD
+        var sellEvent3 = new Event(T0 + 7 * D, SellLimit, Ticker, 4, 120m, 472m, 8m, localCurrency, 2m, -1);
+        var tickerStateAfterSell3 = tickerProcessing.ProcessSell(
+            sellEvent3, [buyEvent1, sellEvent1, resetEvent1, sellEvent2, buyEvent2, buyEvent3, cashWithdrawalEvent1, sellEvent3], 7, 
+            tickerStateAfterCashWithdrawal1, TextWriter.Null);
+
+        // 2 shares left
+        Assert.AreEqual(2, tickerStateAfterSell3.TotalQuantity);
+        // The total amount is decreased to 2/6 (2 remaining out of 6 shares), and not by the total amount of the sell event 3
+        var totalAmountBaseAfterSell3 = tickerStateAfterCashWithdrawal1.TotalAmountBase * (2m / 6m);
+        Assert.AreEqual(totalAmountBaseAfterSell3, tickerStateAfterSell3.TotalAmountBase, Instance.Basics.Precision);
+
+        // The plus value CUMP for the event is the difference between the sell price and the average buy price for the 4 shares sold
+        // The minus value CUMP remains the same as before, since no new minus value has been realized
+        var averageBuyPriceFourSharesSell3 = tickerStateAfterCashWithdrawal1.TotalAmountBase - totalAmountBaseAfterSell3;
+        var plusValueCumpSell3 = 472m / 2m - averageBuyPriceFourSharesSell3;
+        Assert.AreEqual(plusValueCumpSell3, tickerStateAfterSell3.PlusValueCumpBase, Instance.Basics.Precision);
+        Assert.AreEqual(tickerStateAfterCashWithdrawal1.MinusValueCumpBase, tickerStateAfterSell3.MinusValueCumpBase);
+
+        // The plus value PEPS for the event is the difference between the sell price and the buy price of the oldest 4 shares bought:
+        // - oldest 3 shares bought at 1020 USD / 10 shares (local currency)
+        // - next 1 share bought at 102 USD / 2 shares (local currency)
+        // - last 2 shares bought at 224 USD / 2 shares (local currency)
+        // The minus value PEPS remains the same as before, since no new minus value has been realized
+        var buyPriceOldestFourShares = 3 * 1020m / 10m / 2m + 1 * 102m / 1m / 2m;
+        var plusValuePepsSell3 = 472m / 2m - buyPriceOldestFourShares;
+        Assert.AreEqual(plusValuePepsSell3, tickerStateAfterSell3.PlusValuePepsBase, Instance.Basics.Precision);
+        Assert.AreEqual(tickerStateAfterCashWithdrawal1.MinusValuePepsBase, tickerStateAfterSell3.MinusValuePepsBase);
+
+        // The PEPS current index is 5, since all the 3 oldest shares, together with the next 1 share, have been sold,
+        // and the pointer moves to the next buy event (last 2 shares bought), that is in position 5 in the list of events
+        Assert.AreEqual(5, tickerStateAfterSell3.PepsCurrentIndex);
+        // The PEPS current index sold quantity is 0, since 0 shares out of 2 have been sold
+        Assert.AreEqual(0, tickerStateAfterSell3.PepsCurrentIndexSoldQuantity);
+
+        // TODO: calculate the plus value and minus value crypto
+
+        // TODO: continue
     }
 
 }
