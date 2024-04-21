@@ -47,6 +47,8 @@ class TickerProcessing(Basics basics)
     internal /* for testing */ TickerState ProcessReset(
         Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter)
     {
+        if (tickerEvent != tickerEvents[eventIndex])
+            throw new InvalidDataException($"Event and event index inconsistent");
         if (tickerEvent.Type is not EventType.Reset)
             throw new NotSupportedException($"Unsupported type: {tickerEvent.Type}");
         if (tickerEvent.Quantity != null)
@@ -72,12 +74,17 @@ class TickerProcessing(Basics basics)
     internal /* for testing */ TickerState ProcessNoop(
         Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter)
     {
+        if (tickerEvent != tickerEvents[eventIndex])
+            throw new InvalidDataException($"Event and event index inconsistent");
+
         return tickerState;
     }
 
     internal /* for testing */ TickerState ProcessBuy(
         Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter)
     {
+        if (tickerEvent != tickerEvents[eventIndex])
+            throw new InvalidDataException($"Event and event index inconsistent");
         if (tickerEvent.Type is not (EventType.BuyMarket or EventType.BuyLimit))
             throw new NotSupportedException($"Unsupported type: {tickerEvent.Type}");
         if (tickerEvent.Ticker == null)
@@ -135,53 +142,11 @@ class TickerProcessing(Basics basics)
         };
     }
 
-    internal /* for testing */ TickerState ProcessStockSplit(
-        Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter)
-    {
-        if (tickerEvent.Type is not EventType.StockSplit)
-            throw new NotSupportedException($"Unsupported type: {tickerEvent.Type}");
-        if (tickerEvent.Ticker == null)
-            throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.Ticker)} null");
-        if (tickerEvent.Quantity == null)
-            throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.Quantity)} null");
-        if (tickerEvent.PricePerShareLocal != null)
-            throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.PricePerShareLocal)} not null");
-        if (tickerEvent.TotalAmountLocal != 0m)
-            throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.TotalAmountLocal)} not zero");
-        if (tickerEvent.Ticker != tickerState.Ticker)
-            throw new InvalidDataException($"Event and state tickers don't match");
-
-        var splitDelta = tickerEvent.Quantity.Value;
-        outWriter.WriteLine($"\tSplit Delta = {splitDelta}");
-
-        var splitRatio = (tickerState.TotalQuantity + splitDelta) / tickerState.TotalQuantity;
-        outWriter.WriteLine($"\tSplit Ratio = {splitRatio}");
-
-        outWriter.WriteLine($"\tRetroactively update previous buy and sell events:");
-        for (var i = 0; i < eventIndex; i++)
-        {
-            if (tickerEvents[i].IsBuy || tickerEvents[i].IsSell)
-            {
-                var normalizedEvent = tickerEvents[i] with
-                {
-                    Quantity = tickerEvents[i].Quantity * splitRatio,
-                    PricePerShareLocal = tickerEvents[i].PricePerShareLocal / splitRatio,
-                };
-                outWriter.WriteLine($"\t\t{tickerEvents[i]}");
-                outWriter.WriteLine($"\t\t\tbecomes {normalizedEvent}");
-                tickerEvents[i] = normalizedEvent;
-            }
-        }
-
-        return tickerState with
-        {
-            TotalQuantity = tickerState.TotalQuantity + splitDelta,
-        };
-    }
-
     internal /* for testing */ TickerState ProcessSell(
         Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter)
     {
+        if (tickerEvent != tickerEvents[eventIndex])
+            throw new InvalidDataException($"Event and event index inconsistent");
         if (tickerEvent.Type is not (EventType.SellMarket or EventType.SellLimit))
             throw new NotSupportedException($"Unsupported type: {tickerEvent.Type}");
         if (tickerEvent.Ticker == null)
@@ -383,9 +348,57 @@ class TickerProcessing(Basics basics)
         }
     }
 
+    internal /* for testing */ TickerState ProcessStockSplit(
+            Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter)
+    {
+        if (tickerEvent != tickerEvents[eventIndex])
+            throw new InvalidDataException($"Event and event index inconsistent");
+        if (tickerEvent.Type is not EventType.StockSplit)
+            throw new NotSupportedException($"Unsupported type: {tickerEvent.Type}");
+        if (tickerEvent.Ticker == null)
+            throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.Ticker)} null");
+        if (tickerEvent.Quantity == null)
+            throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.Quantity)} null");
+        if (tickerEvent.PricePerShareLocal != null)
+            throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.PricePerShareLocal)} not null");
+        if (tickerEvent.TotalAmountLocal != 0m)
+            throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.TotalAmountLocal)} not zero");
+        if (tickerEvent.Ticker != tickerState.Ticker)
+            throw new InvalidDataException($"Event and state tickers don't match");
+
+        var splitDelta = tickerEvent.Quantity.Value;
+        outWriter.WriteLine($"\tSplit Delta = {splitDelta}");
+
+        var splitRatio = (tickerState.TotalQuantity + splitDelta) / tickerState.TotalQuantity;
+        outWriter.WriteLine($"\tSplit Ratio = {splitRatio}");
+
+        outWriter.WriteLine($"\tRetroactively update previous buy and sell events:");
+        for (var i = 0; i < eventIndex; i++)
+        {
+            if (tickerEvents[i].IsBuy || tickerEvents[i].IsSell)
+            {
+                var normalizedEvent = tickerEvents[i] with
+                {
+                    Quantity = tickerEvents[i].Quantity * splitRatio,
+                    PricePerShareLocal = tickerEvents[i].PricePerShareLocal / splitRatio,
+                };
+                outWriter.WriteLine($"\t\t{tickerEvents[i]}");
+                outWriter.WriteLine($"\t\t\tbecomes {normalizedEvent}");
+                tickerEvents[i] = normalizedEvent;
+            }
+        }
+
+        return tickerState with
+        {
+            TotalQuantity = tickerState.TotalQuantity + splitDelta,
+        };
+    }
+
     internal /* for testing */ TickerState ProcessDividend(
         Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter)
     {
+        if (tickerEvent != tickerEvents[eventIndex])
+            throw new InvalidDataException($"Event and event index inconsistent");
         if (tickerEvent.Type is not EventType.Dividend)
             throw new NotSupportedException($"Unsupported type: {tickerEvent.Type}");
         if (tickerEvent.Ticker == null)
