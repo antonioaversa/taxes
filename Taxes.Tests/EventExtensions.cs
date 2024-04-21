@@ -6,6 +6,7 @@ static class EventExtensions
 {
     private const decimal DefaultDelta = 0.01m;
 
+    [AssertionMethod]
     public static void AssertEvent(
         this Event @event, 
         DateTime? date = null, 
