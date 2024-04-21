@@ -536,7 +536,7 @@ public class TickerProcessingTest
         
         // First buy 3 shares at 100.10002 USD, with fees of 3.20003 USD => Total Amount Local of 303.50009 USD
         var buyEvent = new Event(T0, BuyLimit, Ticker, 3, 100.10002m, 303.50009m, 3.20003m, localCurrency, 4m, -1);
-        var tickerStateAfterBuy = tickerProcessing.ProcessBuy(buyEvent, [buyEvent], 0, initialState, new StringWriter());
+        var tickerStateAfterBuy = tickerProcessing.ProcessBuy(buyEvent, [buyEvent], 0, initialState, TextWriter.Null);
         // Then sell 2 shares at 150.15003 USD, with fees of 2.50005 USD => Total Amount Local of 300.30006 USD - 2.50005 USD = 297.80001 USD
         var sellEvent = new Event(T0 + D, SellLimit, Ticker, 2, 150.15003m, 297.80001m, 2.50005m, localCurrency, 4m, -1);
         var writer = new StringWriter();
@@ -568,7 +568,7 @@ public class TickerProcessingTest
     [TestMethod]
     public void ProcessBuyAndSell_UpdateTickerStateCorrectly()
     {
-        var tickerProcessing = new TickerProcessing(new Basics() { Rounding = x => decimal.Round(x, 2) });
+        var tickerProcessing = Instance;
         var localCurrency = USD; // FX rate between USD and EUR stays stable at 4 USD for 1 EUR across events
         var initialState = new TickerState(Ticker, Isin);
 
@@ -576,7 +576,7 @@ public class TickerProcessingTest
         // First buy 3 shares at 100 USD, with fees of 3.20 USD => Total Amount Local of 300 USD + 3.20 USD = 303.20 USD
         var buyEvent1 = new Event(T0, BuyLimit, Ticker, 3, 100m, 303.20m, 3.20m, localCurrency, 4m, -1);
         var tickerStateAfterBuy1 = tickerProcessing.ProcessBuy(
-            buyEvent1, [buyEvent1], 0, initialState, new StringWriter());
+            buyEvent1, [buyEvent1], 0, initialState, TextWriter.Null);
         
         // 3 shares available
         Assert.AreEqual(3, tickerStateAfterBuy1.TotalQuantity);
@@ -588,7 +588,7 @@ public class TickerProcessingTest
         // Then sell 2 shares at 150 USD, with fees of 2.50 USD => Total Amount Local of 300 USD - 2.50 USD = 297.50 USD
         var sellEvent1 = new Event(T0 + D, SellLimit, Ticker, 2, 150m, 297.50m, 2.50m, localCurrency, 4m, -1);
         var tickerStateAfterSell1 = tickerProcessing.ProcessSell(
-            sellEvent1, [buyEvent1, sellEvent1], 1, tickerStateAfterBuy1, new StringWriter());
+            sellEvent1, [buyEvent1, sellEvent1], 1, tickerStateAfterBuy1, TextWriter.Null);
         
         // Only 1 share left
         Assert.AreEqual(1, tickerStateAfterSell1.TotalQuantity);
@@ -620,7 +620,7 @@ public class TickerProcessingTest
         // Buy 3 shares at 110 USD, with fees of 4 USD => Total Amount Local of 330 USD + 4 USD = 334 USD
         var buyEvent2 = new Event(T0 + 2 * D, BuyLimit, Ticker, 3, 110m, 334m, 4m, localCurrency, 4m, -1);
         var tickerStateAfterBuy2 = tickerProcessing.ProcessBuy(
-            buyEvent2, [buyEvent1, sellEvent1, buyEvent2], 2, tickerStateAfterSell1, new StringWriter());
+            buyEvent2, [buyEvent1, sellEvent1, buyEvent2], 2, tickerStateAfterSell1, TextWriter.Null);
 
         // The total quantity is increased by 3
         Assert.AreEqual(4, tickerStateAfterBuy2.TotalQuantity);
@@ -632,7 +632,7 @@ public class TickerProcessingTest
         // Buy 2 shares at 120 USD, with fees of 3 USD => Total Amount Local of 240 USD + 3 USD = 243 USD
         var buyEvent3 = new Event(T0 + 3 * D, BuyLimit, Ticker, 2, 120m, 243m, 3m, localCurrency, 4m, -1);
         var tickerStateAfterBuy3 = tickerProcessing.ProcessBuy(
-            buyEvent3, [buyEvent1, sellEvent1, buyEvent2, buyEvent3], 3, tickerStateAfterBuy2, new StringWriter());
+            buyEvent3, [buyEvent1, sellEvent1, buyEvent2, buyEvent3], 3, tickerStateAfterBuy2, TextWriter.Null);
 
         // The total quantity is increased by 2
         Assert.AreEqual(6, tickerStateAfterBuy3.TotalQuantity);
@@ -644,7 +644,8 @@ public class TickerProcessingTest
         // Sell 3 shares at 130 USD, with fees of 3 USD => Total Amount Local of 390 USD - 3 USD = 387 USD
         var sellEvent2 = new Event(T0 + 4 * D, SellLimit, Ticker, 3, 130m, 387m, 3m, localCurrency, 4m, -1);
         var tickerStateAfterSell2 = tickerProcessing.ProcessSell(
-            sellEvent2, [buyEvent1, sellEvent1, buyEvent2, buyEvent3, sellEvent2], 4, tickerStateAfterBuy3, new StringWriter());
+            sellEvent2, [buyEvent1, sellEvent1, buyEvent2, buyEvent3, sellEvent2], 4, 
+            tickerStateAfterBuy3, TextWriter.Null);
 
         // Only 3 shares left
         Assert.AreEqual(3, tickerStateAfterSell2.TotalQuantity);
@@ -684,7 +685,8 @@ public class TickerProcessingTest
         // Sell 1 shares at 10 USD, with fees of 1 USD => Total Amount Local of 10 USD - 1 USD = 9 USD
         var sellEvent3 = new Event(T0 + 5 * D, SellLimit, Ticker, 1, 10m, 9m, 1m, localCurrency, 4m, -1);
         var tickerStateAfterSell3 = tickerProcessing.ProcessSell(
-            sellEvent3, [buyEvent1, sellEvent1, buyEvent2, buyEvent3, sellEvent2, sellEvent3], 5, tickerStateAfterSell2, new StringWriter());
+            sellEvent3, [buyEvent1, sellEvent1, buyEvent2, buyEvent3, sellEvent2, sellEvent3], 5, 
+            tickerStateAfterSell2, TextWriter.Null);
 
         // Only 2 shares left
         Assert.AreEqual(2, tickerStateAfterSell3.TotalQuantity);
@@ -724,7 +726,7 @@ public class TickerProcessingTest
         var sellEvent4 = new Event(T0 + 6 * D, SellLimit, Ticker, 2, 10m, 19m, 1m, localCurrency, 4m, -1);
         var tickerStateAfterSell4 = tickerProcessing.ProcessSell(
             sellEvent4, [buyEvent1, sellEvent1, buyEvent2, buyEvent3, sellEvent2, sellEvent3, sellEvent4], 6, 
-            tickerStateAfterSell3, new StringWriter());
+            tickerStateAfterSell3, TextWriter.Null);
 
         // No shares left
         Assert.AreEqual(0, tickerStateAfterSell4.TotalQuantity);
@@ -749,6 +751,21 @@ public class TickerProcessingTest
         var minusValuePepsSell4 = buyPriceTwoOldestShares - 19m / 4m;
         Assert.AreEqual(tickerStateAfterSell4.PlusValuePepsBase, tickerStateAfterSell3.PlusValuePepsBase);
         Assert.AreEqual(minusValuePepsSell3 + minusValuePepsSell4, tickerStateAfterSell4.MinusValuePepsBase, Instance.Basics.Precision);
+    }
+
+    [TestMethod]
+    public void ProcessBuyAndSell_AfterReset_UpdateTickerStateCorrectly()
+    {
+        var tickerProcessing = Instance;
+        var localCurrency = USD; // FX rate between USD and EUR stays stable at 2 USD for 1 EUR across events
+        var initialState = new TickerState(Ticker, Isin);
+
+        // -------
+        // First buy 10 shares at 100 USD, with fees of 20 USD => Total Amount Local of 1000 USD + 20 USD = 1020 USD
+        var buyEvent1 = new Event(T0, BuyLimit, Ticker, 10, 100m, 1020m, 20m, localCurrency, 2m, -1);
+        var tickerStateAfterBuy1 = tickerProcessing.ProcessBuy(
+            buyEvent1, [buyEvent1], 0, initialState, TextWriter.Null);
+
     }
 
 }
