@@ -388,6 +388,7 @@ class TickerProcessing(Basics basics)
         return tickerState with
         {
             TotalQuantity = tickerState.TotalQuantity + splitDelta,
+            PepsCurrentIndexSoldQuantity = tickerState.PepsCurrentIndexSoldQuantity * splitRatio,
         };
     }
 
