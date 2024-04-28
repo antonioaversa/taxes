@@ -1,5 +1,50 @@
 # Taxes calculator
 
+The software can be used to simulate approximated taxes on financial assets, according to French Law, for a given 
+period of time. It can be used in simulations for personal use, and it doesn't provide any guarantee of correctness.
+
+It is provided as-is and shouldn't be used as a substitute for professional tools or advice.
+
+It currently deals with the calculation of the following asset classes:
+- stocks (and ETFs of stocks)
+- crypto-currencies
+
+It has not been designed to process bonds, ETFs of bonds, or other financial assets, such as options, futures, etc.
+It also doesn't provide any support for the calculation of taxes on income, such as salaries, pensions, etc.
+It doesn't offer support in the compilation of the tax declaration, nor in its submission.
+
+It is designed to be used in **batch mode**, and it requires the following input:
+- **Basics.json**, a JSON file containing the basic setup of the software
+  - where settings like rounding, precision, base currency, ISINs, etc. are configured
+  - also where the paths of input files containing list of events are specified (see next point)
+- **one or more ordered list of stock events**, each list in a CSV, according to the Revolut export format
+  - events can be ticker events, such as buy, sell, dividends and splits, or portfolio events, such as deposits and withdrawals
+  - multiple lists are supported to be able to keep one list (that is one CSV file) per year
+	- keeping different lists per year is useful but not mandatory
+	- when data for multiple years is provided, it's important to have a reset event at the beginning of each year, 
+	  to reset the state of the calculation of capital gains, losses, dividends, etc.
+  - if more than one list is provided, the software will merge them in a single list of events, ordered by date
+- **one or more ordered list of crypto events**, each list in a CSV, according to the Revolut export format
+  - the Revolut export format for crypto events is different from the one for stock events
+  - events can be crypto-specific events (`EXCHANGE`), or portfolio events (`TRANSFER`) 
+  - multiple lists are supported to be able to keep one list (that is one CSV file) per year and per crypto
+	- keeping different lists per year and per crypto is useful but not mandatory
+	- as for stocks, when data for multiple years is provided, it's important to have a reset event at the beginning of 
+	  each year, to reset the state of the calculation of crypto gains and losses
+  - as for stocks, if more than one list is provided, the software will merge them in a single list of events, ordered
+	by date
+- **BCE FX Rates**, a semicolon-separated-values file in French-local containing the FX Rates (Foreign eXchange Rates)
+  between the base currency (specified in the basics) and any other currency appearing in the events
+  - the exchange rate is determined by the ECB and provided by the Banque de France on their web-site
+  - the file should contain all FX Rates for a contiguous period of time including all dates of ticker events
+  - the software will use the FX Rate as defined in other reports, or the closest FX Rate available, when the ECB 
+	didn't provide an FX Rate for the date of a ticker event
+  - as an alternative for stock events, the FX Rate specified on each event can be used
+	- that is available in Revolut exported data for stock events only, not for crypto events
+ 
+The output is emitted on the standard output. It shows the processing of the events, and the calculation of the taxes
+step-by-step, giving the state of the portfolio and the taxes due after each event.
+
 ## Setup
 Update all the files under the `Reports` directory.
 
