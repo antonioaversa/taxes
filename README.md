@@ -182,16 +182,18 @@ When using the multi-currency FX Rates option, the file can be used as-is, witho
 
 #### Single-currency FX Rates
 
-Make sure that the file (name example `BCE-FXRate-<base_currency>-USD.txt`) is up-to-date, i.e. it contains all the FX
-Rates defined by the ECB between the base currency `EUR` and `USD` for a contiguous period of time including all dates 
-of ticker events, of any type (buy, sell, dividends, for both stocks and crypto).
+Make sure that the file (name example `BCE-FXRate-<base_currency>-<local_currency_>.txt`) is up-to-date.
+
+That means it has to contains all the FX Rates defined by the ECB between the base currency (e.g. `EUR`) and the local 
+currency (e.g. `USD`) for a contiguous period of time including all dates of ticker events, of any type (buy, sell, 
+dividends, for both stocks and crypto).
 
 This file can be generated from the [Multi-currency FX Rates file](#Multi-currency-FX-Rates), by retaining only the FX
-Rates between `USD` and `EUR`.
+Rates between the local currency and the base currency.
 
 The resulting file should define FX Rates in the following format:
 
-```
+```text
 <date>\t<decimalNumber>
 ```
 
@@ -201,7 +203,7 @@ Where:
 
 For example:
 
-```
+```text
 4/14/2023	1.1057 
 4/13/2023	1.1015
 4/12/2023	1.0922
@@ -213,13 +215,13 @@ For example:
 
 Comments are allowed, in the following format:
 
-```
+```text
 // Titre :	Dollar des Etats-Unis (USD)
-// Code s rie :	EXR.D.USD.EUR.SP00.A
-// Unit  :	Dollar des Etats-Unis (USD)
-// Magnitude :	Unit s (0)
-// M thode d'observation :	Fin de p riode (E)
-// Source :	BCE (Banque Centrale Europ enne) (4F0)
+// Code série :	EXR.D.USD.EUR.SP00.A
+// Unité :	Dollar des Etats-Unis (USD)
+// Magnitude :	Unités (0)
+// Méthode d'observation :	Fin de période (E)
+// Source :	BCE (Banque Centrale Européenne) (4F0)
 ```
 
 ### Setup crypto portfolio values
@@ -231,8 +233,16 @@ event, not just the sell price of the specific crypto sold.
 As of the day of writing this, there is no option to extract this data from the Revolut app into a file, so the value 
 of the portfolio should be checked manually in the UI of the app and entered in a file respecting the following format:
 
-
-
+```text
+Date,PortfolioValue
+2022-03-30,2261.4
+2022-03-31,2756.6
+2022-06-15,8422.8
+2022-06-21,8670.8
+2022-06-24,8942.1
+2022-06-27,9996.7
+2022-06-28,10414
+```
 
 ### Setup stock events
 
