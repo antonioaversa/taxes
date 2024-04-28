@@ -13,8 +13,9 @@ public class TickerProcessingTest
     private const string Isin = "US0378331005";
     private const string AnotherTicker = "GOOGL";
     private const string AnotherIsin = "US02079K3059";
-    private static readonly DateTime T0 = new(2022, 01, 01, 00, 00, 00);
+    private static readonly DateTime T0 = new(2022, 01, 01, 00, 00, 00, DateTimeKind.Utc);
     private static readonly TimeSpan D = TimeSpan.FromDays(1);
+    private static readonly TextWriter NoOut = TextWriter.Null;
 
     private readonly TickerProcessing Instance = new(new());
 
@@ -25,13 +26,13 @@ public class TickerProcessingTest
     }
 
     [TestMethod]
-    public void ProcessTicker_BuyLimit()
+    public void ProcessTicker_BuyLimit_IncreasesTotalQuantityAndAmountAccordingly()
     {
         // Quantity, PricePerShareLocal, TotalAmountLocal, FeesLocal
         List<Event> e = [new(T0, BuyLimit, Ticker, 3, 100, 303, 3, EUR, 1, -1)];
         Instance.ProcessTicker(Ticker, e).AssertZeroExceptFor(
             totalQuantity: 3, totalAmountBase: 303, portfolioAcquisitionValueBase: 303);
-        e.Add(new(T0 + D, BuyLimit, Ticker, 2, 110, 222, 2, EUR, 1, -1));
+        e.Add(new(T0 + 1 * D, BuyLimit, Ticker, 2, 110, 222, 2, EUR, 1, -1));
         Instance.ProcessTicker(Ticker, e).AssertZeroExceptFor(
             totalQuantity: 5, totalAmountBase: 525, portfolioAcquisitionValueBase: 525);
         e.Add(new(T0 + 2 * D, BuyLimit, Ticker, 1, 90, 91, 1, EUR, 1, -1));
@@ -67,12 +68,12 @@ public class TickerProcessingTest
 
     [TestMethod]
     [ExpectedException(typeof(Exception), AllowDerivedTypes = true)]
-    public void ProcessTicker_SellWithoutBuying() => 
+    public void ProcessTicker_SellWithoutBuying_RaisesException() => 
         Instance.ProcessTicker(Ticker, [new(T0, SellLimit, Ticker, 3, 100, 303, 3, EUR, 1, -1)]);
 
     [TestMethod]
     [ExpectedException(typeof(Exception), AllowDerivedTypes = true)]
-    public void ProcessTicker_SellMoreThanBuying() =>
+    public void ProcessTicker_SellMoreThanOwned_RaisesException() =>
          Instance.ProcessTicker(Ticker, [
              new(T0, BuyLimit, Ticker, 3, 100, 303, 3, EUR, 1,  -1),
              new(T0, SellLimit, Ticker, 4, 100, 404, 4, EUR, 1, -1)]);
@@ -85,7 +86,7 @@ public class TickerProcessingTest
     //         new(T0, BuyLimit, Ticker, 
     //             Quantity: 3, PricePerShareLocal: 100, TotalAmountLocal: 303, FeesLocal: 3, 
     //             EUR, 1, -1),
-    //         new(T0 + D, SellLimit, Ticker, 
+    //         new(T0 + 1 * D, SellLimit, Ticker, 
     //             Quantity: 3, PricePerShareLocal: 110, TotalAmountLocal: 330, FeesLocal: 3, 
     //             EUR, 1, -1)];
     //     Instance.ProcessTicker(Ticker, e).AssertZeroExceptFor(
@@ -101,271 +102,271 @@ public class TickerProcessingTest
     [DataRow(CustodyChange)]
     public void ProcessTicker_Event_DoesntChangeTickerState(EventType eventType)
     {
-        var tickerState = new TickerState(Ticker, Isin);
-        var tickerEvent = new Event(T0, eventType, Ticker, null, null, 100, null, EUR, 1, -1);
-        var tickerStateAfterTopUp = Instance.ProcessTicker(Ticker, [tickerEvent], TextWriter.Null);
-        Assert.AreEqual(tickerState, tickerStateAfterTopUp);
+        var state = new TickerState(Ticker, Isin);
+        var tickerEvent = new Event(T0 + 0 * D, eventType, Ticker, null, null, 100, null, EUR, 1, -1);
+        var stateAfterTopUp = Instance.ProcessTicker(Ticker, [tickerEvent], NoOut);
+        Assert.AreEqual(state, stateAfterTopUp);
     }
 
     [TestMethod]
     public void ProcessReset_KeepsTickerAndIsin()
     {
-        var tickerEvent = new Event(T0, Reset, Ticker, null, null, 0m, null, EUR, 1, -1);
-        var tickerState = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
-        var tickerStateAfterReset = Instance.ProcessReset(tickerEvent, [tickerEvent], 0, tickerState, TextWriter.Null);
-        Assert.AreEqual(Ticker, tickerStateAfterReset.Ticker);
-        Assert.AreEqual(Isin, tickerStateAfterReset.Isin);
+        var reset1 = new Event(T0 + 0 * D, Reset, Ticker, null, null, 0m, null, EUR, 1, -1);
+        var state = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
+        var stateAfterReset = Instance.ProcessReset(reset1, [reset1], 0, state, NoOut);
+        Assert.AreEqual(Ticker, stateAfterReset.Ticker);
+        Assert.AreEqual(Isin, stateAfterReset.Isin);
     }
 
     [TestMethod]
     public void ProcessReset_WhenTickerEventAndIndexAreInconsistent_RaisesException()
     {
-        var cashWithdrawalEvent = new Event(T0, CashWithdrawal, Ticker, null, null, 100, null, EUR, 1, -1);
-        var resetEvent = new Event(T0, Reset, Ticker, null, null, 0m, null, EUR, 1, -1);
-        var tickerState = new TickerState(Ticker, Isin);
-        ThrowsAny<Exception>(() => Instance.ProcessReset(resetEvent, [cashWithdrawalEvent, resetEvent], 0, tickerState, TextWriter.Null));
+        var cashWithdrawal1 = new Event(T0 + 0 * D, CashWithdrawal, Ticker, null, null, 100, null, EUR, 1, -1);
+        var reset1 = new Event(T0 + 0 * D, Reset, Ticker, null, null, 0m, null, EUR, 1, -1);
+        var state = new TickerState(Ticker, Isin);
+        ThrowsAny<Exception>(() => Instance.ProcessReset(reset1, [cashWithdrawal1, reset1], 0, state, NoOut));
     }
 
     [TestMethod]
     public void ProcessReset_WhenPassingNotSupportedType_RaisesException()
     {
-        var tickerEvent = new Event(T0, CustodyFee, Ticker, 0, 0, 0, 12.0m, EUR, 1, -1);
-        var tickerState = new TickerState(Ticker, Isin);
-        ThrowsAny<Exception>(() => Instance.ProcessReset(tickerEvent, [tickerEvent], 0, tickerState, TextWriter.Null));
+        var custodyFee1 = new Event(T0 + 0 * D, CustodyFee, Ticker, 0, 0, 0, 12.0m, EUR, 1, -1);
+        var state = new TickerState(Ticker, Isin);
+        ThrowsAny<Exception>(() => Instance.ProcessReset(custodyFee1, [custodyFee1], 0, state, NoOut));
     }
 
     [TestMethod]
     public void ProcessReset_WhenPassingANonZeroTotalAmount_RaisesException()
     {
-        var tickerState = new TickerState(Ticker, Isin);
-        var tickerEvent = new Event(T0, Reset, Ticker, null, null, TotalAmountLocal: 303, null, EUR, 1, -1);
-        ThrowsAny<Exception>(() => Instance.ProcessReset(tickerEvent, [tickerEvent], 0, tickerState, TextWriter.Null));
+        var state = new TickerState(Ticker, Isin);
+        var reset1 = new Event(T0 + 0 * D, Reset, Ticker, null, null, TotalAmountLocal: 303, null, EUR, 1, -1);
+        ThrowsAny<Exception>(() => Instance.ProcessReset(reset1, [reset1], 0, state, NoOut));
     }
 
     [TestMethod]
     public void ProcessReset_WhenPassingTransactionRelatedInfo_RaisesException()
     {
-        var tickerState = new TickerState(Ticker, Isin);
-        var tickerEvent = new Event(T0, Reset, Ticker, Quantity: 4, null, 0m, null, EUR, 1, -1);
-        ThrowsAny<Exception>(() => Instance.ProcessReset(tickerEvent, [tickerEvent], 0, tickerState, TextWriter.Null));
-        tickerEvent = new Event(T0, Reset, Ticker, null, PricePerShareLocal: 100, 0m, null, EUR, 1, -1);
-        ThrowsAny<Exception>(() => Instance.ProcessReset(tickerEvent, [tickerEvent], 0, tickerState, TextWriter.Null));
-        tickerEvent = new Event(T0, Reset, Ticker, null, null, 0m, FeesLocal: 3, EUR, 1, -1);
-        ThrowsAny<Exception>(() => Instance.ProcessReset(tickerEvent, [tickerEvent], 0, tickerState, TextWriter.Null));
+        var state = new TickerState(Ticker, Isin);
+        var reset1 = new Event(T0 + 0 * D, Reset, Ticker, Quantity: 4, null, 0m, null, EUR, 1, -1);
+        ThrowsAny<Exception>(() => Instance.ProcessReset(reset1, [reset1], 0, state, NoOut));
+        reset1 = new Event(T0 + 0 * D, Reset, Ticker, null, PricePerShareLocal: 100, 0m, null, EUR, 1, -1);
+        ThrowsAny<Exception>(() => Instance.ProcessReset(reset1, [reset1], 0, state, NoOut));
+        reset1 = new Event(T0 + 0 * D, Reset, Ticker, null, null, 0m, FeesLocal: 3, EUR, 1, -1);
+        ThrowsAny<Exception>(() => Instance.ProcessReset(reset1, [reset1], 0, state, NoOut));
     }
 
     [TestMethod]
     public void ProcessReset_PreservesTotalQuantityAndAmountBase()
     {
-        var tickerEvent = new Event(T0, Reset, Ticker, null, null, 0m, null, EUR, 1, -1);
-        var tickerState = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
-        var tickerStateAfterReset = Instance.ProcessReset(tickerEvent, [tickerEvent], 0, tickerState, TextWriter.Null);
-        AssertEq(3, tickerStateAfterReset.TotalQuantity);
-        AssertEq(5.5m, tickerStateAfterReset.TotalAmountBase);
+        var reset1 = new Event(T0 + 0 * D, Reset, Ticker, null, null, 0m, null, EUR, 1, -1);
+        var state = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
+        var stateAfterReset = Instance.ProcessReset(reset1, [reset1], 0, state, NoOut);
+        AssertEq(3, stateAfterReset.TotalQuantity);
+        AssertEq(5.5m, stateAfterReset.TotalAmountBase);
     }
 
     [TestMethod]
     public void ProcessReset_PreservesPepsIndexes()
     {
-        var tickerEvent = new Event(T0, Reset, Ticker, null, null, 0m, null, EUR, 1, -1);
-        var tickerState = new TickerState(Ticker, Isin, PepsCurrentIndex: 3, PepsCurrentIndexSoldQuantity: 5.5m);
-        var tickerStateAfterReset = Instance.ProcessReset(tickerEvent, [tickerEvent], 0, tickerState, TextWriter.Null);
-        AssertEq(3, tickerStateAfterReset.PepsCurrentIndex);
-        AssertEq(5.5m, tickerStateAfterReset.PepsCurrentIndexSoldQuantity);
+        var reset1 = new Event(T0 + 0 * D, Reset, Ticker, null, null, 0m, null, EUR, 1, -1);
+        var state = new TickerState(Ticker, Isin, PepsCurrentIndex: 3, PepsCurrentIndexSoldQuantity: 5.5m);
+        var stateAfterReset = Instance.ProcessReset(reset1, [reset1], 0, state, NoOut);
+        AssertEq(3, stateAfterReset.PepsCurrentIndex);
+        AssertEq(5.5m, stateAfterReset.PepsCurrentIndexSoldQuantity);
     }
 
     [TestMethod]
     public void ProcessReset_PreservesPortfolioAcquisitionValueBaseAndCryptoFractionOfInitialCapital()
     {
-        var tickerEvent = new Event(T0, Reset, Ticker, null, null, 0m, null, EUR, 1, -1);
-        var tickerState = new TickerState(Ticker, Isin, 
+        var reset1 = new Event(T0 + 0 * D, Reset, Ticker, null, null, 0m, null, EUR, 1, -1);
+        var state = new TickerState(Ticker, Isin, 
             PortfolioAcquisitionValueBase: 5.5m, CryptoFractionOfInitialCapital: 0.75m);
-        var tickerStateAfterReset = Instance.ProcessReset(tickerEvent, [tickerEvent], 0, tickerState, TextWriter.Null);
-        AssertEq(5.5m, tickerStateAfterReset.PortfolioAcquisitionValueBase);
-        AssertEq(0.75m, tickerStateAfterReset.CryptoFractionOfInitialCapital);
+        var stateAfterReset = Instance.ProcessReset(reset1, [reset1], 0, state, NoOut);
+        AssertEq(5.5m, stateAfterReset.PortfolioAcquisitionValueBase);
+        AssertEq(0.75m, stateAfterReset.CryptoFractionOfInitialCapital);
     }
 
     [TestMethod]
     public void ProcessReset_ResetsPlusValues()
     {
-        var tickerEvent = new Event(T0, Reset, Ticker, null, null, 0m, null, EUR, 1, -1);
-        var tickerState = new TickerState(Ticker, Isin, 
+        var reset1 = new Event(T0 + 0 * D, Reset, Ticker, null, null, 0m, null, EUR, 1, -1);
+        var state = new TickerState(Ticker, Isin, 
             PlusValueCumpBase: 5.5m, PlusValuePepsBase: 5.5m, PlusValueCryptoBase: 5.5m);
-        var tickerStateAfterReset = Instance.ProcessReset(tickerEvent, [tickerEvent], 0, tickerState, TextWriter.Null);
-        AssertEq(0, tickerStateAfterReset.PlusValueCumpBase);
-        AssertEq(0, tickerStateAfterReset.PlusValuePepsBase);
-        AssertEq(0, tickerStateAfterReset.PlusValueCryptoBase);
+        var stateAfterReset = Instance.ProcessReset(reset1, [reset1], 0, state, NoOut);
+        AssertEq(0, stateAfterReset.PlusValueCumpBase);
+        AssertEq(0, stateAfterReset.PlusValuePepsBase);
+        AssertEq(0, stateAfterReset.PlusValueCryptoBase);
     }
 
     [TestMethod]
     public void ProcessReset_ResetsMinusValues()
     {
-        var tickerEvent = new Event(T0, Reset, Ticker, null, null, 0m, null, EUR, 1, -1);
-        var tickerState = new TickerState(Ticker, Isin, 
+        var reset1 = new Event(T0 + 0 * D, Reset, Ticker, null, null, 0m, null, EUR, 1, -1);
+        var state = new TickerState(Ticker, Isin, 
                        MinusValueCumpBase: 5.5m, MinusValuePepsBase: 5.5m, MinusValueCryptoBase: 5.5m);
-        var tickerStateAfterReset = Instance.ProcessReset(tickerEvent, [tickerEvent], 0, tickerState, TextWriter.Null);
-        AssertEq(0, tickerStateAfterReset.MinusValueCumpBase);
-        AssertEq(0, tickerStateAfterReset.MinusValuePepsBase);
-        AssertEq(0, tickerStateAfterReset.MinusValueCryptoBase);
+        var stateAfterReset = Instance.ProcessReset(reset1, [reset1], 0, state, NoOut);
+        AssertEq(0, stateAfterReset.MinusValueCumpBase);
+        AssertEq(0, stateAfterReset.MinusValuePepsBase);
+        AssertEq(0, stateAfterReset.MinusValueCryptoBase);
     }
 
     [TestMethod]
     public void ProcessReset_ResetsDividends()
     {
-        var tickerEvent = new Event(T0, Reset, Ticker, null, null, 0m, null, EUR, 1, -1);
-        var tickerState = new TickerState(Ticker, Isin, 
+        var reset1 = new Event(T0 + 0 * D, Reset, Ticker, null, null, 0m, null, EUR, 1, -1);
+        var state = new TickerState(Ticker, Isin, 
                        NetDividendsBase: 5.5m, WhtDividendsBase: 5.5m, GrossDividendsBase: 5.5m);
-        var tickerStateAfterReset = Instance.ProcessReset(tickerEvent, [tickerEvent], 0, tickerState, TextWriter.Null);
-        AssertEq(0, tickerStateAfterReset.NetDividendsBase);
-        AssertEq(0, tickerStateAfterReset.WhtDividendsBase);
-        AssertEq(0, tickerStateAfterReset.GrossDividendsBase);
+        var stateAfterReset = Instance.ProcessReset(reset1, [reset1], 0, state, NoOut);
+        AssertEq(0, stateAfterReset.NetDividendsBase);
+        AssertEq(0, stateAfterReset.WhtDividendsBase);
+        AssertEq(0, stateAfterReset.GrossDividendsBase);
     }
 
     [TestMethod]
     public void ProcessNoop_LeavesTickerStateUnchanged()
     {
-        var tickerEvent = new Event(T0, CashTopUp, Ticker, null, null, 0m, null, EUR, 1, -1);
-        var tickerState = new TickerState(Ticker, Isin, 
+        var cashTopUp1 = new Event(T0 + 0 * D, CashTopUp, Ticker, null, null, 0m, null, EUR, 1, -1);
+        var state = new TickerState(Ticker, Isin, 
             PlusValueCumpBase: 5.5m, PlusValuePepsBase: 5.6m, PlusValueCryptoBase: 13.22m,
             MinusValueCumpBase: 3.2m, MinusValuePepsBase: 0m, MinusValueCryptoBase: 3.9m,
             TotalQuantity: 3, TotalAmountBase: 25.46m,
             NetDividendsBase: 4.5m, WhtDividendsBase: 0.2m, GrossDividendsBase: 4.7m,
             PepsCurrentIndex: 3, PepsCurrentIndexSoldQuantity: 2.1m,
             PortfolioAcquisitionValueBase: 23.3m, CryptoFractionOfInitialCapital: 0.75m);
-        var tickerStateAfterNoop = Instance.ProcessNoop(tickerEvent, [tickerEvent], 0, tickerState, TextWriter.Null);
-        Assert.AreEqual(tickerState, tickerStateAfterNoop);
+        var stateAfterNoop = Instance.ProcessNoop(cashTopUp1, [cashTopUp1], 0, state, NoOut);
+        Assert.AreEqual(state, stateAfterNoop);
     }
 
     [TestMethod]
     public void ProcessNoop_WhenTickerEventAndIndexAreInconsistent_RaisesException()
     {
-        var cashWithdrawalEvent = new Event(T0, CashWithdrawal, Ticker, null, null, 100, null, EUR, 1, -1);
-        var cashTopUpEvent = new Event(T0, CashTopUp, Ticker, null, null, 0m, null, EUR, 1, -1);
-        var tickerState = new TickerState(Ticker, Isin);
-        ThrowsAny<Exception>(() => Instance.ProcessNoop(cashTopUpEvent, [cashWithdrawalEvent, cashTopUpEvent], 0, tickerState, TextWriter.Null));
+        var cashWithdrawal1 = new Event(T0 + 0 * D, CashWithdrawal, Ticker, null, null, 100, null, EUR, 1, -1);
+        var cashTopUp1 = new Event(T0 + 0 * D, CashTopUp, Ticker, null, null, 0m, null, EUR, 1, -1);
+        var state = new TickerState(Ticker, Isin);
+        ThrowsAny<Exception>(() => Instance.ProcessNoop(cashTopUp1, [cashWithdrawal1, cashTopUp1], 0, state, NoOut));
     }
 
     [TestMethod]
     public void ProcessBuy_WhenTickerEventAndIndexAreInconsistent_RaisesException()
     {
-        var cashWithdrawalEvent = new Event(T0, CashWithdrawal, Ticker, null, null, 100, null, EUR, 1, -1);
-        var buyLimitEvent = new Event(T0, BuyLimit, Ticker, 3, 100, 303, 3, EUR, 1, -1);
-        var tickerState = new TickerState(Ticker, Isin);
-        ThrowsAny<Exception>(() => Instance.ProcessBuy(buyLimitEvent, [cashWithdrawalEvent, buyLimitEvent], 0, tickerState, TextWriter.Null));
+        var cashWithdrawal1 = new Event(T0 + 0 * D, CashWithdrawal, Ticker, null, null, 100, null, EUR, 1, -1);
+        var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 3, 100, 303, 3, EUR, 1, -1);
+        var state = new TickerState(Ticker, Isin);
+        ThrowsAny<Exception>(() => Instance.ProcessBuy(buy1, [cashWithdrawal1, buy1], 0, state, NoOut));
     }
 
     [TestMethod]
     public void ProcessBuy_WhenPassingNotSupportedType_RaisesException()
     {
-        var tickerEvent = new Event(T0, CustodyFee, Ticker, null, null, 12.0m, null, EUR, 1, -1);
-        var tickerState = new TickerState(Ticker, Isin);
-        ThrowsAny<Exception>(() => Instance.ProcessBuy(tickerEvent, [tickerEvent], 0, tickerState, TextWriter.Null));
+        var custodyFee1 = new Event(T0 + 0 * D, CustodyFee, Ticker, null, null, 12.0m, null, EUR, 1, -1);
+        var state = new TickerState(Ticker, Isin);
+        ThrowsAny<Exception>(() => Instance.ProcessBuy(custodyFee1, [custodyFee1], 0, state, NoOut));
     }
 
     [TestMethod]
     public void ProcessBuy_WhenTickerNameIsNull_RaisesException()
     {
-        var tickerEvent = new Event(T0, BuyLimit, null, 3, 100, 303, 3, EUR, 1, -1);
-        var tickerState = new TickerState(Ticker, Isin);
-        ThrowsAny<Exception>(() => Instance.ProcessBuy(tickerEvent, [tickerEvent], 0, tickerState, TextWriter.Null));
+        var buy1 = new Event(T0 + 0 * D, BuyLimit, null, 3, 100, 303, 3, EUR, 1, -1);
+        var state = new TickerState(Ticker, Isin);
+        ThrowsAny<Exception>(() => Instance.ProcessBuy(buy1, [buy1], 0, state, NoOut));
     }
 
     [TestMethod]
     public void ProcessBuy_WhenPricePerShareLocalIsNull_RaisesException()
     {
-        var tickerEvent = new Event(T0, BuyLimit, Ticker, 3, null, 303, 3, EUR, 1, -1);
-        var tickerState = new TickerState(Ticker, Isin);
-        ThrowsAny<Exception>(() => Instance.ProcessBuy(tickerEvent, [tickerEvent], 0, tickerState, TextWriter.Null));
+        var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 3, null, 303, 3, EUR, 1, -1);
+        var state = new TickerState(Ticker, Isin);
+        ThrowsAny<Exception>(() => Instance.ProcessBuy(buy1, [buy1], 0, state, NoOut));
     }
 
     [TestMethod]
     public void ProcessBuy_WhenQuantityIsNull_RaisesException()
     {
-        var tickerEvent = new Event(T0, BuyLimit, Ticker, null, 100, 303, 3, EUR, 1, -1);
-        var tickerState = new TickerState(Ticker, Isin);
-        ThrowsAny<Exception>(() => Instance.ProcessBuy(tickerEvent, [tickerEvent], 0, tickerState, TextWriter.Null));
+        var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, null, 100, 303, 3, EUR, 1, -1);
+        var state = new TickerState(Ticker, Isin);
+        ThrowsAny<Exception>(() => Instance.ProcessBuy(buy1, [buy1], 0, state, NoOut));
     }
 
     [TestMethod]
     public void ProcessBuy_WhenTotalAmountLocalIsNonPositive_RaisesException()
     {
         // Buying 3 shares at 100 EUR, with fees of 3 EUR => Total Amount Local of 0 EUR
-        var tickerEvent = new Event(T0, BuyLimit, Ticker, 3, 100, 0m, 3, EUR, 1, -1);
-        var tickerState = new TickerState(Ticker, Isin);
-        ThrowsAny<Exception>(() => Instance.ProcessBuy(tickerEvent, [tickerEvent], 0, tickerState, TextWriter.Null));
+        var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 3, 100, 0m, 3, EUR, 1, -1);
+        var state = new TickerState(Ticker, Isin);
+        ThrowsAny<Exception>(() => Instance.ProcessBuy(buy1, [buy1], 0, state, NoOut));
 
         // Buying 3 shares at 100 EUR, with fees of 3 EUR => Total Amount Local of -1 EUR
-        tickerEvent = new Event(T0, BuyLimit, Ticker, 3, 100, -1m, 3, EUR, 1, -1);
-        ThrowsAny<Exception>(() => Instance.ProcessBuy(tickerEvent, [tickerEvent], 0, tickerState, TextWriter.Null));
+        buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 3, 100, -1m, 3, EUR, 1, -1);
+        ThrowsAny<Exception>(() => Instance.ProcessBuy(buy1, [buy1], 0, state, NoOut));
     }
 
     [TestMethod]
     public void ProcessBuy_WhenFeesLocalIsNull_RaisesException()
     {
-        var tickerEvent = new Event(T0, BuyLimit, Ticker, 3, 100, 303, null, EUR, 1, -1);
-        var tickerState = new TickerState(Ticker, Isin);
-        ThrowsAny<Exception>(() => Instance.ProcessBuy(tickerEvent, [tickerEvent], 0, tickerState, TextWriter.Null));
+        var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 3, 100, 303, null, EUR, 1, -1);
+        var state = new TickerState(Ticker, Isin);
+        ThrowsAny<Exception>(() => Instance.ProcessBuy(buy1, [buy1], 0, state, NoOut));
     }
 
     [TestMethod]
     public void ProcessBuy_WhenCurrenciesDontMatch_RaisesException()
     {
-        var tickerEvent = new Event(T0, BuyLimit, Ticker, 3, 100, 303, 3, USD, 1, -1);
-        var tickerState = new TickerState(Ticker, Isin);
-        var tickerEvents = new[] { new Event(T0, BuyLimit, Ticker, 0, 0, 0, 0, EUR, 1, -1), tickerEvent };
-        ThrowsAny<Exception>(() => Instance.ProcessBuy(tickerEvent, tickerEvents, 1, tickerState, TextWriter.Null));
+        var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 3, 100, 303, 3, USD, 1, -1);
+        var state = new TickerState(Ticker, Isin);
+        var events = new[] { new Event(T0 + 0 * D, BuyLimit, Ticker, 0, 0, 0, 0, EUR, 1, -1), buy1 };
+        ThrowsAny<Exception>(() => Instance.ProcessBuy(buy1, events, 1, state, NoOut));
     }
 
     [TestMethod]
     public void ProcessBuy_WhenTickersDontMatch_RaisesException()
     {
-        var tickerEvent = new Event(T0, BuyLimit, Ticker, 3, 100, 303, 3, EUR, 1, -1);
-        var tickerState = new TickerState(AnotherTicker, AnotherIsin);
-        ThrowsAny<Exception>(() => Instance.ProcessBuy(tickerEvent, [tickerEvent], 0, tickerState, TextWriter.Null));
+        var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 3, 100, 303, 3, EUR, 1, -1);
+        var state = new TickerState(AnotherTicker, AnotherIsin);
+        ThrowsAny<Exception>(() => Instance.ProcessBuy(buy1, [buy1], 0, state, NoOut));
     }
 
     [TestMethod]
     public void ProcessBuy_WhenFeesDontMatch_RaisesException()
     {
-        var tickerState = new TickerState(Ticker, Isin);
-        var tickerEvent = new Event(T0, BuyLimit, Ticker, 3, 100, 303, 2, EUR, 1, -1); // Fees should be 3
-        ThrowsAny<Exception>(() => Instance.ProcessBuy(tickerEvent, [tickerEvent], 0, tickerState, TextWriter.Null));
+        var state = new TickerState(Ticker, Isin);
+        var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 3, 100, 303, 2, EUR, 1, -1); // Fees should be 3
+        ThrowsAny<Exception>(() => Instance.ProcessBuy(buy1, [buy1], 0, state, NoOut));
     }
 
     [TestMethod]
     public void ProcessBuy_IncreasesTotalQuantityByTheQuantityInTheEvent()
     {
-        var tickerState = new TickerState(Ticker, Isin);
+        var state = new TickerState(Ticker, Isin);
         // First buy of 3 shares
-        var tickerEvent = new Event(T0, BuyLimit, Ticker, 3, 100, 303, 3, EUR, 1, -1);
-        var tickerStateAfterBuy = Instance.ProcessBuy(tickerEvent, [tickerEvent], 0, tickerState, TextWriter.Null);
-        AssertEq(3, tickerStateAfterBuy.TotalQuantity);
+        var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 3, 100, 303, 3, EUR, 1, -1);
+        var stateAfterBuy = Instance.ProcessBuy(buy1, [buy1], 0, state, NoOut);
+        AssertEq(3, stateAfterBuy.TotalQuantity);
         // Second buy of 2 shares
-        tickerEvent = new Event(T0 + D, BuyLimit, Ticker, 2, 110, 222, 2, EUR, 1, -1);
-        tickerStateAfterBuy = Instance.ProcessBuy(tickerEvent, [tickerEvent], 0, tickerStateAfterBuy, TextWriter.Null);
-        AssertEq(5, tickerStateAfterBuy.TotalQuantity);
+        var buy2 = new Event(T0 + 1 * D, BuyLimit, Ticker, 2, 110, 222, 2, EUR, 1, -1);
+        stateAfterBuy = Instance.ProcessBuy(buy2, [buy1, buy2], 1, stateAfterBuy, NoOut);
+        AssertEq(5, stateAfterBuy.TotalQuantity);
         // Third buy of 2.5 shares
-        tickerEvent = new Event(T0 + 2 * D, BuyLimit, Ticker, 2.5m, 90, 227.5m, 2.5m, EUR, 1, -1);
-        tickerStateAfterBuy = Instance.ProcessBuy(tickerEvent, [tickerEvent], 0, tickerStateAfterBuy, TextWriter.Null);
-        AssertEq(7.5m, tickerStateAfterBuy.TotalQuantity);
+        var buy3 = new Event(T0 + 2 * D, BuyLimit, Ticker, 2.5m, 90, 227.5m, 2.5m, EUR, 1, -1);
+        stateAfterBuy = Instance.ProcessBuy(buy3, [buy1, buy2, buy3], 2, stateAfterBuy, NoOut);
+        AssertEq(7.5m, stateAfterBuy.TotalQuantity);
     }
 
     [TestMethod]
     public void ProcessBuy_IncreasesTotalAmountBase_BySharesAmountPlusFees()
     {
-        var tickerState = new TickerState(Ticker, Isin);
+        var state = new TickerState(Ticker, Isin);
         // First buy of 3 shares at 100 EUR, with fees of 3 EUR => Total Amount Local of 303 EUR
-        var tickerEvent = new Event(T0, BuyLimit, Ticker, 3, 100, 303, 3, EUR, 1, -1);
-        var tickerStateAfterBuy = Instance.ProcessBuy(tickerEvent, [tickerEvent], 0, tickerState, TextWriter.Null);
-        AssertEq(303, tickerStateAfterBuy.TotalAmountBase);
+        var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 3, 100, 303, 3, EUR, 1, -1);
+        var stateAfterBuy = Instance.ProcessBuy(buy1, [buy1], 0, state, NoOut);
+        AssertEq(303, stateAfterBuy.TotalAmountBase);
         // Second buy of 2 shares at 110 EUR, with fees of 2 EUR => Total Amount Local of 222 EUR
-        tickerEvent = new Event(T0 + D, BuyLimit, Ticker, 2, 110, 222, 2, EUR, 1, -1);
-        tickerStateAfterBuy = Instance.ProcessBuy(tickerEvent, [tickerEvent], 0, tickerStateAfterBuy, TextWriter.Null);
-        AssertEq(525, tickerStateAfterBuy.TotalAmountBase);
+        var buy2 = new Event(T0 + 1 * D, BuyLimit, Ticker, 2, 110, 222, 2, EUR, 1, -1);
+        stateAfterBuy = Instance.ProcessBuy(buy2, [buy1, buy2], 1, stateAfterBuy, NoOut);
+        AssertEq(525, stateAfterBuy.TotalAmountBase);
         // Third buy of 2.5 shares at 90 EUR, with fees of 2.5 EUR => Total Amount Local of 227.5 EUR
-        tickerEvent = new Event(T0 + 2 * D, BuyLimit, Ticker, 2.5m, 90, 227.5m, 2.5m, EUR, 1, -1);
-        tickerStateAfterBuy = Instance.ProcessBuy(tickerEvent, [tickerEvent], 0, tickerStateAfterBuy, TextWriter.Null);
-        AssertEq(752.5m, tickerStateAfterBuy.TotalAmountBase);
+        var buy3 = new Event(T0 + 2 * D, BuyLimit, Ticker, 2.5m, 90, 227.5m, 2.5m, EUR, 1, -1);
+        stateAfterBuy = Instance.ProcessBuy(buy3, [buy1, buy2, buy3], 2, stateAfterBuy, NoOut);
+        AssertEq(752.5m, stateAfterBuy.TotalAmountBase);
     }
 
     [TestMethod]
@@ -377,8 +378,8 @@ public class TickerProcessingTest
         var initialState = new TickerState(Ticker, Isin);
 
         // First buy 3 shares at 100.10002 USD, with fees of 3.20003 USD => Total Amount Local of 300.30006 USD + 3.20003 USD = 303.50009 USD
-        var tickerEvent = new Event(T0, BuyLimit, Ticker, 3, 100.10002m, 303.50009m, 3.20003m, localCurrency, 2m, -1);
-        tickerProcessing.ProcessBuy(tickerEvent, [tickerEvent], 0, initialState, writer);
+        var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 3, 100.10002m, 303.50009m, 3.20003m, localCurrency, 2m, -1);
+        tickerProcessing.ProcessBuy(buy1, [buy1], 0, initialState, writer);
         var output = writer.ToString();
 
         // Prints Total Buy Price in local currency as rounded value
@@ -402,129 +403,128 @@ public class TickerProcessingTest
     [TestMethod]
     public void ProcessSell_WhenTickerEventAndIndexAreInconsistent_RaisesException()
     {
-        var cashWithdrawalEvent = new Event(T0, CashWithdrawal, Ticker, null, null, 100, null, EUR, 1, -1);
-        var sellLimitEvent = new Event(T0, SellLimit, Ticker, 3, 100, 303, 3, EUR, 1, -1);
-        var tickerState = new TickerState(Ticker, Isin);
-        ThrowsAny<Exception>(() => Instance.ProcessSell(sellLimitEvent, [cashWithdrawalEvent, sellLimitEvent], 0, tickerState, TextWriter.Null));
+        var cashWithdrawal1 = new Event(T0 + 0 * D, CashWithdrawal, Ticker, null, null, 100, null, EUR, 1, -1);
+        var sellLimit1 = new Event(T0 + 0 * D, SellLimit, Ticker, 3, 100, 303, 3, EUR, 1, -1);
+        var state = new TickerState(Ticker, Isin);
+        ThrowsAny<Exception>(() => Instance.ProcessSell(sellLimit1, [cashWithdrawal1, sellLimit1], 0, state, NoOut));
     }
 
     [TestMethod]
     public void ProcessSell_WhenPassingNotSupportedType_RaisesException()
     {
         // Custody fees for 12 EUR
-        var tickerEvent = new Event(T0, CustodyFee, Ticker, 0, 0, 0, 12.0m, EUR, 1, -1);
+        var custodyFee1 = new Event(T0 + 0 * D, CustodyFee, Ticker, 0, 0, 0, 12.0m, EUR, 1, -1);
         // While owning no shares
-        var tickerState = new TickerState(Ticker, Isin);
-        ThrowsAny<Exception>(() => Instance.ProcessSell(tickerEvent, [tickerEvent], 0, tickerState, TextWriter.Null));
+        var state = new TickerState(Ticker, Isin);
+        ThrowsAny<Exception>(() => Instance.ProcessSell(custodyFee1, [custodyFee1], 0, state, NoOut));
     }
 
     [TestMethod]
     public void ProcessSell_WhenTickerNameIsNull_RaisesException()
     {
         // Selling 1 share at 2.0 EUR, with fees of 0.2 EUR => Total Amount Local of 1.8 EUR
-        var tickerEvent = new Event(T0, SellLimit, null, 1, 2.0m, 1.8m, 0.2m, EUR, 1, -1);
+        var sell1 = new Event(T0 + 0 * D, SellLimit, null, 1, 2.0m, 1.8m, 0.2m, EUR, 1, -1);
         // While owning 3 shares for a total of 5.5 EUR
-        var tickerState = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
-        ThrowsAny<Exception>(() => Instance.ProcessSell(tickerEvent, [tickerEvent], 0, tickerState, TextWriter.Null));
+        var state = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
+        ThrowsAny<Exception>(() => Instance.ProcessSell(sell1, [sell1], 0, state, NoOut));
     }
 
     [TestMethod]
     public void ProcessSell_WhenTotalAmountLocalIsNonPositive_RaisesException()
     {
         // Selling 1 share at 2.0 EUR, with fees of 0.2 EUR => Total Amount Local of 0 EUR
-        var tickerEvent = new Event(T0, SellLimit, Ticker, 1, 2.0m, 0m, 0.2m, EUR, 1, -1);
+        var sell1 = new Event(T0 + 0 * D, SellLimit, Ticker, 1, 2.0m, 0m, 0.2m, EUR, 1, -1);
         // While owning 3 shares for a total of 5.5 EUR
-        var tickerState = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
-        ThrowsAny<Exception>(() => Instance.ProcessSell(tickerEvent, [tickerEvent], 0, tickerState, TextWriter.Null));
-
+        var state = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
+        ThrowsAny<Exception>(() => Instance.ProcessSell(sell1, [sell1], 0, state, NoOut));
         // Selling 1 share at 2.0 EUR, with fees of 0.2 EUR => Total Amount Local of -1 EUR
-        tickerEvent = new Event(T0, SellLimit, Ticker, 1, 2.0m, -1m, 0.2m, EUR, 1, -1);
-        ThrowsAny<Exception>(() => Instance.ProcessSell(tickerEvent, [tickerEvent], 0, tickerState, TextWriter.Null));
+        sell1 = new Event(T0 + 0 * D, SellLimit, Ticker, 1, 2.0m, -1m, 0.2m, EUR, 1, -1);
+        ThrowsAny<Exception>(() => Instance.ProcessSell(sell1, [sell1], 0, state, NoOut));
     }
 
     [TestMethod]
     public void ProcessSell_WhenFeesLocalIsNull_RaisesException()
     {
         // Selling 1 share at 2.0 EUR, with fees of NULL EUR => Total Amount Local of 1.8 EUR
-        var tickerEvent = new Event(T0, SellLimit, Ticker, 1, 2.0m, 1.8m, null, EUR, 1, -1);
+        var sell1 = new Event(T0 + 0 * D, SellLimit, Ticker, 1, 2.0m, 1.8m, null, EUR, 1, -1);
         // While owning 3 shares for a total of 5.5 EUR
-        var tickerState = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
-        ThrowsAny<Exception>(() => Instance.ProcessSell(tickerEvent, [tickerEvent], 0, tickerState, TextWriter.Null));
+        var state = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
+        ThrowsAny<Exception>(() => Instance.ProcessSell(sell1, [sell1], 0, state, NoOut));
     }
 
     [TestMethod]
     public void ProcessSell_WhenTickersMismatch_RaisesException()
     {
         // Selling 1 share of A at 2.0 EUR, with fees of 0.2 EUR => Total Amount Local of 1.8 EUR
-        var tickerEvent = new Event(T0, SellLimit, Ticker, 1, 2.0m, 1.8m, 0.2m, EUR, 1, -1);
+        var sell1 = new Event(T0 + 0 * D, SellLimit, Ticker, 1, 2.0m, 1.8m, 0.2m, EUR, 1, -1);
         // While owning 3 shares of B for a total of 5.5 EUR
-        var tickerState = new TickerState(AnotherTicker, AnotherIsin, TotalQuantity: 3, TotalAmountBase: 5.5m);
-        ThrowsAny<Exception>(() => Instance.ProcessSell(tickerEvent, [tickerEvent], 0, tickerState, TextWriter.Null));
+        var state = new TickerState(AnotherTicker, AnotherIsin, TotalQuantity: 3, TotalAmountBase: 5.5m);
+        ThrowsAny<Exception>(() => Instance.ProcessSell(sell1, [sell1], 0, state, NoOut));
     }
 
     [TestMethod]
     public void ProcessSell_WhenPricePerShareLocalIsNull_RaisesException()
     {
         // Selling 1 share at NULL, with fees of 0.2 EUR => Total Amount Local of 1.8 EUR
-        var tickerEvent = new Event(T0, SellLimit, Ticker, 1, null, 1.8m, 0.2m, EUR, 1, -1);
+        var sell1 = new Event(T0 + 0 * D, SellLimit, Ticker, 1, null, 1.8m, 0.2m, EUR, 1, -1);
         // While owning 3 shares for a total of 5.5 EUR
-        var tickerState = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
-        ThrowsAny<Exception>(() => Instance.ProcessSell(tickerEvent, [tickerEvent], 0, tickerState, TextWriter.Null));
+        var state = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
+        ThrowsAny<Exception>(() => Instance.ProcessSell(sell1, [sell1], 0, state, NoOut));
     }
 
     [TestMethod]
     public void ProcessSell_WhenQuantityIsNull_RaisesException()
     {
         // Selling NULL shares at 2.0 EUR, with fees of 0.2 EUR => Total Amount Local of 1.8 EUR
-        var tickerEvent = new Event(T0, SellLimit, Ticker, null, 2.0m, 1.8m, 0.2m, EUR, 1, -1);
+        var sell1 = new Event(T0 + 0 * D, SellLimit, Ticker, null, 2.0m, 1.8m, 0.2m, EUR, 1, -1);
         // While owning 3 shares for a total of 5.5 EUR
-        var tickerState = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
-        ThrowsAny<Exception>(() => Instance.ProcessSell(tickerEvent, [tickerEvent], 0, tickerState, TextWriter.Null));
+        var state = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
+        ThrowsAny<Exception>(() => Instance.ProcessSell(sell1, [sell1], 0, state, NoOut));
 
     }
 
     [TestMethod]
     public void ProcessSell_WhenCurrenciesAreEtherogenous_RaisesException()
     {
-        // Selling 1 share at 2.0 USD, with fees of 0.2 USD => Total Amount Local of 1.8 USD
-        var sellEvent = new Event(T0, SellLimit, Ticker, 1, 2.0m, 1.8m, 0.2m, USD, 1, -1);
         // While owning 3 shares for a total of 5.5 EUR
-        var tickerState = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
-        var tickerEvents = new[] { new Event(T0, BuyLimit, Ticker, 0, 0, 0, 0, EUR, 1, -1), sellEvent };
-        ThrowsAny<Exception>(() => Instance.ProcessSell(sellEvent, tickerEvents, 1, tickerState, TextWriter.Null));
+        var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 0, 0, 0, 0, EUR, 1, -1);
+        // Selling 1 share at 2.0 USD, with fees of 0.2 USD => Total Amount Local of 1.8 USD
+        var sell1 = new Event(T0 + 0 * D, SellLimit, Ticker, 1, 2.0m, 1.8m, 0.2m, USD, 1, -1);
+        var state = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
+        ThrowsAny<Exception>(() => Instance.ProcessSell(sell1, [buy1, sell1], 1, state, NoOut));
     }
 
     [TestMethod]
     public void ProcessSell_WhenSellingMoreThanOwned_RaisesException()
     {
-        // Selling 4 shares at 2.0 EUR, with fees of 0.8 EUR => Total Amount Local of 7.2 EUR
-        var sellEvent = new Event(T0, SellLimit, Ticker, 4, 8.0m, 7.2m, 0.8m, EUR, 1, -1);
         // While owning 3 shares for a total of 5.5 EUR
-        var tickerState = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
-        var tickerEvents = new[] { new Event(T0, BuyLimit, Ticker, 3, 0, 0, 0, EUR, 1, -1), sellEvent };
-        ThrowsAny<Exception>(() => Instance.ProcessSell(sellEvent, tickerEvents, 1, tickerState, TextWriter.Null));
+        var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 3, 0, 0, 0, EUR, 1, -1);
+        // Selling 4 shares at 2.0 EUR, with fees of 0.8 EUR => Total Amount Local of 7.2 EUR
+        var sell1 = new Event(T0 + 0 * D, SellLimit, Ticker, 4, 8.0m, 7.2m, 0.8m, EUR, 1, -1);
+        var state = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
+        ThrowsAny<Exception>(() => Instance.ProcessSell(sell1, [buy1, sell1], 1, state, NoOut));
     }
 
     [TestMethod]
     public void ProcessSell_WhenFeesAreInconsistent_RaisesException()
     {
-        // Selling 1 share at 2.0 EUR, with fees of 0.4 EUR => Total Amount Local of 1.7 EUR (fees should be 0.3 EUR)
-        var sellEvent = new Event(T0, SellLimit, Ticker, 1, 2.0m, 1.7m, 0.4m, EUR, 1, -1);
         // While owning 3 shares for a total of 5.5 EUR
-        var tickerState = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
-        var tickerEvents = new[] { new Event(T0, BuyLimit, Ticker, 3, 2, 5.5m, 0.5m, EUR, 1, -1), sellEvent };
-        ThrowsAny<Exception>(() => Instance.ProcessSell(sellEvent, tickerEvents, 1, tickerState, TextWriter.Null));
+        var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 3, 2, 5.5m, 0.5m, EUR, 1, -1);
+        // Selling 1 share at 2.0 EUR, with fees of 0.4 EUR => Total Amount Local of 1.7 EUR (fees should be 0.3 EUR)
+        var sell1 = new Event(T0 + 0 * D, SellLimit, Ticker, 1, 2.0m, 1.7m, 0.4m, EUR, 1, -1);
+        var state = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
+        ThrowsAny<Exception>(() => Instance.ProcessSell(sell1, [buy1, sell1], 1, state, NoOut));
     }
 
     [TestMethod]
     public void ProcessSell_WhenPastBuyEventDoesntHaveQuantity_RaisesException()
     {
-        // Selling 1 share at 2.0 EUR, with fees of 0.2 EUR => Total Amount Local of 1.8 EUR
-        var sellEvent = new Event(T0, SellLimit, Ticker, 1, 2.0m, 1.8m, 0.2m, EUR, 1, -1);
         // While owning 3 shares for a total of 5.5 EUR
-        var tickerState = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
-        var tickerEvents = new[] { new Event(T0, BuyLimit, Ticker, null, 2, 5.5m, 0.5m, EUR, 1, -1), sellEvent };
-        ThrowsAny<Exception>(() => Instance.ProcessSell(sellEvent, tickerEvents, 1, tickerState, TextWriter.Null));
+        var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, null, 2, 5.5m, 0.5m, EUR, 1, -1);
+        // Selling 1 share at 2.0 EUR, with fees of 0.2 EUR => Total Amount Local of 1.8 EUR
+        var sell1 = new Event(T0 + 0 * D, SellLimit, Ticker, 1, 2.0m, 1.8m, 0.2m, EUR, 1, -1);
+        var state = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
+        ThrowsAny<Exception>(() => Instance.ProcessSell(sell1, [buy1, sell1], 1, state, NoOut));
     }
 
     [TestMethod]
@@ -535,12 +535,12 @@ public class TickerProcessingTest
         var initialState = new TickerState(Ticker, Isin);
         
         // First buy 3 shares at 100.10002 USD, with fees of 3.20003 USD => Total Amount Local of 303.50009 USD
-        var buyEvent = new Event(T0, BuyLimit, Ticker, 3, 100.10002m, 303.50009m, 3.20003m, localCurrency, 4m, -1);
-        var tickerStateAfterBuy = tickerProcessing.ProcessBuy(buyEvent, [buyEvent], 0, initialState, TextWriter.Null);
+        var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 3, 100.10002m, 303.50009m, 3.20003m, localCurrency, 4m, -1);
+        var stateAfterBuy = tickerProcessing.ProcessBuy(buy1, [buy1], 0, initialState, NoOut);
         // Then sell 2 shares at 150.15003 USD, with fees of 2.50005 USD => Total Amount Local of 300.30006 USD - 2.50005 USD = 297.80001 USD
-        var sellEvent = new Event(T0 + D, SellLimit, Ticker, 2, 150.15003m, 297.80001m, 2.50005m, localCurrency, 4m, -1);
+        var sell1 = new Event(T0 + 1 * D, SellLimit, Ticker, 2, 150.15003m, 297.80001m, 2.50005m, localCurrency, 4m, -1);
         var writer = new StringWriter();
-        var tickerStateAfterSell = tickerProcessing.ProcessSell(sellEvent, [buyEvent, sellEvent], 1, tickerStateAfterBuy, writer);
+        tickerProcessing.ProcessSell(sell1, [buy1, sell1], 1, stateAfterBuy, writer);
         var output = writer.ToString();
 
         // Prints Total Sell Price in local currency as rounded value
@@ -574,116 +574,115 @@ public class TickerProcessingTest
 
         // -------
         // First buy 3 shares at 100 USD, with fees of 3.20 USD => Total Amount Local of 300 USD + 3.20 USD = 303.20 USD
-        var buyEvent1 = new Event(T0, BuyLimit, Ticker, 3, 100m, 303.20m, 3.20m, localCurrency, 4m, -1);
-        var tickerStateAfterBuy1 = tickerProcessing.ProcessBuy(
-            buyEvent1, [buyEvent1], 0, initialState, TextWriter.Null);
+        var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 3, 100m, 303.20m, 3.20m, localCurrency, 4m, -1);
+        var stateAfterBuy1 = tickerProcessing.ProcessBuy(
+            buy1, [buy1], 0, initialState, NoOut);
         
         AssertStateAfterBuy1();
 
         void AssertStateAfterBuy1()
         {
             // 3 shares available
-            AssertEq(3, tickerStateAfterBuy1.TotalQuantity);
+            AssertEq(3, stateAfterBuy1.TotalQuantity);
             // The total amount corresponds to the total amount of the buy event 1
-            AssertEq(303.20m / 4m, tickerStateAfterBuy1.TotalAmountBase);
+            AssertEq(303.20m / 4m, stateAfterBuy1.TotalAmountBase);
         }
 
         // -------
         // Then sell 2 shares at 150 USD, with fees of 2.50 USD => Total Amount Local of 300 USD - 2.50 USD = 297.50 USD
-        var sellEvent1 = new Event(T0 + D, SellLimit, Ticker, 2, 150m, 297.50m, 2.50m, localCurrency, 4m, -1);
-        var tickerStateAfterSell1 = tickerProcessing.ProcessSell(
-            sellEvent1, [buyEvent1, sellEvent1], 1, tickerStateAfterBuy1, TextWriter.Null);
+        var sell1 = new Event(T0 + 1 * D, SellLimit, Ticker, 2, 150m, 297.50m, 2.50m, localCurrency, 4m, -1);
+        var stateAfterSell1 = tickerProcessing.ProcessSell(
+            sell1, [buy1, sell1], 1, stateAfterBuy1, NoOut);
 
         AssertStateAfterSell1();
 
         void AssertStateAfterSell1()
         {
             // Only 1 share left
-            AssertEq(1, tickerStateAfterSell1.TotalQuantity);
+            AssertEq(1, stateAfterSell1.TotalQuantity);
             // The share left (1 remaining out of 3 shares) has the same average buy price as before
-            var totalAmountBaseAfterSell1 = tickerStateAfterBuy1.TotalAmountBase * (1m / 3m);
-            AssertEq(totalAmountBaseAfterSell1, tickerStateAfterSell1.TotalAmountBase);
+            var totalAmountBaseAfterSell1 = stateAfterBuy1.TotalAmountBase * (1m / 3m);
+            AssertEq(totalAmountBaseAfterSell1, stateAfterSell1.TotalAmountBase);
 
             // The plus value CUMP is the difference between the sell price and the average buy price for the 2 shares sold
             // The minus value CUMP is 0, since no minus value has been realized
             var averageBuyPriceTwoShares = totalAmountBaseAfterSell1 * 2;
             var plusValueCumpSell1 = 297.50m / 4m - averageBuyPriceTwoShares;
-            AssertEq(plusValueCumpSell1, tickerStateAfterSell1.PlusValueCumpBase);
-            AssertEq(0, tickerStateAfterSell1.MinusValueCumpBase);
+            AssertEq(plusValueCumpSell1, stateAfterSell1.PlusValueCumpBase);
+            AssertEq(0, stateAfterSell1.MinusValueCumpBase);
 
             // The plus value PEPS is the difference between the sell price and the buy price of the first two shares bought
             // The minus value PEPS is 0, since no minus value has been realized
             var buyPriceFirstTwoShares = (2 * 303.20m / 3) / 4m;
             var plusValuePepsSell1 = 297.50m / 4m - buyPriceFirstTwoShares;
-            AssertEq(plusValuePepsSell1, tickerStateAfterSell1.PlusValuePepsBase);
-            AssertEq(0, tickerStateAfterSell1.MinusValuePepsBase);
+            AssertEq(plusValuePepsSell1, stateAfterSell1.PlusValuePepsBase);
+            AssertEq(0, stateAfterSell1.MinusValuePepsBase);
 
             // The PEPS current index is 0, since only 2 shares out of 3 have been sold
-            AssertEq(0, tickerStateAfterSell1.PepsCurrentIndex);
+            AssertEq(0, stateAfterSell1.PepsCurrentIndex);
             // The PEPS current index sold quantity is 2, since 2 shares out of 3 have been sold
-            AssertEq(2, tickerStateAfterSell1.PepsCurrentIndexSoldQuantity);
+            AssertEq(2, stateAfterSell1.PepsCurrentIndexSoldQuantity);
 
             // TODO: calculate the plus value and minus value crypto
         }
 
         // -------
         // Buy 3 shares at 110 USD, with fees of 4 USD => Total Amount Local of 330 USD + 4 USD = 334 USD
-        var buyEvent2 = new Event(T0 + 2 * D, BuyLimit, Ticker, 3, 110m, 334m, 4m, localCurrency, 4m, -1);
-        var tickerStateAfterBuy2 = tickerProcessing.ProcessBuy(
-            buyEvent2, [buyEvent1, sellEvent1, buyEvent2], 2, tickerStateAfterSell1, TextWriter.Null);
+        var buy2 = new Event(T0 + 2 * D, BuyLimit, Ticker, 3, 110m, 334m, 4m, localCurrency, 4m, -1);
+        var stateAfterBuy2 = tickerProcessing.ProcessBuy(
+            buy2, [buy1, sell1, buy2], 2, stateAfterSell1, NoOut);
 
         AssertStateAfterBuy2();
 
         void AssertStateAfterBuy2()
         {
             // The total quantity is increased by 3
-            AssertEq(4, tickerStateAfterBuy2.TotalQuantity);
+            AssertEq(4, stateAfterBuy2.TotalQuantity);
             // The total amount is increased by the total amount of the buy event 2
-            var totalAmountBaseAfterBuy2 = tickerStateAfterSell1.TotalAmountBase + 334m / 4m;
-            AssertEq(totalAmountBaseAfterBuy2, tickerStateAfterBuy2.TotalAmountBase);
+            var totalAmountBaseAfterBuy2 = stateAfterSell1.TotalAmountBase + 334m / 4m;
+            AssertEq(totalAmountBaseAfterBuy2, stateAfterBuy2.TotalAmountBase);
         }
 
         // -------
         // Buy 2 shares at 120 USD, with fees of 3 USD => Total Amount Local of 240 USD + 3 USD = 243 USD
-        var buyEvent3 = new Event(T0 + 3 * D, BuyLimit, Ticker, 2, 120m, 243m, 3m, localCurrency, 4m, -1);
-        var tickerStateAfterBuy3 = tickerProcessing.ProcessBuy(
-            buyEvent3, [buyEvent1, sellEvent1, buyEvent2, buyEvent3], 3, tickerStateAfterBuy2, TextWriter.Null);
+        var buy3 = new Event(T0 + 3 * D, BuyLimit, Ticker, 2, 120m, 243m, 3m, localCurrency, 4m, -1);
+        var stateAfterBuy3 = tickerProcessing.ProcessBuy(
+            buy3, [buy1, sell1, buy2, buy3], 3, stateAfterBuy2, NoOut);
 
         AssertStateAfterBuy3();
 
         void AssertStateAfterBuy3()
         {
             // The total quantity is increased by 2
-            AssertEq(6, tickerStateAfterBuy3.TotalQuantity);
+            AssertEq(6, stateAfterBuy3.TotalQuantity);
             // The total amount is increased by the total amount of the buy event 3
-            var totalAmountBaseAfterBuy3 = tickerStateAfterBuy2.TotalAmountBase + 243m / 4m;
-            AssertEq(totalAmountBaseAfterBuy3, tickerStateAfterBuy3.TotalAmountBase);
+            var totalAmountBaseAfterBuy3 = stateAfterBuy2.TotalAmountBase + 243m / 4m;
+            AssertEq(totalAmountBaseAfterBuy3, stateAfterBuy3.TotalAmountBase);
         }
 
         // -------
         // Sell 3 shares at 130 USD, with fees of 3 USD => Total Amount Local of 390 USD - 3 USD = 387 USD
-        var sellEvent2 = new Event(T0 + 4 * D, SellLimit, Ticker, 3, 130m, 387m, 3m, localCurrency, 4m, -1);
-        var tickerStateAfterSell2 = tickerProcessing.ProcessSell(
-            sellEvent2, [buyEvent1, sellEvent1, buyEvent2, buyEvent3, sellEvent2], 4, 
-            tickerStateAfterBuy3, TextWriter.Null);
+        var sell2 = new Event(T0 + 4 * D, SellLimit, Ticker, 3, 130m, 387m, 3m, localCurrency, 4m, -1);
+        var stateAfterSell2 = tickerProcessing.ProcessSell(
+            sell2, [buy1, sell1, buy2, buy3, sell2], 4, stateAfterBuy3, NoOut);
 
         AssertStateAfterSell2();
 
         void AssertStateAfterSell2()
         {
             // Only 3 shares left
-            AssertEq(3, tickerStateAfterSell2.TotalQuantity);
+            AssertEq(3, stateAfterSell2.TotalQuantity);
             // The total amount is decreased by half (3 remaining out of 6 shares), and not by the total amount of the sell event 2
-            var totalAmountBaseAfterSell2 = tickerStateAfterBuy3.TotalAmountBase * (3m / 6m);
-            AssertEq(totalAmountBaseAfterSell2, tickerStateAfterSell2.TotalAmountBase);
+            var totalAmountBaseAfterSell2 = stateAfterBuy3.TotalAmountBase * (3m / 6m);
+            AssertEq(totalAmountBaseAfterSell2, stateAfterSell2.TotalAmountBase);
 
             // The plus value CUMP for the event is the difference between the sell price and the average buy price for the 3 shares sold
             // This value is added to the plus value CUMP accumulated so far (first sell event)
             // The minus value CUMP is 0, since no minus value has been realized
-            var averageBuyPriceThreeShares = tickerStateAfterBuy3.TotalAmountBase - totalAmountBaseAfterSell2;
+            var averageBuyPriceThreeShares = stateAfterBuy3.TotalAmountBase - totalAmountBaseAfterSell2;
             var plusValueCumpSell2 = 387m / 4m - averageBuyPriceThreeShares;
-            AssertEq(tickerStateAfterBuy3.PlusValueCumpBase + plusValueCumpSell2, tickerStateAfterSell2.PlusValueCumpBase);
-            AssertEq(0, tickerStateAfterSell2.MinusValueCumpBase);
+            AssertEq(stateAfterBuy3.PlusValueCumpBase + plusValueCumpSell2, stateAfterSell2.PlusValueCumpBase);
+            AssertEq(0, stateAfterSell2.MinusValueCumpBase);
 
             // The plus value PEPS for the event is the difference between the sell price and the buy price of the oldest 3 shares bought,
             // among the 6 shares left after the third buy event:
@@ -694,42 +693,41 @@ public class TickerProcessingTest
             // The minus value PEPS is 0, since no minus value has been realized
             var buyPriceFirstThreeShares = 1 * 303.20m / 3m / 4m + 2 * 334m / 3m / 4m;
             var plusValuePepsSell2 = 387m / 4m - buyPriceFirstThreeShares;
-            AssertEq(tickerStateAfterBuy3.PlusValuePepsBase + plusValuePepsSell2, tickerStateAfterSell2.PlusValuePepsBase);
-            AssertEq(0, tickerStateAfterSell2.MinusValuePepsBase);
+            AssertEq(stateAfterBuy3.PlusValuePepsBase + plusValuePepsSell2, stateAfterSell2.PlusValuePepsBase);
+            AssertEq(0, stateAfterSell2.MinusValuePepsBase);
 
             // The PEPS current index is 2, since the only remaining share of the first buy has been sold, together with
             // the first two shares of the second buy, where the last share is left not sold for now
-            AssertEq(2, tickerStateAfterSell2.PepsCurrentIndex);
+            AssertEq(2, stateAfterSell2.PepsCurrentIndex);
             // The PEPS current index sold quantity is 2, since 2 shares out of 3 have been sold
-            AssertEq(2, tickerStateAfterSell2.PepsCurrentIndexSoldQuantity);
+            AssertEq(2, stateAfterSell2.PepsCurrentIndexSoldQuantity);
 
             // TODO: calculate the plus value and minus value crypto
         }
 
         // -------
         // Sell 1 shares at 10 USD, with fees of 1 USD => Total Amount Local of 10 USD - 1 USD = 9 USD
-        var sellEvent3 = new Event(T0 + 5 * D, SellLimit, Ticker, 1, 10m, 9m, 1m, localCurrency, 4m, -1);
-        var tickerStateAfterSell3 = tickerProcessing.ProcessSell(
-            sellEvent3, [buyEvent1, sellEvent1, buyEvent2, buyEvent3, sellEvent2, sellEvent3], 5, 
-            tickerStateAfterSell2, TextWriter.Null);
+        var sell3 = new Event(T0 + 5 * D, SellLimit, Ticker, 1, 10m, 9m, 1m, localCurrency, 4m, -1);
+        var stateAfterSell3 = tickerProcessing.ProcessSell(
+            sell3, [buy1, sell1, buy2, buy3, sell2, sell3], 5, stateAfterSell2, NoOut);
 
         AssertStateAfterSell3();
 
         void AssertStateAfterSell3()
         {
             // Only 2 shares left
-            AssertEq(2, tickerStateAfterSell3.TotalQuantity);
+            AssertEq(2, stateAfterSell3.TotalQuantity);
             // The total amount is decreased to 2/3 (2 remaining out of 3 shares), and not by the total amount of the sell event 3
-            var totalAmountBaseAfterSell3 = tickerStateAfterSell2.TotalAmountBase * (2m / 3m);
-            AssertEq(totalAmountBaseAfterSell3, tickerStateAfterSell3.TotalAmountBase);
+            var totalAmountBaseAfterSell3 = stateAfterSell2.TotalAmountBase * (2m / 3m);
+            AssertEq(totalAmountBaseAfterSell3, stateAfterSell3.TotalAmountBase);
 
             // The plus value CUMP for the event is the difference between the sell price and the average buy price for the 1 share sold
             // This value is negative, so it is actually a minus value, taken with reversed sign
             // This value is the first CUMP minus value realized. The plus value CUMP doesn't change.
-            var averageBuyPriceOneShare = tickerStateAfterSell2.TotalAmountBase - totalAmountBaseAfterSell3;
+            var averageBuyPriceOneShare = stateAfterSell2.TotalAmountBase - totalAmountBaseAfterSell3;
             var minusValueCumpSell3 = averageBuyPriceOneShare - 9m / 4m;
-            AssertEq(tickerStateAfterSell3.PlusValueCumpBase, tickerStateAfterSell2.PlusValueCumpBase);
-            AssertEq(minusValueCumpSell3, tickerStateAfterSell3.MinusValueCumpBase);
+            AssertEq(stateAfterSell3.PlusValueCumpBase, stateAfterSell2.PlusValueCumpBase);
+            AssertEq(minusValueCumpSell3, stateAfterSell3.MinusValueCumpBase);
 
             // The plus value PEPS for the event is the difference between the sell price and the buy price of the oldest share bought,
             // among the 3 shares left after the third sell event:
@@ -739,42 +737,41 @@ public class TickerProcessingTest
             // This value is the first PEPS minus value realized. The plus value PEPS doesn't change.
             var buyPriceOldestShare = 334m / 3m / 4m;
             var minusValuePepsSell3 = buyPriceOldestShare - 9m / 4m;
-            AssertEq(tickerStateAfterSell3.PlusValuePepsBase, tickerStateAfterSell2.PlusValuePepsBase);
-            AssertEq(minusValuePepsSell3, tickerStateAfterSell3.MinusValuePepsBase);
+            AssertEq(stateAfterSell3.PlusValuePepsBase, stateAfterSell2.PlusValuePepsBase);
+            AssertEq(minusValuePepsSell3, stateAfterSell3.MinusValuePepsBase);
 
             // The PEPS current index is 3, since the last share of the second buy has been sold, and the pointer moves
             // forward to the next buy event, that is in position 3 in the list of events
-            AssertEq(3, tickerStateAfterSell3.PepsCurrentIndex);
+            AssertEq(3, stateAfterSell3.PepsCurrentIndex);
             // The PEPS current index sold quantity is 0, since the current index has been moved forward
-            AssertEq(0, tickerStateAfterSell3.PepsCurrentIndexSoldQuantity);
+            AssertEq(0, stateAfterSell3.PepsCurrentIndexSoldQuantity);
 
             // TODO: calculate the plus value and minus value crypto
         }
 
         // -------
         // Sell 2 shares at 10 USD, with fees of 1 USD => Total Amount Local of 20 USD - 1 USD = 19 USD
-        var sellEvent4 = new Event(T0 + 6 * D, SellLimit, Ticker, 2, 10m, 19m, 1m, localCurrency, 4m, -1);
-        var tickerStateAfterSell4 = tickerProcessing.ProcessSell(
-            sellEvent4, [buyEvent1, sellEvent1, buyEvent2, buyEvent3, sellEvent2, sellEvent3, sellEvent4], 6, 
-            tickerStateAfterSell3, TextWriter.Null);
+        var sell4 = new Event(T0 + 6 * D, SellLimit, Ticker, 2, 10m, 19m, 1m, localCurrency, 4m, -1);
+        var stateAfterSell4 = tickerProcessing.ProcessSell(
+            sell4, [buy1, sell1, buy2, buy3, sell2, sell3, sell4], 6, stateAfterSell3, NoOut);
 
         AssertStateAfterSell4();
 
         void AssertStateAfterSell4()
         {
             // No shares left
-            AssertEq(0, tickerStateAfterSell4.TotalQuantity);
+            AssertEq(0, stateAfterSell4.TotalQuantity);
             // The total amount is decreased to 0 (0 remaining out of 2 shares), and not by the total amount of the sell event 4
-            var totalAmountBaseAfterSell4 = tickerStateAfterSell3.TotalAmountBase * (0m / 2m);
-            AssertEq(totalAmountBaseAfterSell4, tickerStateAfterSell4.TotalAmountBase);
+            var totalAmountBaseAfterSell4 = stateAfterSell3.TotalAmountBase * (0m / 2m);
+            AssertEq(totalAmountBaseAfterSell4, stateAfterSell4.TotalAmountBase);
 
             // The plus value CUMP for the event is the difference between the sell price and the average buy price for the 2 shares sold
             // This value is negative, so it is actually a minus value, taken with reversed sign
             // This value is the second CUMP minus value realized. The plus value CUMP doesn't change.
-            var averageBuyPriceTwoSharesSell4 = tickerStateAfterSell3.TotalAmountBase - totalAmountBaseAfterSell4;
+            var averageBuyPriceTwoSharesSell4 = stateAfterSell3.TotalAmountBase - totalAmountBaseAfterSell4;
             var minusValueCumpSell4 = averageBuyPriceTwoSharesSell4 - 19m / 4m;
-            AssertEq(tickerStateAfterSell3.PlusValueCumpBase, tickerStateAfterSell4.PlusValueCumpBase);
-            AssertEq(tickerStateAfterSell3.MinusValueCumpBase + minusValueCumpSell4, tickerStateAfterSell4.MinusValueCumpBase);
+            AssertEq(stateAfterSell3.PlusValueCumpBase, stateAfterSell4.PlusValueCumpBase);
+            AssertEq(stateAfterSell3.MinusValueCumpBase + minusValueCumpSell4, stateAfterSell4.MinusValueCumpBase);
 
             // The plus value PEPS for the event is the difference between the sell price and the buy price of the two
             // oldest share bought, that are the last two shares remaining
@@ -782,14 +779,14 @@ public class TickerProcessingTest
             // This value is the second PEPS minus value realized. The plus value PEPS doesn't change.
             var buyPriceTwoOldestShares = 243m / 4m;
             var minusValuePepsSell4 = buyPriceTwoOldestShares - 19m / 4m;
-            AssertEq(tickerStateAfterSell3.PlusValuePepsBase, tickerStateAfterSell4.PlusValuePepsBase);
-            AssertEq(tickerStateAfterSell3.MinusValuePepsBase + minusValuePepsSell4, tickerStateAfterSell4.MinusValuePepsBase);
+            AssertEq(stateAfterSell3.PlusValuePepsBase, stateAfterSell4.PlusValuePepsBase);
+            AssertEq(stateAfterSell3.MinusValuePepsBase + minusValuePepsSell4, stateAfterSell4.MinusValuePepsBase);
 
             // The PEPS current index is 4, since the last two shares of the third buy have been sold, and the pointer moves
             // to the next buy event, that is not present -> moved after the end of the list of events
-            AssertEq(7, tickerStateAfterSell4.PepsCurrentIndex);
+            AssertEq(7, stateAfterSell4.PepsCurrentIndex);
             // The PEPS current index sold quantity is 0, since the current index has been moved forward
-            AssertEq(0, tickerStateAfterSell4.PepsCurrentIndexSoldQuantity);
+            AssertEq(0, stateAfterSell4.PepsCurrentIndexSoldQuantity);
 
             // TODO: calculate the plus value and minus value crypto
         }
@@ -804,96 +801,95 @@ public class TickerProcessingTest
 
         // -------
         // First buy 10 shares at 100 USD, with fees of 20 USD => Total Amount Local of 1000 USD + 20 USD = 1020 USD
-        var buyEvent1 = new Event(T0, BuyLimit, Ticker, 10, 100m, 1020m, 20m, localCurrency, 2m, -1);
-        var tickerStateAfterBuy1 = tickerProcessing.ProcessBuy(
-            buyEvent1, [buyEvent1], 0, initialState, TextWriter.Null);
+        var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 10, 100m, 1020m, 20m, localCurrency, 2m, -1);
+        var stateAfterBuy1 = tickerProcessing.ProcessBuy(
+            buy1, [buy1], 0, initialState, NoOut);
 
         // --------
         // Sell 5 shares at 150 USD, with fees of 10 USD => Total Amount Local of 750 USD - 10 USD = 740 USD
-        var sellEvent1 = new Event(T0 + D, SellLimit, Ticker, 5, 150m, 740m, 10m, localCurrency, 2m, -1);
-        var tickerStateAfterSell1 = tickerProcessing.ProcessSell(
-            sellEvent1, [buyEvent1, sellEvent1], 1, tickerStateAfterBuy1, TextWriter.Null);
+        var sell1 = new Event(T0 + 1 * D, SellLimit, Ticker, 5, 150m, 740m, 10m, localCurrency, 2m, -1);
+        var stateAfterSell1 = tickerProcessing.ProcessSell(
+            sell1, [buy1, sell1], 1, stateAfterBuy1, NoOut);
 
         AssertStateAfterSell1();
 
         void AssertStateAfterSell1() {
             // 5 shares left
-            AssertEq(5, tickerStateAfterSell1.TotalQuantity);
+            AssertEq(5, stateAfterSell1.TotalQuantity);
             // The total amount is decreased by half (5 remaining out of 10 shares), and not by the total amount of the sell event 1
-            var totalAmountBaseAfterSell1 = tickerStateAfterBuy1.TotalAmountBase * (5m / 10m);
-            AssertEq(totalAmountBaseAfterSell1, tickerStateAfterSell1.TotalAmountBase);
+            var totalAmountBaseAfterSell1 = stateAfterBuy1.TotalAmountBase * (5m / 10m);
+            AssertEq(totalAmountBaseAfterSell1, stateAfterSell1.TotalAmountBase);
 
             // The plus value CUMP for the event is the difference between the sell price and the average buy price for the 5 shares sold
             // The minus value CUMP is 0, since no minus value has been realized
             var averageBuyPriceFiveShares = totalAmountBaseAfterSell1;
             var plusValueCumpSell1 = 740m / 2m - averageBuyPriceFiveShares;
-            AssertEq(plusValueCumpSell1, tickerStateAfterSell1.PlusValueCumpBase);
-            AssertEq(0, tickerStateAfterSell1.MinusValueCumpBase);
+            AssertEq(plusValueCumpSell1, stateAfterSell1.PlusValueCumpBase);
+            AssertEq(0, stateAfterSell1.MinusValueCumpBase);
 
             // The plus value PEPS for the event is the difference between the sell price and the buy price of the first 5 shares bought
             // The minus value PEPS is 0, since no minus value has been realized
             var buyPriceFirstFiveShares = 1020m / 2m / 2m;
             var plusValuePepsSell1 = 740m / 2m - buyPriceFirstFiveShares;
-            AssertEq(plusValuePepsSell1, tickerStateAfterSell1.PlusValuePepsBase);
-            AssertEq(0, tickerStateAfterSell1.MinusValuePepsBase);
+            AssertEq(plusValuePepsSell1, stateAfterSell1.PlusValuePepsBase);
+            AssertEq(0, stateAfterSell1.MinusValuePepsBase);
 
             // The PEPS current index is 0, since only 5 shares out of 10 have been sold
-            AssertEq(0, tickerStateAfterSell1.PepsCurrentIndex);
+            AssertEq(0, stateAfterSell1.PepsCurrentIndex);
             // The PEPS current index sold quantity is 5, since 5 shares out of 10 have been sold
-            AssertEq(5, tickerStateAfterSell1.PepsCurrentIndexSoldQuantity);
+            AssertEq(5, stateAfterSell1.PepsCurrentIndexSoldQuantity);
 
             // TODO: calculate the plus value and minus value crypto
         }
 
         // -------
         // Reset the ticker state
-        var resetEvent1 = new Event(T0 + 2 * D, Reset, Ticker, null, null, 0, null, localCurrency, 2m, -1);
-        var tickerStateAfterReset1 = tickerProcessing.ProcessReset(
-            resetEvent1, [buyEvent1, sellEvent1, resetEvent1], 2, tickerStateAfterSell1, TextWriter.Null);
+        var reset1 = new Event(T0 + 2 * D, Reset, Ticker, null, null, 0, null, localCurrency, 2m, -1);
+        var stateAfterReset1 = tickerProcessing.ProcessReset(
+            reset1, [buy1, sell1, reset1], 2, stateAfterSell1, NoOut);
 
         AssertStateAfterReset1();
 
         void AssertStateAfterReset1() {
             // The total quantity and amount are the same as before the reset
-            AssertEq(tickerStateAfterSell1.TotalQuantity, tickerStateAfterReset1.TotalQuantity);
-            AssertEq(tickerStateAfterSell1.TotalAmountBase, tickerStateAfterReset1.TotalAmountBase);
+            AssertEq(stateAfterSell1.TotalQuantity, stateAfterReset1.TotalQuantity);
+            AssertEq(stateAfterSell1.TotalAmountBase, stateAfterReset1.TotalAmountBase);
 
             // The plus and minus values CUMP, PEPS and crypto are reset to 0
-            AssertEq(0, tickerStateAfterReset1.PlusValueCumpBase);
-            AssertEq(0, tickerStateAfterReset1.MinusValueCumpBase);
-            AssertEq(0, tickerStateAfterReset1.PlusValuePepsBase);
-            AssertEq(0, tickerStateAfterReset1.MinusValuePepsBase);
-            AssertEq(0, tickerStateAfterReset1.PlusValueCryptoBase);
-            AssertEq(0, tickerStateAfterReset1.MinusValueCryptoBase);
+            AssertEq(0, stateAfterReset1.PlusValueCumpBase);
+            AssertEq(0, stateAfterReset1.MinusValueCumpBase);
+            AssertEq(0, stateAfterReset1.PlusValuePepsBase);
+            AssertEq(0, stateAfterReset1.MinusValuePepsBase);
+            AssertEq(0, stateAfterReset1.PlusValueCryptoBase);
+            AssertEq(0, stateAfterReset1.MinusValueCryptoBase);
 
             // The PEPS current index and sold quantity are the same as before the reset
-            AssertEq(tickerStateAfterSell1.PepsCurrentIndex, tickerStateAfterReset1.PepsCurrentIndex);
-            AssertEq(tickerStateAfterSell1.PepsCurrentIndexSoldQuantity, tickerStateAfterReset1.PepsCurrentIndexSoldQuantity);
+            AssertEq(stateAfterSell1.PepsCurrentIndex, stateAfterReset1.PepsCurrentIndex);
+            AssertEq(stateAfterSell1.PepsCurrentIndexSoldQuantity, stateAfterReset1.PepsCurrentIndexSoldQuantity);
         }
 
         // -------
         // Sell 2 shares at 80 USD, with fees of 6 USD => Total Amount Local of 160 USD - 6 USD = 154 USD
-        var sellEvent2 = new Event(T0 + 3 * D, SellLimit, Ticker, 2, 80m, 154m, 6m, localCurrency, 2m, -1);
-        var tickerStateAfterSell2 = tickerProcessing.ProcessSell(
-            sellEvent2, [buyEvent1, sellEvent1, resetEvent1, sellEvent2], 3, 
-            tickerStateAfterReset1, TextWriter.Null);
+        var sell2 = new Event(T0 + 3 * D, SellLimit, Ticker, 2, 80m, 154m, 6m, localCurrency, 2m, -1);
+        var stateAfterSell2 = tickerProcessing.ProcessSell(
+            sell2, [buy1, sell1, reset1, sell2], 3, stateAfterReset1, NoOut);
 
         AssertStateAfterSell2();
 
         void AssertStateAfterSell2() {
             // 3 shares left
-            AssertEq(3, tickerStateAfterSell2.TotalQuantity);
+            AssertEq(3, stateAfterSell2.TotalQuantity);
             // The total amount is decreased to 3/5 (2 shares out of 5 sold), and not by the total amount of the sell event 2
-            var totalAmountBaseAfterSell2 = tickerStateAfterSell1.TotalAmountBase * (3m / 5m);
-            AssertEq(totalAmountBaseAfterSell2, tickerStateAfterSell2.TotalAmountBase);
+            var totalAmountBaseAfterSell2 = stateAfterSell1.TotalAmountBase * (3m / 5m);
+            AssertEq(totalAmountBaseAfterSell2, stateAfterSell2.TotalAmountBase);
 
             // The plus value CUMP for the event is the difference between the sell price and the average buy price for the 2 shares sold
             // This value is negative, so it is actually a minus value, taken with reversed sign
             // This value is the first CUMP minus value realized. The plus value CUMP doesn't change.
-            var averageBuyPriceTwoSharesSell2 = tickerStateAfterReset1.TotalAmountBase - totalAmountBaseAfterSell2;
+            var averageBuyPriceTwoSharesSell2 = stateAfterReset1.TotalAmountBase - totalAmountBaseAfterSell2;
             var minusValueCumpSell2 = averageBuyPriceTwoSharesSell2 - 154m / 2m;
-            AssertEq(0, tickerStateAfterSell2.PlusValueCumpBase);
-            AssertEq(minusValueCumpSell2, tickerStateAfterSell2.MinusValueCumpBase);
+            AssertEq(0, stateAfterSell2.PlusValueCumpBase);
+            AssertEq(minusValueCumpSell2, stateAfterSell2.MinusValueCumpBase);
 
             // The plus value PEPS for the event is the difference between the sell price and the buy price of the oldest
             // 2 shares bought:
@@ -902,58 +898,55 @@ public class TickerProcessingTest
             // This value is the first PEPS minus value realized. The plus value PEPS doesn't change.
             var buyPriceOldestTwoShares = 2 * 1020m / 10m / 2m;
             var minusValuePepsSell2 = buyPriceOldestTwoShares - 154m / 2m;
-            AssertEq(0, tickerStateAfterSell2.PlusValuePepsBase);
-            AssertEq(minusValuePepsSell2, tickerStateAfterSell2.MinusValuePepsBase);
+            AssertEq(0, stateAfterSell2.PlusValuePepsBase);
+            AssertEq(minusValuePepsSell2, stateAfterSell2.MinusValuePepsBase);
 
             // The PEPS current index is 0, since there are still 3 shares left of the first buy that have not been sold
-            AssertEq(0, tickerStateAfterSell2.PepsCurrentIndex);
+            AssertEq(0, stateAfterSell2.PepsCurrentIndex);
             // The PEPS current index sold quantity is 7, since 7 shares out of 10 have been sold
-            AssertEq(7, tickerStateAfterSell2.PepsCurrentIndexSoldQuantity);
+            AssertEq(7, stateAfterSell2.PepsCurrentIndexSoldQuantity);
 
             // TODO: calculate the plus value and minus value crypto
         }
 
         // -------
         // Buy 1 share at 100 USD, with fees of 2 USD => Total Amount Local of 100 USD + 2 USD = 102 USD
-        var buyEvent2 = new Event(T0 + 4 * D, BuyLimit, Ticker, 1, 100m, 102m, 2m, localCurrency, 2m, -1);
-        var tickerStateAfterBuy2 = tickerProcessing.ProcessBuy(
-            buyEvent2, [buyEvent1, sellEvent1, resetEvent1, sellEvent2, buyEvent2], 4, 
-            tickerStateAfterSell2, TextWriter.Null);
+        var buy2 = new Event(T0 + 4 * D, BuyLimit, Ticker, 1, 100m, 102m, 2m, localCurrency, 2m, -1);
+        var stateAfterBuy2 = tickerProcessing.ProcessBuy(
+            buy2, [buy1, sell1, reset1, sell2, buy2], 4, stateAfterSell2, NoOut);
 
         // Buy 2 shares at 110 USD, with fees of 4 USD => Total Amount Local of 220 USD + 4 USD = 224 USD
-        var buyEvent3 = new Event(T0 + 5 * D, BuyLimit, Ticker, 2, 110m, 224m, 4m, localCurrency, 2m, -1);
-        var tickerStateAfterBuy3 = tickerProcessing.ProcessBuy(
-            buyEvent3, [buyEvent1, sellEvent1, resetEvent1, sellEvent2, buyEvent2, buyEvent3], 5, 
-            tickerStateAfterBuy2, TextWriter.Null);
+        var buy3 = new Event(T0 + 5 * D, BuyLimit, Ticker, 2, 110m, 224m, 4m, localCurrency, 2m, -1);
+        var stateAfterBuy3 = tickerProcessing.ProcessBuy(
+            buy3, [buy1, sell1, reset1, sell2, buy2, buy3], 5, 
+            stateAfterBuy2, NoOut);
 
         // Cash withdrawal of 50 USD, with fees of 1 USD => Total Amount Local of 49 USD
-        var cashWithdrawalEvent1 = new Event(T0 + 6 * D, CashWithdrawal, Ticker, null, null, 49m, 1m, localCurrency, 2m, -1);
-        var tickerStateAfterCashWithdrawal1 = tickerProcessing.ProcessNoop(
-            cashWithdrawalEvent1, [buyEvent1, sellEvent1, resetEvent1, sellEvent2, buyEvent2, buyEvent3, cashWithdrawalEvent1], 6, 
-            tickerStateAfterBuy3, TextWriter.Null);
+        var cashWithdrawal1 = new Event(T0 + 6 * D, CashWithdrawal, Ticker, null, null, 49m, 1m, localCurrency, 2m, -1);
+        var stateAfterCashWithdrawal1 = tickerProcessing.ProcessNoop(
+            cashWithdrawal1, [buy1, sell1, reset1, sell2, buy2, buy3, cashWithdrawal1], 6, stateAfterBuy3, NoOut);
 
         // Sell 4 shares at 120 USD, with fees of 8 USD => Total Amount Local of 480 USD - 8 USD = 472 USD
-        var sellEvent3 = new Event(T0 + 7 * D, SellLimit, Ticker, 4, 120m, 472m, 8m, localCurrency, 2m, -1);
-        var tickerStateAfterSell3 = tickerProcessing.ProcessSell(
-            sellEvent3, [buyEvent1, sellEvent1, resetEvent1, sellEvent2, buyEvent2, buyEvent3, cashWithdrawalEvent1, sellEvent3], 7, 
-            tickerStateAfterCashWithdrawal1, TextWriter.Null);
+        var sell3 = new Event(T0 + 7 * D, SellLimit, Ticker, 4, 120m, 472m, 8m, localCurrency, 2m, -1);
+        var stateAfterSell3 = tickerProcessing.ProcessSell(
+            sell3, [buy1, sell1, reset1, sell2, buy2, buy3, cashWithdrawal1, sell3], 7, stateAfterCashWithdrawal1, NoOut);
 
         AssertStateAfterSell3();
 
         void AssertStateAfterSell3() 
         {
             // 2 shares left
-            AssertEq(2, tickerStateAfterSell3.TotalQuantity);
+            AssertEq(2, stateAfterSell3.TotalQuantity);
             // The total amount is decreased to 2/6 (2 remaining out of 6 shares), and not by the total amount of the sell event 3
-            var totalAmountBaseAfterSell3 = tickerStateAfterCashWithdrawal1.TotalAmountBase * (2m / 6m);
-            AssertEq(totalAmountBaseAfterSell3, tickerStateAfterSell3.TotalAmountBase);
+            var totalAmountBaseAfterSell3 = stateAfterCashWithdrawal1.TotalAmountBase * (2m / 6m);
+            AssertEq(totalAmountBaseAfterSell3, stateAfterSell3.TotalAmountBase);
 
             // The plus value CUMP for the event is the difference between the sell price and the average buy price for the 4 shares sold
             // The minus value CUMP remains the same as before, since no new minus value has been realized
-            var averageBuyPriceFourSharesSell3 = tickerStateAfterCashWithdrawal1.TotalAmountBase - totalAmountBaseAfterSell3;
+            var averageBuyPriceFourSharesSell3 = stateAfterCashWithdrawal1.TotalAmountBase - totalAmountBaseAfterSell3;
             var plusValueCumpSell3 = 472m / 2m - averageBuyPriceFourSharesSell3;
-            AssertEq(plusValueCumpSell3, tickerStateAfterSell3.PlusValueCumpBase);
-            AssertEq(tickerStateAfterCashWithdrawal1.MinusValueCumpBase, tickerStateAfterSell3.MinusValueCumpBase);
+            AssertEq(plusValueCumpSell3, stateAfterSell3.PlusValueCumpBase);
+            AssertEq(stateAfterCashWithdrawal1.MinusValueCumpBase, stateAfterSell3.MinusValueCumpBase);
 
             // The plus value PEPS for the event is the difference between the sell price and the buy price of the oldest 4 shares bought:
             // - oldest 3 shares bought at 1020 USD / 10 shares (local currency)
@@ -962,14 +955,14 @@ public class TickerProcessingTest
             // The minus value PEPS remains the same as before, since no new minus value has been realized
             var buyPriceOldestFourShares = 3 * 1020m / 10m / 2m + 1 * 102m / 1m / 2m;
             var plusValuePepsSell3 = 472m / 2m - buyPriceOldestFourShares;
-            AssertEq(plusValuePepsSell3, tickerStateAfterSell3.PlusValuePepsBase);
-            AssertEq(tickerStateAfterCashWithdrawal1.MinusValuePepsBase, tickerStateAfterSell3.MinusValuePepsBase);
+            AssertEq(plusValuePepsSell3, stateAfterSell3.PlusValuePepsBase);
+            AssertEq(stateAfterCashWithdrawal1.MinusValuePepsBase, stateAfterSell3.MinusValuePepsBase);
 
             // The PEPS current index is 5, since all the 3 oldest shares, together with the next 1 share, have been sold,
             // and the pointer moves to the next buy event (last 2 shares bought), that is in position 5 in the list of events
-            AssertEq(5, tickerStateAfterSell3.PepsCurrentIndex);
+            AssertEq(5, stateAfterSell3.PepsCurrentIndex);
             // The PEPS current index sold quantity is 0, since 0 shares out of 2 have been sold
-            AssertEq(0, tickerStateAfterSell3.PepsCurrentIndexSoldQuantity);
+            AssertEq(0, stateAfterSell3.PepsCurrentIndexSoldQuantity);
 
             // TODO: calculate the plus value and minus value crypto
         }
@@ -977,29 +970,28 @@ public class TickerProcessingTest
         // -------
         // Reset the ticker state
         var resetEvent2 = new Event(T0 + 8 * D, Reset, Ticker, null, null, 0, null, localCurrency, 2m, -1);
-        var tickerStateAfterReset2 = tickerProcessing.ProcessReset(
-            resetEvent2, [buyEvent1, sellEvent1, resetEvent1, sellEvent2, buyEvent2, buyEvent3, cashWithdrawalEvent1, sellEvent3, resetEvent2], 8, 
-            tickerStateAfterSell3, TextWriter.Null);
+        var stateAfterReset2 = tickerProcessing.ProcessReset(
+            resetEvent2, [buy1, sell1, reset1, sell2, buy2, buy3, cashWithdrawal1, sell3, resetEvent2], 8, stateAfterSell3, NoOut);
 
         AssertStateAfterReset2();
 
         void AssertStateAfterReset2()
         {
             // The total quantity and amount are the same as before the reset
-            AssertEq(tickerStateAfterSell3.TotalQuantity, tickerStateAfterReset2.TotalQuantity);
-            AssertEq(tickerStateAfterSell3.TotalAmountBase, tickerStateAfterReset2.TotalAmountBase);
+            AssertEq(stateAfterSell3.TotalQuantity, stateAfterReset2.TotalQuantity);
+            AssertEq(stateAfterSell3.TotalAmountBase, stateAfterReset2.TotalAmountBase);
 
             // The plus and minus values CUMP, PEPS and crypto are reset to 0
-            AssertEq(0, tickerStateAfterReset2.PlusValueCumpBase);
-            AssertEq(0, tickerStateAfterReset2.MinusValueCumpBase);
-            AssertEq(0, tickerStateAfterReset2.PlusValuePepsBase);
-            AssertEq(0, tickerStateAfterReset2.MinusValuePepsBase);
-            AssertEq(0, tickerStateAfterReset2.PlusValueCryptoBase);
-            AssertEq(0, tickerStateAfterReset2.MinusValueCryptoBase);
+            AssertEq(0, stateAfterReset2.PlusValueCumpBase);
+            AssertEq(0, stateAfterReset2.MinusValueCumpBase);
+            AssertEq(0, stateAfterReset2.PlusValuePepsBase);
+            AssertEq(0, stateAfterReset2.MinusValuePepsBase);
+            AssertEq(0, stateAfterReset2.PlusValueCryptoBase);
+            AssertEq(0, stateAfterReset2.MinusValueCryptoBase);
 
             // The PEPS current index and sold quantity are the same as before the reset
-            AssertEq(tickerStateAfterSell3.PepsCurrentIndex, tickerStateAfterReset2.PepsCurrentIndex);
-            AssertEq(tickerStateAfterSell3.PepsCurrentIndexSoldQuantity, tickerStateAfterReset2.PepsCurrentIndexSoldQuantity);
+            AssertEq(stateAfterSell3.PepsCurrentIndex, stateAfterReset2.PepsCurrentIndex);
+            AssertEq(stateAfterSell3.PepsCurrentIndexSoldQuantity, stateAfterReset2.PepsCurrentIndexSoldQuantity);
         }           
     }
 
@@ -1013,140 +1005,140 @@ public class TickerProcessingTest
 
         // -------
         // First buy 10 shares at 100 USD, with fees of 20 USD => Total Amount Local of 1000 USD + 20 USD = 1020 USD
-        var buyEvent1 = new Event(T0, BuyLimit, Ticker, 10, 100m, 1020m, 20m, localCurrency, 2m, -1);
-        events.Add(buyEvent1);
-        var tickerStateAfterBuy1 = tickerProcessing.ProcessBuy(
-            buyEvent1, events, 0, initialState, TextWriter.Null);
+        var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 10, 100m, 1020m, 20m, localCurrency, 2m, -1);
+        events.Add(buy1);
+        var stateAfterBuy1 = tickerProcessing.ProcessBuy(
+            buy1, events, 0, initialState, NoOut);
 
         // --------
         // Sell 5 shares at 150 USD, with fees of 10 USD => Total Amount Local of 750 USD - 10 USD = 740 USD
-        var sellEvent1 = new Event(T0 + D, SellLimit, Ticker, 5, 150m, 740m, 10m, localCurrency, 2m, -1);
-        events.Add(sellEvent1);
-        var tickerStateAfterSell1 = tickerProcessing.ProcessSell(
-            sellEvent1, events, 1, tickerStateAfterBuy1, TextWriter.Null);
+        var sell1 = new Event(T0 + 1 * D, SellLimit, Ticker, 5, 150m, 740m, 10m, localCurrency, 2m, -1);
+        events.Add(sell1);
+        var stateAfterSell1 = tickerProcessing.ProcessSell(
+            sell1, events, 1, stateAfterBuy1, NoOut);
 
         AssertStateAfterSell1();
 
         void AssertStateAfterSell1()
         {
             // 5 shares left
-            AssertEq(5, tickerStateAfterSell1.TotalQuantity);
+            AssertEq(5, stateAfterSell1.TotalQuantity);
             // The total amount is decreased by half (5 remaining out of 10 shares), and not by the total amount of the sell event 1
-            var totalAmountBaseAfterSell1 = tickerStateAfterBuy1.TotalAmountBase * (5m / 10m);
-            AssertEq(totalAmountBaseAfterSell1, tickerStateAfterSell1.TotalAmountBase);
+            var totalAmountBaseAfterSell1 = stateAfterBuy1.TotalAmountBase * (5m / 10m);
+            AssertEq(totalAmountBaseAfterSell1, stateAfterSell1.TotalAmountBase);
 
             // The plus value CUMP for the event is the difference between the sell price and the average buy price for the 5 shares sold
             // The minus value CUMP is 0, since no minus value has been realized
             var averageBuyPriceFiveShares = totalAmountBaseAfterSell1;
             var plusValueCumpSell1 = 740m / 2m - averageBuyPriceFiveShares;
-            AssertEq(plusValueCumpSell1, tickerStateAfterSell1.PlusValueCumpBase);
-            AssertEq(0, tickerStateAfterSell1.MinusValueCumpBase);
+            AssertEq(plusValueCumpSell1, stateAfterSell1.PlusValueCumpBase);
+            AssertEq(0, stateAfterSell1.MinusValueCumpBase);
 
             // The plus value PEPS for the event is the difference between the sell price and the buy price of the first 5 shares bought
             // The minus value PEPS is 0, since no minus value has been realized
             var buyPriceFirstFiveShares = 1020m / 2m / 2m;
             var plusValuePepsSell1 = 740m / 2m - buyPriceFirstFiveShares;
-            AssertEq(plusValuePepsSell1, tickerStateAfterSell1.PlusValuePepsBase);
-            AssertEq(0, tickerStateAfterSell1.MinusValuePepsBase);
+            AssertEq(plusValuePepsSell1, stateAfterSell1.PlusValuePepsBase);
+            AssertEq(0, stateAfterSell1.MinusValuePepsBase);
 
             // The PEPS current index is 0, since only 5 shares out of 10 have been sold
-            AssertEq(0, tickerStateAfterSell1.PepsCurrentIndex);
+            AssertEq(0, stateAfterSell1.PepsCurrentIndex);
             // The PEPS current index sold quantity is 5, since 5 shares out of 10 have been sold
-            AssertEq(5, tickerStateAfterSell1.PepsCurrentIndexSoldQuantity);
+            AssertEq(5, stateAfterSell1.PepsCurrentIndexSoldQuantity);
         }
 
         // -------
         // Stock split of 1:3, starting from 5 shares => 10 additional shares
         var stockSplitEvent1 = new Event(T0 + 2 * D, StockSplit, Ticker, 10m, null, 0, null, localCurrency, 2m, -1);
         events.Add(stockSplitEvent1);
-        var tickerStateAfterStockSplit1 = tickerProcessing.ProcessStockSplit(
-            stockSplitEvent1, events, 2, tickerStateAfterSell1, TextWriter.Null);
+        var stateAfterStockSplit1 = tickerProcessing.ProcessStockSplit(
+            stockSplitEvent1, events, 2, stateAfterSell1, NoOut);
 
         AssertStateAfterStockSplit1();
 
         void AssertStateAfterStockSplit1()
         {
             // The total quantity is increased by 10
-            AssertEq(15, tickerStateAfterStockSplit1.TotalQuantity);
+            AssertEq(15, stateAfterStockSplit1.TotalQuantity);
             // The total amount remains the same
-            AssertEq(tickerStateAfterSell1.TotalAmountBase, tickerStateAfterStockSplit1.TotalAmountBase);
+            AssertEq(stateAfterSell1.TotalAmountBase, stateAfterStockSplit1.TotalAmountBase);
 
             // The plus and minus values CUMP, PEPS and crypto remain the same
-            AssertEq(tickerStateAfterSell1.PlusValueCumpBase, tickerStateAfterStockSplit1.PlusValueCumpBase);
-            AssertEq(tickerStateAfterSell1.MinusValueCumpBase, tickerStateAfterStockSplit1.MinusValueCumpBase);
-            AssertEq(tickerStateAfterSell1.PlusValuePepsBase, tickerStateAfterStockSplit1.PlusValuePepsBase);
-            AssertEq(tickerStateAfterSell1.MinusValuePepsBase, tickerStateAfterStockSplit1.MinusValuePepsBase);
-            AssertEq(tickerStateAfterSell1.PlusValueCryptoBase, tickerStateAfterStockSplit1.PlusValueCryptoBase);
-            AssertEq(tickerStateAfterSell1.MinusValueCryptoBase, tickerStateAfterStockSplit1.MinusValueCryptoBase);
+            AssertEq(stateAfterSell1.PlusValueCumpBase, stateAfterStockSplit1.PlusValueCumpBase);
+            AssertEq(stateAfterSell1.MinusValueCumpBase, stateAfterStockSplit1.MinusValueCumpBase);
+            AssertEq(stateAfterSell1.PlusValuePepsBase, stateAfterStockSplit1.PlusValuePepsBase);
+            AssertEq(stateAfterSell1.MinusValuePepsBase, stateAfterStockSplit1.MinusValuePepsBase);
+            AssertEq(stateAfterSell1.PlusValueCryptoBase, stateAfterStockSplit1.PlusValueCryptoBase);
+            AssertEq(stateAfterSell1.MinusValueCryptoBase, stateAfterStockSplit1.MinusValueCryptoBase);
 
             // The PEPS current index remains unchanged, but the PEPS current index sold quantity is multiplied by 3
-            AssertEq(0, tickerStateAfterStockSplit1.PepsCurrentIndex);
-            AssertEq(tickerStateAfterSell1.PepsCurrentIndexSoldQuantity * 3m, tickerStateAfterStockSplit1.PepsCurrentIndexSoldQuantity);
+            AssertEq(0, stateAfterStockSplit1.PepsCurrentIndex);
+            AssertEq(stateAfterSell1.PepsCurrentIndexSoldQuantity * 3m, stateAfterStockSplit1.PepsCurrentIndexSoldQuantity);
 
             // Previous Buy and Sell stock events are retroactively updated in the list of events, to take into account the 1:3 stock split
-            var modifiedBuyEvent1 = events[0];
-            AssertEq(10 * 3m, modifiedBuyEvent1.Quantity); // 10 shares bought, now 30 shares
-            AssertEq(100m / 3m, modifiedBuyEvent1.PricePerShareLocal); // Buy price per share is divided by 3
-            AssertEq(1020m, modifiedBuyEvent1.TotalAmountLocal); // Remains the same
-            AssertEq(20m, modifiedBuyEvent1.FeesLocal); // Remains the same
-            AssertEq(2m, modifiedBuyEvent1.FXRate); // Remains the same
+            var modifiedbuy1 = events[0];
+            AssertEq(10 * 3m, modifiedbuy1.Quantity); // 10 shares bought, now 30 shares
+            AssertEq(100m / 3m, modifiedbuy1.PricePerShareLocal); // Buy price per share is divided by 3
+            AssertEq(1020m, modifiedbuy1.TotalAmountLocal); // Remains the same
+            AssertEq(20m, modifiedbuy1.FeesLocal); // Remains the same
+            AssertEq(2m, modifiedbuy1.FXRate); // Remains the same
 
-            var modifiedSellEvent1 = events[1];
-            AssertEq(5 * 3m, modifiedSellEvent1.Quantity); // 5 shares sold, now 15 shares
-            AssertEq(150m / 3m, modifiedSellEvent1.PricePerShareLocal); // Sell price per share is divided by 3
-            AssertEq(740m, modifiedSellEvent1.TotalAmountLocal); // Remains the same
-            AssertEq(10m, modifiedSellEvent1.FeesLocal); // Remains the same
-            AssertEq(2m, modifiedSellEvent1.FXRate); // Remains the same
+            var modifiedsell1 = events[1];
+            AssertEq(5 * 3m, modifiedsell1.Quantity); // 5 shares sold, now 15 shares
+            AssertEq(150m / 3m, modifiedsell1.PricePerShareLocal); // Sell price per share is divided by 3
+            AssertEq(740m, modifiedsell1.TotalAmountLocal); // Remains the same
+            AssertEq(10m, modifiedsell1.FeesLocal); // Remains the same
+            AssertEq(2m, modifiedsell1.FXRate); // Remains the same
 
             // The original Buy and Sell stock events are not modified
-            AssertEq(10, buyEvent1.Quantity);
-            AssertEq(100m, buyEvent1.PricePerShareLocal);
-            AssertEq(5, sellEvent1.Quantity);
-            AssertEq(150m, sellEvent1.PricePerShareLocal);
+            AssertEq(10, buy1.Quantity);
+            AssertEq(100m, buy1.PricePerShareLocal);
+            AssertEq(5, sell1.Quantity);
+            AssertEq(150m, sell1.PricePerShareLocal);
         }
 
         // -------
         // Stock split of 1:4, starting from 15 shares => 45 additional shares
         var stockSplitEvent2 = new Event(T0 + 3 * D, StockSplit, Ticker, 45m, null, 0, null, localCurrency, 2m, -1);
         events.Add(stockSplitEvent2);
-        var tickerStateAfterStockSplit2 = tickerProcessing.ProcessStockSplit(
-            stockSplitEvent2, events, 3, tickerStateAfterStockSplit1, TextWriter.Null);
+        var stateAfterStockSplit2 = tickerProcessing.ProcessStockSplit(
+            stockSplitEvent2, events, 3, stateAfterStockSplit1, NoOut);
 
         AssertStateAfterStockSplit2();
 
         void AssertStateAfterStockSplit2()
         {
             // The total quantity is increased by 45
-            AssertEq(60, tickerStateAfterStockSplit2.TotalQuantity);
+            AssertEq(60, stateAfterStockSplit2.TotalQuantity);
             // The total amount remains the same
-            AssertEq(tickerStateAfterStockSplit1.TotalAmountBase, tickerStateAfterStockSplit2.TotalAmountBase);
+            AssertEq(stateAfterStockSplit1.TotalAmountBase, stateAfterStockSplit2.TotalAmountBase);
 
             // The plus and minus values CUMP, PEPS and crypto remain the same
-            AssertEq(tickerStateAfterStockSplit1.PlusValueCumpBase, tickerStateAfterStockSplit2.PlusValueCumpBase);
-            AssertEq(tickerStateAfterStockSplit1.MinusValueCumpBase, tickerStateAfterStockSplit2.MinusValueCumpBase);
-            AssertEq(tickerStateAfterStockSplit1.PlusValuePepsBase, tickerStateAfterStockSplit2.PlusValuePepsBase);
-            AssertEq(tickerStateAfterStockSplit1.MinusValuePepsBase, tickerStateAfterStockSplit2.MinusValuePepsBase);
-            AssertEq(tickerStateAfterStockSplit1.PlusValueCryptoBase, tickerStateAfterStockSplit2.PlusValueCryptoBase);
-            AssertEq(tickerStateAfterStockSplit1.MinusValueCryptoBase, tickerStateAfterStockSplit2.MinusValueCryptoBase);
+            AssertEq(stateAfterStockSplit1.PlusValueCumpBase, stateAfterStockSplit2.PlusValueCumpBase);
+            AssertEq(stateAfterStockSplit1.MinusValueCumpBase, stateAfterStockSplit2.MinusValueCumpBase);
+            AssertEq(stateAfterStockSplit1.PlusValuePepsBase, stateAfterStockSplit2.PlusValuePepsBase);
+            AssertEq(stateAfterStockSplit1.MinusValuePepsBase, stateAfterStockSplit2.MinusValuePepsBase);
+            AssertEq(stateAfterStockSplit1.PlusValueCryptoBase, stateAfterStockSplit2.PlusValueCryptoBase);
+            AssertEq(stateAfterStockSplit1.MinusValueCryptoBase, stateAfterStockSplit2.MinusValueCryptoBase);
 
             // The PEPS current index remains unchanged, but the PEPS current index sold quantity is multiplied by 4
-            AssertEq(0, tickerStateAfterStockSplit2.PepsCurrentIndex);
-            AssertEq(tickerStateAfterStockSplit1.PepsCurrentIndexSoldQuantity * 4m, tickerStateAfterStockSplit2.PepsCurrentIndexSoldQuantity);
+            AssertEq(0, stateAfterStockSplit2.PepsCurrentIndex);
+            AssertEq(stateAfterStockSplit1.PepsCurrentIndexSoldQuantity * 4m, stateAfterStockSplit2.PepsCurrentIndexSoldQuantity);
 
             // Previous Buy and Sell stock events are retroactively updated in the list of events, to take into account the 1:4 stock split
-            var modifiedBuyEvent1 = events[0];
-            AssertEq(10 * 3m * 4m, modifiedBuyEvent1.Quantity); // 30 shares bought, now 120 shares
-            AssertEq(100m / 3m / 4m, modifiedBuyEvent1.PricePerShareLocal); // Buy price per share is divided by 4
-            AssertEq(1020m, modifiedBuyEvent1.TotalAmountLocal); // Remains the same
-            AssertEq(20m, modifiedBuyEvent1.FeesLocal); // Remains the same
-            AssertEq(2m, modifiedBuyEvent1.FXRate); // Remains the same
+            var modifiedbuy1 = events[0];
+            AssertEq(10 * 3m * 4m, modifiedbuy1.Quantity); // 30 shares bought, now 120 shares
+            AssertEq(100m / 3m / 4m, modifiedbuy1.PricePerShareLocal); // Buy price per share is divided by 4
+            AssertEq(1020m, modifiedbuy1.TotalAmountLocal); // Remains the same
+            AssertEq(20m, modifiedbuy1.FeesLocal); // Remains the same
+            AssertEq(2m, modifiedbuy1.FXRate); // Remains the same
 
-            var modifiedSellEvent1 = events[1];
-            AssertEq(5 * 3m * 4m, modifiedSellEvent1.Quantity); // 15 shares sold, now 60 shares
-            AssertEq(150m / 3m / 4m, modifiedSellEvent1.PricePerShareLocal); // Sell price per share is divided by 4
-            AssertEq(740m, modifiedSellEvent1.TotalAmountLocal); // Remains the same
-            AssertEq(10m, modifiedSellEvent1.FeesLocal); // Remains the same
-            AssertEq(2m, modifiedSellEvent1.FXRate); // Remains the same
+            var modifiedsell1 = events[1];
+            AssertEq(5 * 3m * 4m, modifiedsell1.Quantity); // 15 shares sold, now 60 shares
+            AssertEq(150m / 3m / 4m, modifiedsell1.PricePerShareLocal); // Sell price per share is divided by 4
+            AssertEq(740m, modifiedsell1.TotalAmountLocal); // Remains the same
+            AssertEq(10m, modifiedsell1.FeesLocal); // Remains the same
+            AssertEq(2m, modifiedsell1.FXRate); // Remains the same
 
             // Previous Stock Split events are not modified
             var modifiedStockSplit1 = events[2];
@@ -1154,15 +1146,47 @@ public class TickerProcessingTest
             AssertEq(0, modifiedStockSplit1.TotalAmountLocal);
 
             // The original Buy and Sell stock events are not modified
-            AssertEq(10, buyEvent1.Quantity);
-            AssertEq(100m, buyEvent1.PricePerShareLocal);
-            AssertEq(5, sellEvent1.Quantity);
-            AssertEq(150m, sellEvent1.PricePerShareLocal);
+            AssertEq(10, buy1.Quantity);
+            AssertEq(100m, buy1.PricePerShareLocal);
+            AssertEq(5, sell1.Quantity);
+            AssertEq(150m, sell1.PricePerShareLocal);
 
             // The original Stock Split events is not modified
             AssertEq(10, stockSplitEvent1.Quantity);
             AssertEq(0, stockSplitEvent1.TotalAmountLocal);
         }
+    }
+
+    [TestMethod]
+    public void ProcessStockSplit_WhenTickerEventAndIndexAreInconsistent_RaisesException()
+    {
+        var tickerProcessing = Instance;
+        var localCurrency = USD;
+        var fxRate = 2m; // FX rate between USD and EUR stays stable at 2 USD for 1 EUR across events
+        var initialState = new TickerState(Ticker, Isin, TotalQuantity: 15, TotalAmountBase: 225m);
+        var events = new List<Event>
+        {
+            new(T0, BuyLimit, Ticker, 10, 100m, 1020m, 20m, localCurrency, fxRate, -1),
+            new(T0 + 1 * D, StockSplit, Ticker, 45m, null, 0, null, localCurrency, fxRate, -1),
+        };
+
+        ThrowsAny<Exception>(() => tickerProcessing.ProcessStockSplit(events[1], events, 0, initialState, NoOut));
+    }
+
+    [TestMethod]
+    public void ProcessStockSplit_WhenTypeIsInvalid_RaisesException()
+    {
+        var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 10, 100m, 1020m, 20m, USD, 2m, -1);
+        ThrowsAny<Exception>(() => Instance.ProcessStockSplit(
+            buy1, [buy1], 0, new TickerState(Ticker, Isin), NoOut));
+    }
+
+    [TestMethod]
+    public void ProcessStockSplit_WhenTickerIsNull_RaisesException()
+    {
+        var stockSplit1 = new Event(T0 + 0 * D, StockSplit, null, 10, null, 0, null, USD, 2m, -1);
+        ThrowsAny<Exception>(() => Instance.ProcessStockSplit(
+            stockSplit1, [stockSplit1], 0, new TickerState(Ticker, Isin), NoOut));
     }
 
     [AssertionMethod]
