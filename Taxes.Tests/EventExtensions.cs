@@ -2,8 +2,6 @@
 
 static class EventExtensions
 {
-    private const decimal DefaultDelta = 0.01m;
-
     [AssertionMethod]
     public static void AssertEvent(
         this Event @event, 
@@ -16,7 +14,8 @@ static class EventExtensions
         decimal? feesLocal = null, 
         string? currency = null, 
         decimal? fxRate = null, 
-        decimal? portfolioCurrentValueBase = null)
+        decimal? portfolioCurrentValueBase = null,
+        decimal defaultDelta = 0.01m)
     {
         if (date is not null)
             Assert.AreEqual(date.Value, @event.Date);
@@ -25,18 +24,18 @@ static class EventExtensions
         if (ticker is not null)
             Assert.AreEqual(ticker, @event.Ticker);
         if (quantity is not null)
-            Assert.AreEqual(quantity.Value, @event.Quantity!.Value, DefaultDelta);
+            Assert.AreEqual(quantity.Value, @event.Quantity!.Value, defaultDelta);
         if (pricePerShareLocal is not null)
-            Assert.AreEqual(pricePerShareLocal.Value, @event.PricePerShareLocal!.Value, DefaultDelta);
+            Assert.AreEqual(pricePerShareLocal.Value, @event.PricePerShareLocal!.Value, defaultDelta);
         if (totalAmountLocal is not null)
-            Assert.AreEqual(totalAmountLocal.Value, @event.TotalAmountLocal, DefaultDelta);
+            Assert.AreEqual(totalAmountLocal.Value, @event.TotalAmountLocal, defaultDelta);
         if (feesLocal is not null)
-            Assert.AreEqual(feesLocal.Value, @event.FeesLocal!.Value, DefaultDelta);
+            Assert.AreEqual(feesLocal.Value, @event.FeesLocal!.Value, defaultDelta);
         if (currency is not null)
             Assert.AreEqual(currency, @event.Currency);
         if (fxRate is not null)
-            Assert.AreEqual(fxRate.Value, @event.FXRate, DefaultDelta);
+            Assert.AreEqual(fxRate.Value, @event.FXRate, defaultDelta);
         if (portfolioCurrentValueBase is not null)
-            Assert.AreEqual(portfolioCurrentValueBase.Value, @event.PortfolioCurrentValueBase, DefaultDelta);
+            Assert.AreEqual(portfolioCurrentValueBase.Value, @event.PortfolioCurrentValueBase, defaultDelta);
     }
 }
