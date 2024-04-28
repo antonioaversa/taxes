@@ -1,7 +1,10 @@
 # Revolut taxes calculator for France
 
 The software can be used to **simulate approximated taxes on financial assets**, according to French Law, for a given 
-period of time.
+period of time. 
+
+It is designed to process the data exported from the Revolut app, but can be easily adapted to other
+sources of data.
 
 > [!CAUTION]
 > It can be used in simulations for personal use, and it doesn't provide any guarantee of correctness.
@@ -152,13 +155,10 @@ Make sure that `Basics.json` is up-to-date:
 	- e.g. `["crypto_2022_*.csv", "crypto_2023_*.csv"]` 
 - define `CryptoPortfolioValuesCurrency`, as the default currency used to specify the value of the entire crypto 
   portfolio (typically `USD` in the Revolut app) for each relevant day
-  - unlike stocks, crypto taxes calculation require knowning the value of the entire crypto portfolio after each 
-	taxable event, not just the sell price of the specific crypto sold
-  - as of the day of writing this, there is no option to extract this data from the Revolut app into a file, so the
-	value of the portfolio should be checked manually in the UI of the app and entered in a file respecting the
-	format described [here](#Setup-crypto-portfolio-values)
+  - data extraction from Revolut and format described [here](#Setup-crypto-portfolio-values) 
 - define `CryptoPortfolioValuesFilePath`, as the path of the file containing the value of the entire crypto portfolio
   for each relevant day 
+  - - data extraction from Revolut and format described [here](#Setup-crypto-portfolio-values) 
 
 ### Setup BCE FX Rates
 
@@ -168,14 +168,6 @@ The recommended way to setup the FX Rates is to use the
 
 #### Multi-currency FX Rates
 
-
-
-#### Single currency FX Rates
-
-Make sure that `BCE-FXRate-<base_currency>-USD.txt` is up-to-date, i.e. it contains all the FX Rates defined by the ECB
-between the base currency `EUR` and `USD` for a contiguous period of time including all dates of ticker events, of any 
-type (buy, sell, dividends, for both stocks and crypto).
-
 The FX Rates are provided by the ECB only for working days. It's OK: the software will use the FX Rate as defined in
 other reports, or the closest FX Rate available, when the ECB didn't provide an FX Rate for the date of a ticker event.
 
@@ -184,7 +176,18 @@ on the web-site of the Banque de France.
 
 Under the `Taux de change (parités quotidiennes) dd MMM yyyy` page, there is the possibility to download the data in
 CSV format, for all conversions. The downloaded CSV file has a complete history of FX Rates for every day in the past, 
-and for all currencies. This CSV file should then be then trimmed, retaining only the FX Rate between `USD` and `EUR`.
+and for all currencies.
+
+When using the multi-currency FX Rates option, the file can be used as-is, without any modification.
+
+#### Single-currency FX Rates
+
+Make sure that the file (name example `BCE-FXRate-<base_currency>-USD.txt`) is up-to-date, i.e. it contains all the FX
+Rates defined by the ECB between the base currency `EUR` and `USD` for a contiguous period of time including all dates 
+of ticker events, of any type (buy, sell, dividends, for both stocks and crypto).
+
+This file can be generated from the [Multi-currency FX Rates file](#Multi-currency-FX-Rates), by retaining only the FX
+Rates between `USD` and `EUR`.
 
 The resulting file should define FX Rates in the following format:
 
@@ -220,6 +223,15 @@ Comments are allowed, in the following format:
 ```
 
 ### Setup crypto portfolio values
+
+Unlike stocks, crypto taxes calculation require knowning the value of the entire crypto portfolio after each taxable 
+event, not just the sell price of the specific crypto sold.
+
+
+As of the day of writing this, there is no option to extract this data from the Revolut app into a file, so the value 
+of the portfolio should be checked manually in the UI of the app and entered in a file respecting the following format:
+
+
 
 
 ### Setup stock events
