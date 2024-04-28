@@ -1,4 +1,6 @@
-﻿namespace Taxes.Test;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+namespace Taxes.Test;
 
 [TestClass]
 public class StockEventsReaderTests
@@ -114,6 +116,16 @@ public class StockEventsReaderTests
             """);
         var events = Instance.Parse(textReader, NoFxRates);
         Assert.IsNull(events[0].PricePerShareLocal);
+    }
+
+    [TestMethod]
+    public void Parse_WithPricePerShareAndQuantityNonNull_AndNonBuyNorSell_RaisesException()
+    {
+        using var textReader = new StringReader("""
+            Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
+            2022-03-30T23:48:44.882381Z,,CUSTODY FEE,1,"$3,000","$3,000",USD,1.12
+            """);
+        AssertExtensions.ThrowsAny<Exception>(() => Instance.Parse(textReader, NoFxRates));
     }
 
     [TestMethod]
