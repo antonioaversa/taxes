@@ -360,6 +360,8 @@ class TickerProcessing(Basics basics)
             throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.PricePerShareLocal)} not null");
         if (tickerEvent.TotalAmountLocal != 0m)
             throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.TotalAmountLocal)} not zero");
+        if (tickerEvent.FeesLocal != null)
+            throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.FeesLocal)} not null");
         if (tickerEvent.Ticker != tickerState.Ticker)
             throw new InvalidDataException($"Event and state tickers don't match");
 
