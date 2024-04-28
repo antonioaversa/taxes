@@ -1,17 +1,24 @@
 # Taxes calculator
 
-The software can be used to simulate approximated taxes on financial assets, according to French Law, for a given 
+The software can be used to **simulate approximated taxes on financial assets**, according to French Law, for a given 
 period of time. It can be used in simulations for personal use, and it doesn't provide any guarantee of correctness.
 
-It is provided as-is and shouldn't be used as a substitute for professional tools or advice.
+> [!CAUTION]
+> It is provided as-is and shouldn't be used as a substitute for professional tools or advice.
 
 It currently deals with the calculation of the following asset classes:
 - stocks (and ETFs of stocks)
 - crypto-currencies
 
-It has not been designed to process bonds, ETFs of bonds, or other financial assets, such as options, futures, etc.
-It also doesn't provide any support for the calculation of taxes on income, such as salaries, pensions, etc.
-It doesn't offer support in the compilation of the tax declaration, nor in its submission.
+> [!WARNING]
+> It has not been designed to process bonds, ETFs of bonds, or other financial assets, such as options, futures, etc.
+> It also doesn't provide any support for the calculation of taxes on income, such as salaries, pensions, etc.
+> It doesn't offer support in the compilation of the tax declaration, nor in its submission.
+
+Check the [Input and output section](#Input-and-output) for more details on how to use the software.
+Then check the [Setup section](#Setup) for more details on how to configure the software before its use.
+
+## Input and output
 
 It is designed to be used in **batch mode**, and it requires the following input:
 - **Basics.json**, a JSON file containing the basic setup of the software
@@ -46,6 +53,7 @@ The output is emitted on the standard output. It shows the processing of the eve
 step-by-step, giving the state of the portfolio and the taxes due after each event.
 
 ## Setup
+
 Update all the files under the `Reports` directory.
 
 Those files are necessary input for the calculation of the taxes.
@@ -73,8 +81,22 @@ Make sure that `Basics.json` is up-to-date:
 	- Remark: each file path can also be a blob pattern
 	- Remark: files are processed in increasing lexicographic order of their name
 	- e.g. `["crypto_2022_*.csv", "crypto_2023_*.csv"]` 
+- define `CryptoPortfolioValuesCurrency`, as the default currency used to specify the value of the entire crypto 
+  portfolio (typically `USD` in the Revolut app) for each relevant day
+  - unlike stocks, crypto taxes calculation require knowning the value of the entire crypto portfolio after each 
+	taxable event, not just the sell price of the specific crypto sold
+- define `CryptoPortfolioValuesFilePath`, as the path of the file containing the value of the entire crypto portfolio
+  for each relevant day
 
 ### Setup BCE FX Rates
+
+There are two ways to setup the FX Rates: multi-currency FX Rates, and single currency FX Rates.
+
+The recommended way to setup the FX Rates is to use the 
+
+#### Multi-currency FX Rates
+
+#### Single currency FX Rates
 
 Make sure that `BCE-FXRate-<base_currency>-USD.txt` is up-to-date, i.e. it contains all the FX Rates defined by the ECB
 between the base currency `EUR` and `USD` for a contiguous period of time including all dates of ticker events, of any 
