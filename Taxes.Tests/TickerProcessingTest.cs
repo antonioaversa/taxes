@@ -1049,10 +1049,10 @@ public class TickerProcessingTest
 
         // -------
         // Stock split of 1:3, starting from 5 shares => 10 additional shares
-        var stockSplitEvent1 = new Event(T0 + 2 * D, StockSplit, Ticker, 10m, null, 0, null, localCurrency, 2m, -1);
-        events.Add(stockSplitEvent1);
+        var stockSplit1 = new Event(T0 + 2 * D, StockSplit, Ticker, 10m, null, 0, null, localCurrency, 2m, -1);
+        events.Add(stockSplit1);
         var stateAfterStockSplit1 = tickerProcessing.ProcessStockSplit(
-            stockSplitEvent1, events, 2, stateAfterSell1, NoOut);
+            stockSplit1, events, 2, stateAfterSell1, NoOut);
 
         AssertStateAfterStockSplit1();
 
@@ -1076,19 +1076,19 @@ public class TickerProcessingTest
             AssertEq(stateAfterSell1.PepsCurrentIndexSoldQuantity * 3m, stateAfterStockSplit1.PepsCurrentIndexSoldQuantity);
 
             // Previous Buy and Sell stock events are retroactively updated in the list of events, to take into account the 1:3 stock split
-            var modifiedbuy1 = events[0];
-            AssertEq(10 * 3m, modifiedbuy1.Quantity); // 10 shares bought, now 30 shares
-            AssertEq(100m / 3m, modifiedbuy1.PricePerShareLocal); // Buy price per share is divided by 3
-            AssertEq(1020m, modifiedbuy1.TotalAmountLocal); // Remains the same
-            AssertEq(20m, modifiedbuy1.FeesLocal); // Remains the same
-            AssertEq(2m, modifiedbuy1.FXRate); // Remains the same
+            var modifiedBuy1 = events[0];
+            AssertEq(10 * 3m, modifiedBuy1.Quantity); // 10 shares bought, now 30 shares
+            AssertEq(100m / 3m, modifiedBuy1.PricePerShareLocal); // Buy price per share is divided by 3
+            AssertEq(1020m, modifiedBuy1.TotalAmountLocal); // Remains the same
+            AssertEq(20m, modifiedBuy1.FeesLocal); // Remains the same
+            AssertEq(2m, modifiedBuy1.FXRate); // Remains the same
 
-            var modifiedsell1 = events[1];
-            AssertEq(5 * 3m, modifiedsell1.Quantity); // 5 shares sold, now 15 shares
-            AssertEq(150m / 3m, modifiedsell1.PricePerShareLocal); // Sell price per share is divided by 3
-            AssertEq(740m, modifiedsell1.TotalAmountLocal); // Remains the same
-            AssertEq(10m, modifiedsell1.FeesLocal); // Remains the same
-            AssertEq(2m, modifiedsell1.FXRate); // Remains the same
+            var modifiedSell1 = events[1];
+            AssertEq(5 * 3m, modifiedSell1.Quantity); // 5 shares sold, now 15 shares
+            AssertEq(150m / 3m, modifiedSell1.PricePerShareLocal); // Sell price per share is divided by 3
+            AssertEq(740m, modifiedSell1.TotalAmountLocal); // Remains the same
+            AssertEq(10m, modifiedSell1.FeesLocal); // Remains the same
+            AssertEq(2m, modifiedSell1.FXRate); // Remains the same
 
             // The original Buy and Sell stock events are not modified
             AssertEq(10, buy1.Quantity);
@@ -1099,10 +1099,10 @@ public class TickerProcessingTest
 
         // -------
         // Stock split of 1:4, starting from 15 shares => 45 additional shares
-        var stockSplitEvent2 = new Event(T0 + 3 * D, StockSplit, Ticker, 45m, null, 0, null, localCurrency, 2m, -1);
-        events.Add(stockSplitEvent2);
+        var stockSplit2 = new Event(T0 + 3 * D, StockSplit, Ticker, 45m, null, 0, null, localCurrency, 2m, -1);
+        events.Add(stockSplit2);
         var stateAfterStockSplit2 = tickerProcessing.ProcessStockSplit(
-            stockSplitEvent2, events, 3, stateAfterStockSplit1, NoOut);
+            stockSplit2, events, 3, stateAfterStockSplit1, NoOut);
 
         AssertStateAfterStockSplit2();
 
@@ -1126,19 +1126,19 @@ public class TickerProcessingTest
             AssertEq(stateAfterStockSplit1.PepsCurrentIndexSoldQuantity * 4m, stateAfterStockSplit2.PepsCurrentIndexSoldQuantity);
 
             // Previous Buy and Sell stock events are retroactively updated in the list of events, to take into account the 1:4 stock split
-            var modifiedbuy1 = events[0];
-            AssertEq(10 * 3m * 4m, modifiedbuy1.Quantity); // 30 shares bought, now 120 shares
-            AssertEq(100m / 3m / 4m, modifiedbuy1.PricePerShareLocal); // Buy price per share is divided by 4
-            AssertEq(1020m, modifiedbuy1.TotalAmountLocal); // Remains the same
-            AssertEq(20m, modifiedbuy1.FeesLocal); // Remains the same
-            AssertEq(2m, modifiedbuy1.FXRate); // Remains the same
+            var modifiedBuy1 = events[0];
+            AssertEq(10 * 3m * 4m, modifiedBuy1.Quantity); // 30 shares bought, now 120 shares
+            AssertEq(100m / 3m / 4m, modifiedBuy1.PricePerShareLocal); // Buy price per share is divided by 4
+            AssertEq(1020m, modifiedBuy1.TotalAmountLocal); // Remains the same
+            AssertEq(20m, modifiedBuy1.FeesLocal); // Remains the same
+            AssertEq(2m, modifiedBuy1.FXRate); // Remains the same
 
-            var modifiedsell1 = events[1];
-            AssertEq(5 * 3m * 4m, modifiedsell1.Quantity); // 15 shares sold, now 60 shares
-            AssertEq(150m / 3m / 4m, modifiedsell1.PricePerShareLocal); // Sell price per share is divided by 4
-            AssertEq(740m, modifiedsell1.TotalAmountLocal); // Remains the same
-            AssertEq(10m, modifiedsell1.FeesLocal); // Remains the same
-            AssertEq(2m, modifiedsell1.FXRate); // Remains the same
+            var modifiedSell1 = events[1];
+            AssertEq(5 * 3m * 4m, modifiedSell1.Quantity); // 15 shares sold, now 60 shares
+            AssertEq(150m / 3m / 4m, modifiedSell1.PricePerShareLocal); // Sell price per share is divided by 4
+            AssertEq(740m, modifiedSell1.TotalAmountLocal); // Remains the same
+            AssertEq(10m, modifiedSell1.FeesLocal); // Remains the same
+            AssertEq(2m, modifiedSell1.FXRate); // Remains the same
 
             // Previous Stock Split events are not modified
             var modifiedStockSplit1 = events[2];
@@ -1151,9 +1151,112 @@ public class TickerProcessingTest
             AssertEq(5, sell1.Quantity);
             AssertEq(150m, sell1.PricePerShareLocal);
 
-            // The original Stock Split events is not modified
-            AssertEq(10, stockSplitEvent1.Quantity);
-            AssertEq(0, stockSplitEvent1.TotalAmountLocal);
+            // The original Stock Split event is not modified
+            AssertEq(10, stockSplit1.Quantity);
+            AssertEq(0, stockSplit1.TotalAmountLocal);
+        }
+
+        // -------
+        // Custody fee of 10 USD
+        var custodyFee1 = new Event(T0 + 4 * D, CustodyFee, Ticker, null, null, 10m, 0, localCurrency, 2m, -1);
+        events.Add(custodyFee1);
+        var stateAfterCustodyFees1 = tickerProcessing.ProcessNoop(
+            custodyFee1, events, 4, stateAfterStockSplit2, NoOut);
+
+        AssertStateAfterCustodyFee1();
+
+        void AssertStateAfterCustodyFee1()
+        {
+            // The total quantity and amount are the same as before the custody fees
+            AssertEq(stateAfterStockSplit2.TotalQuantity, stateAfterCustodyFees1.TotalQuantity);
+            AssertEq(stateAfterStockSplit2.TotalAmountBase, stateAfterCustodyFees1.TotalAmountBase);
+
+            // The plus and minus values CUMP, PEPS and crypto remain the same
+            AssertEq(stateAfterStockSplit2.PlusValueCumpBase, stateAfterCustodyFees1.PlusValueCumpBase);
+            AssertEq(stateAfterStockSplit2.MinusValueCumpBase, stateAfterCustodyFees1.MinusValueCumpBase);
+            AssertEq(stateAfterStockSplit2.PlusValuePepsBase, stateAfterCustodyFees1.PlusValuePepsBase);
+            AssertEq(stateAfterStockSplit2.MinusValuePepsBase, stateAfterCustodyFees1.MinusValuePepsBase);
+            AssertEq(stateAfterStockSplit2.PlusValueCryptoBase, stateAfterCustodyFees1.PlusValueCryptoBase);
+            AssertEq(stateAfterStockSplit2.MinusValueCryptoBase, stateAfterCustodyFees1.MinusValueCryptoBase);
+
+            // The PEPS current index and sold quantity are the same as before the custody fees
+            AssertEq(stateAfterStockSplit2.PepsCurrentIndex, stateAfterCustodyFees1.PepsCurrentIndex);
+            AssertEq(stateAfterStockSplit2.PepsCurrentIndexSoldQuantity, stateAfterCustodyFees1.PepsCurrentIndexSoldQuantity);
+        }
+
+        // -------
+        // Stock split of 2:1, starting from 60 shares => -30 additional shares
+        var stockSplit3 = new Event(T0 + 5 * D, StockSplit, Ticker, -30m, null, 0, null, localCurrency, 2m, -1);
+        events.Add(stockSplit3);
+        var stateAfterStockSplit3 = tickerProcessing.ProcessStockSplit(
+            stockSplit3, events, 5, stateAfterCustodyFees1, NoOut);
+
+        AssertStateAfterStockSplit3();
+
+        void AssertStateAfterStockSplit3()
+        {
+            // The total quantity is decreased by 30
+            AssertEq(30, stateAfterStockSplit3.TotalQuantity);
+            // The total amount remains the same
+            AssertEq(stateAfterCustodyFees1.TotalAmountBase, stateAfterStockSplit3.TotalAmountBase);
+
+            // The plus and minus values CUMP, PEPS and crypto remain the same
+            AssertEq(stateAfterCustodyFees1.PlusValueCumpBase, stateAfterStockSplit3.PlusValueCumpBase);
+            AssertEq(stateAfterCustodyFees1.MinusValueCumpBase, stateAfterStockSplit3.MinusValueCumpBase);
+            AssertEq(stateAfterCustodyFees1.PlusValuePepsBase, stateAfterStockSplit3.PlusValuePepsBase);
+            AssertEq(stateAfterCustodyFees1.MinusValuePepsBase, stateAfterStockSplit3.MinusValuePepsBase);
+            AssertEq(stateAfterCustodyFees1.PlusValueCryptoBase, stateAfterStockSplit3.PlusValueCryptoBase);
+            AssertEq(stateAfterCustodyFees1.MinusValueCryptoBase, stateAfterStockSplit3.MinusValueCryptoBase);
+
+            // The PEPS current index remains unchanged, but the PEPS current index sold quantity is divided by 2
+            AssertEq(0, stateAfterStockSplit3.PepsCurrentIndex);
+            AssertEq(stateAfterCustodyFees1.PepsCurrentIndexSoldQuantity / 2m, stateAfterStockSplit3.PepsCurrentIndexSoldQuantity);
+
+            // Previous Buy and Sell stock events are retroactively updated in the list of events, to take into account the 1:4 stock split
+            var modifiedBuy1 = events[0];
+            AssertEq(10 * 3m * 4m / 2m, modifiedBuy1.Quantity); // 120 shares bought, now 60 shares
+            AssertEq(100m / 3m / 4m * 2m, modifiedBuy1.PricePerShareLocal); // Buy price per share is multiplied by 2
+            AssertEq(1020m, modifiedBuy1.TotalAmountLocal); // Remains the same
+            AssertEq(20m, modifiedBuy1.FeesLocal); // Remains the same
+            AssertEq(2m, modifiedBuy1.FXRate); // Remains the same
+
+            var modifiedSell1 = events[1];
+            AssertEq(5 * 3m * 4m / 2m, modifiedSell1.Quantity); // 60 shares sold, now 30 shares
+            AssertEq(150m / 3m / 4m * 2m, modifiedSell1.PricePerShareLocal); // Sell price per share is multiplied by 2
+            AssertEq(740m, modifiedSell1.TotalAmountLocal); // Remains the same
+            AssertEq(10m, modifiedSell1.FeesLocal); // Remains the same
+            AssertEq(2m, modifiedSell1.FXRate); // Remains the same
+
+            // First Stock Split event is not modified
+            var modifiedStockSplit1 = events[2];
+            AssertEq(10, modifiedStockSplit1.Quantity);
+            AssertEq(0, modifiedStockSplit1.TotalAmountLocal);
+
+            // Second Stock Split event is not modified
+            var modifiedStockSplit2 = events[3];
+            AssertEq(45, modifiedStockSplit2.Quantity);
+            AssertEq(0, modifiedStockSplit2.TotalAmountLocal);
+
+            // First Custody Fee event is not modified
+            var modifiedCustodyFee1 = events[4];
+            AssertEq(10m, modifiedCustodyFee1.TotalAmountLocal);
+
+            // The original Buy and Sell stock events are not modified
+            AssertEq(10, buy1.Quantity);
+            AssertEq(100m, buy1.PricePerShareLocal);
+            AssertEq(5, sell1.Quantity);
+            AssertEq(150m, sell1.PricePerShareLocal);
+
+            // The original first Stock Split event is not modified
+            AssertEq(10, stockSplit1.Quantity);
+            AssertEq(0, stockSplit1.TotalAmountLocal);
+
+            // The original second Stock Split event is not modified
+            AssertEq(45, stockSplit2.Quantity);
+            AssertEq(0, stockSplit2.TotalAmountLocal);
+
+            // The original Custody Fee event is not modified
+            AssertEq(10m, custodyFee1.TotalAmountLocal);
         }
     }
 
@@ -1184,9 +1287,72 @@ public class TickerProcessingTest
     [TestMethod]
     public void ProcessStockSplit_WhenTickerIsNull_RaisesException()
     {
-        var stockSplit1 = new Event(T0 + 0 * D, StockSplit, null, 10, null, 0, null, USD, 2m, -1);
+        var stockSplit1 = new Event(T0 + 0 * D, StockSplit, Ticker: null, 10, null, 0, null, USD, 2m, -1);
         ThrowsAny<Exception>(() => Instance.ProcessStockSplit(
             stockSplit1, [stockSplit1], 0, new TickerState(Ticker, Isin), NoOut));
+    }
+
+    [TestMethod]
+    public void ProcessStockSplit_WhenQuantityIsNull_RaisesException()
+    {
+        var stockSplit1 = new Event(T0 + 0 * D, StockSplit, Ticker, Quantity: null, null, 0, null, USD, 2m, -1);
+        ThrowsAny<Exception>(() => Instance.ProcessStockSplit(
+            stockSplit1, [stockSplit1], 0, new TickerState(Ticker, Isin), NoOut));
+    }
+
+    [TestMethod]
+    public void ProcessStockSplit_WhenPricePerShareIsNotNull_RaisesException()
+    {
+        var stockSplit1 = new Event(T0 + 0 * D, StockSplit, Ticker, 10, PricePerShareLocal: 100m, 0, null, USD, 2m, -1);
+        ThrowsAny<Exception>(() => Instance.ProcessStockSplit(
+            stockSplit1, [stockSplit1], 0, new TickerState(Ticker, Isin), NoOut));
+    }
+
+    [TestMethod]
+    public void ProcessStockSplit_WhenTotalAmountIsNotZero_RaisesException()
+    {
+        var stockSplit1 = new Event(T0 + 0 * D, StockSplit, Ticker, 10, null, TotalAmountLocal: 100m, 0, USD, 2m, -1);
+        ThrowsAny<Exception>(() => Instance.ProcessStockSplit(
+            stockSplit1, [stockSplit1], 0, new TickerState(Ticker, Isin), NoOut));
+    }
+
+    [TestMethod]
+    public void ProcessStockSplit_WhenFeesAreNotNull_RaisesException()
+    {
+        var stockSplit1 = new Event(T0 + 0 * D, StockSplit, Ticker, 10, null, 0, FeesLocal: 20m, USD, 2m, -1);
+        ThrowsAny<Exception>(() => Instance.ProcessStockSplit(
+            stockSplit1, [stockSplit1], 0, new TickerState(Ticker, Isin), NoOut));
+    }
+
+    [TestMethod]
+    public void ProcessStockSplit_WhenTickersAreInconsistent_RaisesException()
+    {
+        var stockSplit1 = new Event(T0 + 0 * D, StockSplit, Ticker, 10, null, 0, null, USD, 2m, -1);
+        ThrowsAny<Exception>(() => Instance.ProcessStockSplit(
+            stockSplit1, [stockSplit1], 0, new TickerState(AnotherTicker, AnotherIsin), NoOut));
+    }
+
+    [TestMethod]
+    public void ProcessStockSplit_CalculatesAndPrintsSteps()
+    {
+        var tickerProcessing = new TickerProcessing(new Basics() { Rounding = x => decimal.Round(x, 2) });
+        var localCurrency = USD;
+        var fxRate = 2m; // FX rate between USD and EUR stays stable at 2 USD for 1 EUR across events
+        var initialState = new TickerState(Ticker, Isin);
+
+        // First buy 10 shares at 100 USD, with fees of 20 USD => Total Amount Local of 1000 USD + 20 USD = 1020 USD
+        var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 10, 100m, 1020m, 20m, localCurrency, fxRate, -1);
+        var stateAfterBuy1 = tickerProcessing.ProcessBuy(buy1, [buy1], 0, initialState, NoOut);
+
+        // Then stock split of 1:3, starting from 10 shares => 20 additional shares
+        var stockSplit1 = new Event(T0 + 1 * D, StockSplit, Ticker, 20m, null, 0, null, localCurrency, fxRate, -1);
+        var writer = new StringWriter();
+        tickerProcessing.ProcessStockSplit(stockSplit1, [buy1, stockSplit1], 1, stateAfterBuy1, writer);
+
+        var output = writer.ToString();
+
+        Assert.IsTrue(output.Contains("Split Delta = 20"));
+        Assert.IsTrue(output.Contains("Split Ratio = 3"));
     }
 
     [AssertionMethod]
