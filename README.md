@@ -19,9 +19,33 @@ It currently deals with the calculation of the following asset classes:
 > It also doesn't provide any support for the calculation of taxes on income, such as salaries, pensions, etc.
 > It doesn't offer support in the compilation of the tax declaration, nor in its submission.
 
+Check the [Prerequirements section](#Prerequirements) for more details on the prerequisites to use the software.
+
+Check the [Build section](#Build) for more details on how to build and execute the software.
+
 Check the [Input and output section](#Input-and-output) for more details on how to use the software.
 
 Then check the [Setup section](#Setup) for more details on how to configure the software before its use.
+
+## Prerequirements
+
+The software is written in C# and requires the .NET 8.0 runtime to be installed on the machine where it is executed.
+
+The latest version of .NET 8.0 for all major Operating Systems (Linux, MacOS, Windows) can be downloaded from the 
+[official site](https://dotnet.microsoft.com/download/dotnet/8.0).
+
+## Build
+
+The software can be built using the `dotnet` command-line tool on the three major Operating Systems.
+
+Once this repository has been cloned and the prerequisites have been installed, the software can be built and run
+by opening a terminal and executing the following commands starting from the root directory of the project:
+
+```shell
+cd Taxes
+dotnet build
+dotnet run
+```
 
 ## Input and output
 
