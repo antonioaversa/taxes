@@ -139,23 +139,23 @@ Make sure that `Basics.json` is up-to-date:
   - `Fixed_(?<numberOfDigits>\d+)_(?<resolutionAroundZero>[\d\.]+)` 
 	- e.g. `Fixed_4_0.0005`, for rounding with `4` decimals and resolution around zero of `0.0005`
 - define `Precision` for financial calculation, as a strictly-positive decimal number
-	- e.g. `0.01`, for two digits precision
+  - e.g. `0.01`, for two digits precision
 - define `BaseCurrency`, used as target currency for all financial calculations
-	- for the time being only `EUR`, for EURO, is supported
+  - for the time being only `EUR`, for EURO, is supported
 - define `ISINs`, used in reporting of calculation results, as a string-to-string dictionary, mapping the Ticker of a
   financial asset, to the ISIN of that asset. E.g. `{ "AAPL" : "US0378331005", ... }`
-	- for the time being only `US` stocks are supported, for the calculation of withholding tax on dividends
+  - for the time being only `US` stocks are supported, for the calculation of withholding tax on dividends
 - define events file paths: 
-    - `StockEventsFilePaths`, as the list of paths of files containing ticker events for stocks
-	    - Remark: each file path can also be a blob pattern
-	    - Remark: files are processed in increasing lexicographic order of their name
-	    - e.g. `["stocks_2022.csv", "stocks_2023.csv"]` 
-        - data extraction from Revolut and format described in the [Setup stock events section](#Setup-stock-events)
-    - `CryptoEventsFilePaths`, as the list of paths of files containing ticker events for crypto
-	    - Remark: each file path can also be a blob pattern
-	    - Remark: files are processed in increasing lexicographic order of their name
-	    - e.g. `["crypto_2022_*.csv", "crypto_2023_*.csv"]` 
-        - data extraction from Revolut and format described in the [Setup crypto events section](#Setup-crypto-events)
+  - `StockEventsFilePaths`, as the list of paths of files containing ticker events for stocks
+	- Remark: each file path can also be a blob pattern
+	- Remark: files are processed in increasing lexicographic order of their name
+	- e.g. `["stocks_2022.csv", "stocks_2023.csv"]` 
+    - data extraction from Revolut and format described in the [Setup stock events section](#Setup-stock-events)
+  - `CryptoEventsFilePaths`, as the list of paths of files containing ticker events for crypto
+	- Remark: each file path can also be a blob pattern
+	- Remark: files are processed in increasing lexicographic order of their name
+	- e.g. `["crypto_2022_*.csv", "crypto_2023_*.csv"]` 
+    - data extraction from Revolut and format described in the [Setup crypto events section](#Setup-crypto-events)
 - define crypto portfolio settings:
   - `CryptoPortfolioValuesCurrency`, as the default currency used to specify the value of the entire crypto 
     portfolio (typically `USD` in the Revolut app) for each relevant day
