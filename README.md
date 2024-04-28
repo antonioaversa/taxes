@@ -144,23 +144,91 @@ Make sure that `Basics.json` is up-to-date:
 	- for the time being only `EUR`, for EURO, is supported
 - define `ISINs`, used in reporting of calculation results, as a string-to-string dictionary, mapping the Ticker of a
   financial asset, to the ISIN of that asset. E.g. `{ "AAPL" : "US0378331005", ... }`
-	- for the time being only `US` stocks are supported
-- define `StockEventsFilePaths`, as the list of paths of files containing ticker events for stocks
-	- Remark: each file path can also be a blob pattern
-	- Remark: files are processed in increasing lexicographic order of their name
-	- e.g. `["stocks_2022.csv", "stocks_2023.csv"]` 
-- define `CryptoEventsFilePaths`, as the list of paths of files containing ticker events for crypto
-	- Remark: each file path can also be a blob pattern
-	- Remark: files are processed in increasing lexicographic order of their name
-	- e.g. `["crypto_2022_*.csv", "crypto_2023_*.csv"]` 
-- define `CryptoPortfolioValuesCurrency`, as the default currency used to specify the value of the entire crypto 
-  portfolio (typically `USD` in the Revolut app) for each relevant day
-  - data extraction from Revolut and format described [here](#Setup-crypto-portfolio-values) 
-- define `CryptoPortfolioValuesFilePath`, as the path of the file containing the value of the entire crypto portfolio
-  for each relevant day 
-  - - data extraction from Revolut and format described [here](#Setup-crypto-portfolio-values) 
+	- for the time being only `US` stocks are supported, for the calculation of withholding tax on dividends
+- define events file paths: 
+    - `StockEventsFilePaths`, as the list of paths of files containing ticker events for stocks
+	    - Remark: each file path can also be a blob pattern
+	    - Remark: files are processed in increasing lexicographic order of their name
+	    - e.g. `["stocks_2022.csv", "stocks_2023.csv"]` 
+        - data extraction from Revolut and format described in the [Setup stock events section](#Setup-stock-events)
+    - `CryptoEventsFilePaths`, as the list of paths of files containing ticker events for crypto
+	    - Remark: each file path can also be a blob pattern
+	    - Remark: files are processed in increasing lexicographic order of their name
+	    - e.g. `["crypto_2022_*.csv", "crypto_2023_*.csv"]` 
+        - data extraction from Revolut and format described in the [Setup crypto events section](#Setup-crypto-events)
+- define crypto portfolio settings:
+  - `CryptoPortfolioValuesCurrency`, as the default currency used to specify the value of the entire crypto 
+    portfolio (typically `USD` in the Revolut app) for each relevant day
+  - `CryptoPortfolioValuesFilePath`, as the path of the file containing the value of the entire crypto portfolio
+    for each relevant day 
+  - data extraction from Revolut and format described in the [Setup crypto portfolio values section](#Setup-crypto-portfolio-values) 
+- define FX Rates settings: 
+  - `FXRatesInputType`, as the input type for FX Rates in local currency
+    - possible values: `MultiCurrency` (recommended) and `SingleCurrency` (legacy) 
+  - `FXRatesSingleCurrency`, as the single local currency for which FX Rates are provided
+    - only relevant when `FXRatesInputType` is set to `SingleCurrency`
+  - `FXRatesFilePath`, as the path of the file that contains the FX Rates
+  - data extraction from the web and format described in the [Setup FX Rates section](#Setup-FX-Rates)
 
-### Setup BCE FX Rates
+### Setup stock events
+
+The stock events are exported from the Revolut app in CSV format.
+
+An example of valid stock events file is the following:
+
+```texts
+Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
+2022-03-30T23:48:44.882381Z,,CASH TOP-UP,,,"$3,000",USD,1.12
+2022-05-02T13:32:24.217636Z,TSLA,BUY - MARKET,1.018999,$861.63,$878,USD,01.06
+2022-06-02T06:41:50.336664Z,,CUSTODY FEE,,,($1.35),USD,01.07
+2022-06-06T05:20:46.594417Z,AMZN,STOCK SPLIT,11.49072,,$0,USD,01.08
+2022-06-10T04:28:02.657456Z,MSFT,DIVIDEND,,,$10.54,USD,01.07
+2022-06-23T14:30:37.660417Z,CVNA,SELL - LIMIT,15,$26.62,$398.23,USD,01.06
+2022-06-29T13:45:38.161874Z,CVNA,BUY - LIMIT,10,$23.02,$231.25,USD,01.05
+2022-07-07T15:37:02.604183Z,QCOM,SELL - MARKET,8,$132.29,"$1,055.65",USD,01.02
+2022-07-19T06:01:55.845058Z,GSK,STOCK SPLIT,-1.8,,$0,USD,01.02
+2023-01-01T00:00:00.000000Z,,RESET,,,$0,USD,1.0584
+2023-11-26T21:54:34.023429Z,,CASH WITHDRAWAL,,,"($3,500)",USD,1.0968
+2023-12-11T14:34:06.497Z,PFE,BUY - LIMIT,17,$28.50 ,$485.71 ,USD,1.0765
+2023-12-18T14:37:36.664Z,ORCL,BUY - MARKET,20,$104.24 ,"$2,084.90 ",USD,1.0947
+```
+
+### Setup crypto events
+
+The crypto events are exported from the Revolut app in CSV format.
+
+An example of valid crypto events file is the following:
+
+```text
+Type,Product,Started Date,Completed Date,Description,Amount,Currency,Fiat amount,Fiat amount (inc. fees),Fee,Base currency,State,Balance
+EXCHANGE,Current,2022-03-30 22:23:01,2022-03-30 22:23:01,Exchanged to SOL,2.000000,SOL,214.83,218.05,3.22,EUR,COMPLETED,2.000000
+EXCHANGE,Current,2022-04-06 22:16:57,2022-04-06 22:16:57,Exchanged to SOL,0.500000,SOL,53.90,54.71,0.81,EUR,COMPLETED,2.500000
+EXCHANGE,Current,2022-04-18 00:23:02,2022-04-18 00:23:02,Exchanged to SOL,0.500000,SOL,46.61,47.31,0.70,EUR,COMPLETED,3.000000
+TRANSFER,Current,2022-05-19 10:09:31,2022-05-19 10:09:31,Balance migration to another region or legal entity,-3.000000,SOL,-139.89,-139.89,0.00,EUR,COMPLETED,
+TRANSFER,Current,2022-05-19 10:09:31,2022-05-19 10:09:31,Balance migration to another region or legal entity,3.000000,SOL,140.18,140.18,0.00,EUR,COMPLETED,
+EXCHANGE,Current,2022-10-21 09:14:13,2022-10-21 09:14:13,Exchanged to SOL,10.000000,SOL,280.11,284.28,4.17,EUR,COMPLETED,13.000000
+```
+
+### Setup crypto portfolio values
+
+Unlike stocks, crypto taxes calculation require knowning the value of the entire crypto portfolio after each taxable 
+event, not just the sell price of the specific crypto sold.
+
+As of the day of writing this, there is no option to extract this data from the Revolut app into a file, so the value 
+of the portfolio should be checked manually in the UI of the app and entered in a file respecting the following format:
+
+```text
+Date,PortfolioValue
+2022-03-30,2261.4
+2022-03-31,2756.6
+2022-06-15,8422.8
+2022-06-21,8670.8
+2022-06-24,8942.1
+2022-06-27,9996.7
+2022-06-28,10414
+```
+
+### Setup FX Rates
 
 There are two ways to setup the FX Rates: multi-currency FX Rates, and single currency FX Rates.
 
@@ -223,35 +291,3 @@ Comments are allowed, in the following format:
 // Méthode d'observation :	Fin de période (E)
 // Source :	BCE (Banque Centrale Européenne) (4F0)
 ```
-
-### Setup crypto portfolio values
-
-Unlike stocks, crypto taxes calculation require knowning the value of the entire crypto portfolio after each taxable 
-event, not just the sell price of the specific crypto sold.
-
-
-As of the day of writing this, there is no option to extract this data from the Revolut app into a file, so the value 
-of the portfolio should be checked manually in the UI of the app and entered in a file respecting the following format:
-
-```text
-Date,PortfolioValue
-2022-03-30,2261.4
-2022-03-31,2756.6
-2022-06-15,8422.8
-2022-06-21,8670.8
-2022-06-24,8942.1
-2022-06-27,9996.7
-2022-06-28,10414
-```
-
-### Setup stock events
-
-Files reporting ticker events for stocks (buy, sell, dividends, split, etc.) should be defined in 
-
-TODO
-
-### Setup crypto events
-TODO
-
-## Processing
-TODO
