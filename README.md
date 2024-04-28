@@ -1,9 +1,10 @@
 # Revolut taxes calculator for France
 
 The software can be used to **simulate approximated taxes on financial assets**, according to French Law, for a given 
-period of time. It can be used in simulations for personal use, and it doesn't provide any guarantee of correctness.
+period of time.
 
 > [!CAUTION]
+> It can be used in simulations for personal use, and it doesn't provide any guarantee of correctness.
 > It is provided as-is and shouldn't be used as a substitute for professional tools or advice.
 
 It currently deals with the calculation of the following asset classes:
@@ -16,11 +17,14 @@ It currently deals with the calculation of the following asset classes:
 > It doesn't offer support in the compilation of the tax declaration, nor in its submission.
 
 Check the [Input and output section](#Input-and-output) for more details on how to use the software.
+
 Then check the [Setup section](#Setup) for more details on how to configure the software before its use.
 
 ## Input and output
 
-It is designed to be used in **batch mode**, and it requires the following input:
+It is designed to be used in **batch mode** (no UI provided).
+
+It requires the following input:
 - **Basics.json**, a JSON file containing the basic setup of the software
   - where settings like rounding, precision, base currency, ISINs, etc. are configured
   - also where the paths of input files containing list of events are specified (see next point)
@@ -46,11 +50,76 @@ It is designed to be used in **batch mode**, and it requires the following input
   - the file should contain all FX Rates for a contiguous period of time including all dates of ticker events
   - the software will use the FX Rate as defined in other reports, or the closest FX Rate available, when the ECB 
 	didn't provide an FX Rate for the date of a ticker event
-  - as an alternative for stock events, the FX Rate specified on each event can be used
+  - as an alternative for stock events, the FX Rate specified on each event can be used during calculation
 	- that is available in Revolut exported data for stock events only, not for crypto events
+	- however, BCE FX Rates should be used whenever available, so that simulation results are as close to actual taxes
+	  as possible
  
-The output is emitted on the standard output. It shows the processing of the events, and the calculation of the taxes
+The output is emitted to the standard output. It shows the processing of the events, and the calculation of the taxes
 step-by-step, giving the state of the portfolio and the taxes due after each event.
+
+Example of output:
+
+```text
+PROCESS TSM [US8740391003]
+0: 2022-09-22 15:09:50 BuyMarket 15 shares at 75.74 USD/share => 1136.08 USD (FXRate = 0.9884)
+        Total Buy Price (USD) = 1136.08
+        Total Buy Price (EUR) = 1149.4132
+        Shares Buy Price (USD) = 1136.10
+        Shares Buy Price (EUR) = 1149.4334
+        PerShare Buy Price (USD) = 75.74
+        PerShare Buy Price (EUR) = 76.6289
+        Buy Fees (USD) = 0.02
+        Buy Fees (EUR) = 0.0202
+        Ticker State: 15 shares => 1149.4132 EUR, +V = CUMP 0 EUR, PEPS 0 EUR, CRYP 0 EUR, -V = CUMP 0 EUR, PEPS 0 EUR, CRYP 0 EUR, Dividends = 0 EUR + WHT 0 EUR = 0 EUR
+
+1: 2023-01-17 05:29:46 Dividend => 5.30 USD (FXRate = 1.0843)
+        Net Dividend (USD) = 5.30
+        Net Dividend (EUR) = 4.8879
+        WHT Dividend (EUR) = 0.8626
+        Gross Dividend (EUR) = 5.7505
+        Ticker State: 15 shares => 1149.4132 EUR, +V = CUMP 0 EUR, PEPS 0 EUR, CRYP 0 EUR, -V = CUMP 0 EUR, PEPS 0 EUR, CRYP 0 EUR, Dividends = 4.8879 EUR + WHT 0.8626 EUR = 5.7505 EUR
+
+2: 2023-01-24 18:50:20 SellMarket 15 shares at 94.21 USD/share => 1413.13 USD (FXRate = 1.0858)
+        Total Sell Price (USD) = 1413.13
+        Shares Sell Price (USD) = 1413.15
+        PerShare Average Buy Price (EUR) = 76.6275
+        Total Average Buy Price (EUR) = 1149.4132
+        PerShare Sell Price (EUR) = 86.7655
+        Shares Sell Price (EUR) = 1301.4828
+        Total Sell Price (EUR) = 1301.4644
+        Sell Fees (EUR) = 0.0184
+        Plus Value CUMP (EUR) = 152.0512
+        PEPS Remaining Quantity to match: 15 => FIND Buy Event
+        PEPS Buy Event 2022-09-22 15:09:50 BuyMarket 15 shares at 75.74 USD/share => 1136.08 USD (FXRate = 0.9884) at index 0 bought entirely => move to next
+        PEPS Remaining Quantity to match: 0 => DONE
+        Plus Value PEPS (EUR) = 152.0107
+        Portfolio Current Value not known => Skipping Crypto +/- value calculation...
+        Ticker State: 0 shares => 0 EUR, +V = CUMP 152.0512 EUR, PEPS 152.0107 EUR, CRYP 0 EUR, -V = CUMP 0 EUR, PEPS 0 EUR, CRYP 0 EUR, Dividends = 4.8879 EUR + WHT 0.8626 EUR = 5.7505 EUR
+```
+
+At the end of the processing, the software emits a summary of the taxes due, for each asset class, for the entire period:
+
+```text
+Total Plus Value CUMP (EUR) = 2855.3576
+Total Plus Value PEPS (EUR) = 3542.9491
+Total Plus Value CRYPTO (EUR) = 0
+Total Minus Value CUMP (EUR) = 591.6265
+Total Minus Value PEPS (EUR) = 1671.8474
+Total Minus Value CRYPTO (EUR) = 0
+Total Net Dividends (EUR) = 252.9329
+Total WHT Dividends (EUR) = 44.6352
+Total Gross Dividends (EUR) = 297.5682
+Total Plus Value CUMP (EUR) = 0
+Total Plus Value PEPS (EUR) = 0
+Total Plus Value CRYPTO (EUR) = 0
+Total Minus Value CUMP (EUR) = 0
+Total Minus Value PEPS (EUR) = 0
+Total Minus Value CRYPTO (EUR) = 0
+Total Net Dividends (EUR) = 0
+Total WHT Dividends (EUR) = 0
+Total Gross Dividends (EUR) = 0
+```
 
 ## Setup
 
@@ -85,8 +154,11 @@ Make sure that `Basics.json` is up-to-date:
   portfolio (typically `USD` in the Revolut app) for each relevant day
   - unlike stocks, crypto taxes calculation require knowning the value of the entire crypto portfolio after each 
 	taxable event, not just the sell price of the specific crypto sold
+  - as of the day of writing this, there is no option to extract this data from the Revolut app into a file, so the
+	value of the portfolio should be checked manually in the UI of the app and entered in a file respecting the
+	format described [here](#Setup-crypto-portfolio-values)
 - define `CryptoPortfolioValuesFilePath`, as the path of the file containing the value of the entire crypto portfolio
-  for each relevant day
+  for each relevant day 
 
 ### Setup BCE FX Rates
 
@@ -95,6 +167,8 @@ There are two ways to setup the FX Rates: multi-currency FX Rates, and single cu
 The recommended way to setup the FX Rates is to use the 
 
 #### Multi-currency FX Rates
+
+
 
 #### Single currency FX Rates
 
@@ -144,6 +218,9 @@ Comments are allowed, in the following format:
 // M thode d'observation :	Fin de p riode (E)
 // Source :	BCE (Banque Centrale Europ enne) (4F0)
 ```
+
+### Setup crypto portfolio values
+
 
 ### Setup stock events
 
