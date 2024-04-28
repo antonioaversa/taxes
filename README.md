@@ -1,4 +1,4 @@
-# Taxes calculator
+# Revolut taxes calculator for France
 
 The software can be used to **simulate approximated taxes on financial assets**, according to French Law, for a given 
 period of time. It can be used in simulations for personal use, and it doesn't provide any guarantee of correctness.
