@@ -346,7 +346,7 @@ class TickerProcessing(Basics basics)
     }
 
     internal /* for testing */ TickerState ProcessStockSplit(
-            Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter)
+        Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter)
     {
         if (tickerEvent != tickerEvents[eventIndex])
             throw new InvalidDataException($"Event and event index inconsistent");
@@ -405,8 +405,6 @@ class TickerProcessing(Basics basics)
             throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.Ticker)} null");
         if (tickerEvent.TotalAmountLocal <= 0)
             throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.TotalAmountLocal)} non-positive");
-        if (tickerEvent.TotalAmountLocal == 0m)
-            throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.TotalAmountLocal)} zero");
 
         var netDividendLocal = tickerEvent.TotalAmountLocal;
         outWriter.WriteLine($"\tNet Dividend ({tickerEvent.Currency}) = {netDividendLocal.R(basics)}");
@@ -414,7 +412,8 @@ class TickerProcessing(Basics basics)
         var netDividendBase = netDividendLocal / tickerEvent.FXRate;
         outWriter.WriteLine($"\tNet Dividend ({basics.BaseCurrency}) = {netDividendBase.R(basics)}");
 
-        var whtDividendBase = netDividendBase * Basics.WitholdingTaxFor(tickerState.Isin) / (1m - Basics.WitholdingTaxFor(tickerState.Isin));
+        var witholdingTaxRate = Basics.WitholdingTaxFor(tickerState.Isin);
+        var whtDividendBase = netDividendBase * witholdingTaxRate / (1m - witholdingTaxRate);
         outWriter.WriteLine($"\tWHT Dividend ({basics.BaseCurrency}) = {whtDividendBase.R(basics)}");
 
         var grossDividendBase = netDividendBase + whtDividendBase;

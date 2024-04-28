@@ -1355,6 +1355,154 @@ public class TickerProcessingTest
         Assert.IsTrue(output.Contains("Split Ratio = 3"));
     }
 
+    [TestMethod]
+    public void ProcessDividend_WhenTickerEventAndIndexAreInconsistent_RaisesException()
+    {
+        var tickerProcessing = Instance;
+        var localCurrency = USD;
+        var fxRate = 2m; // FX rate between USD and EUR stays stable at 2 USD for 1 EUR across events
+        var initialState = new TickerState(Ticker, Isin, TotalQuantity: 15, TotalAmountBase: 225m);
+        var events = new List<Event>
+        {
+            new(T0, BuyLimit, Ticker, 10, 100m, 1020m, 20m, localCurrency, fxRate, -1),
+            new(T0 + 1 * D, Dividend, Ticker, null, null, 10m, null, localCurrency, fxRate, -1),
+        };
+
+        ThrowsAny<Exception>(() => tickerProcessing.ProcessDividend(events[1], events, 0, initialState, NoOut));
+    }
+
+    [TestMethod]
+    public void ProcessDividend_WhenTypeIsInvalid_RaisesException()
+    {
+        var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 10, 100m, 1020m, 20m, USD, 2m, -1);
+        ThrowsAny<Exception>(() => Instance.ProcessDividend(
+            buy1, [buy1], 0, new TickerState(Ticker, Isin), NoOut));
+    }
+
+    [TestMethod]
+    public void ProcessDividend_WhenTickerIsNull_RaisesException()
+    {
+        var dividend1 = new Event(T0 + 0 * D, Dividend, Ticker: null, null, null, 10m, null, USD, 2m, -1);
+        ThrowsAny<Exception>(() => Instance.ProcessDividend(
+            dividend1, [dividend1], 0, new TickerState(Ticker, Isin), NoOut));
+    }
+
+    [TestMethod]
+    public void ProcessDividend_WhenTotalAmountIsNotPositive_RaisesException()
+    {
+        var dividend1 = new Event(T0 + 0 * D, Dividend, Ticker, null, null, TotalAmountLocal: 0m, 0, USD, 2m, -1);
+        ThrowsAny<Exception>(() => Instance.ProcessDividend(
+            dividend1, [dividend1], 0, new TickerState(Ticker, Isin), NoOut));
+
+        var dividend2 = new Event(T0 + 0 * D, Dividend, Ticker, null, null, TotalAmountLocal: -10m, 0, USD, 2m, -1);
+        ThrowsAny<Exception>(() => Instance.ProcessDividend(
+            dividend2, [dividend1, dividend2], 1, new TickerState(Ticker, Isin), NoOut));
+    }
+
+    [TestMethod]
+    public void ProcessDividend_CalculatesAndPrintsSteps()
+    {
+        var tickerProcessing = new TickerProcessing(new Basics() { Rounding = x => decimal.Round(x, 2) });
+        var localCurrency = USD;
+        var fxRate = 2m; // FX rate between USD and EUR stays stable at 2 USD for 1 EUR across events
+        var initialState = new TickerState(Ticker, Isin);
+
+        // First buy 10 shares at 100 USD, with fees of 20 USD => Total Amount Local of 1000 USD + 20 USD = 1020 USD
+        var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 10, 100m, 1020m, 20m, localCurrency, fxRate, -1);
+        var stateAfterBuy1 = tickerProcessing.ProcessBuy(buy1, [buy1], 0, initialState, NoOut);
+
+        // Then dividend of 8.5 USD: 1 USD per share for 10 shares, with withholding tax of 15% from US =>
+        // Total Amount Local of 10 USD - (15% * 10 USD) = 8.5 USD
+        var dividend1 = new Event(T0 + 1 * D, Dividend, Ticker, null, null, 8.5m, null, localCurrency, fxRate, -1);
+        var writer = new StringWriter();
+        tickerProcessing.ProcessDividend(dividend1, [buy1, dividend1], 1, stateAfterBuy1, writer);
+
+        var output = writer.ToString();
+
+        Assert.IsTrue(output.Contains($"Net Dividend ({localCurrency}) = 8.5"));
+        Assert.IsTrue(output.Contains($"Net Dividend ({Instance.Basics.BaseCurrency}) = 4.25")); // 8.5 USD / (2 USD/EUR) 
+        Assert.IsTrue(output.Contains($"WHT Dividend ({Instance.Basics.BaseCurrency}) = 0.75")); // 15% of 10 USD / (2 USD/EUR)
+        Assert.IsTrue(output.Contains($"Gross Dividend ({Instance.Basics.BaseCurrency}) = 5")); // 10 USD / (2 USD/EUR)
+    }
+
+    [TestMethod]
+    public void ProcessDividend_UpdatesTickerStateCorrectly()
+    {
+        var tickerProcessing = Instance;
+        var localCurrency = USD;
+        var fxRate = 2m; // FX rate between USD and EUR stays stable at 2 USD for 1 EUR across events
+        var initialState = new TickerState(Ticker, Isin);
+
+        // First buy 10 shares at 100 USD, with fees of 20 USD => Total Amount Local of 1000 USD + 20 USD = 1020 USD
+        var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 10, 100m, 1020m, 20m, localCurrency, fxRate, -1);
+        var stateAfterBuy1 = tickerProcessing.ProcessBuy(
+            buy1, [buy1], 0, initialState, NoOut);
+
+        // Then dividend of 25.5 USD: 3 USD per share for 10 shares, with withholding tax of 15% from US =>
+        // Total Amount Local of 30 USD - (15% * 30 USD) = 25.5 USD
+        var dividend1 = new Event(T0 + 1 * D, Dividend, Ticker, null, null, 25.5m, null, localCurrency, fxRate, -1);
+        var stateAfterDividend1 = tickerProcessing.ProcessDividend(
+            dividend1, [buy1, dividend1], 1, stateAfterBuy1, NoOut);
+
+        AssertStateAfterDividend1();
+
+        void AssertStateAfterDividend1()
+        {
+            // The total quantity and amount are the same as before the dividend
+            AssertEq(stateAfterBuy1.TotalQuantity, stateAfterDividend1.TotalQuantity);
+            AssertEq(stateAfterBuy1.TotalAmountBase, stateAfterDividend1.TotalAmountBase);
+
+            // The plus and minus values CUMP, PEPS and crypto remain the same
+            AssertEq(stateAfterBuy1.PlusValueCumpBase, stateAfterDividend1.PlusValueCumpBase);
+            AssertEq(stateAfterBuy1.MinusValueCumpBase, stateAfterDividend1.MinusValueCumpBase);
+            AssertEq(stateAfterBuy1.PlusValuePepsBase, stateAfterDividend1.PlusValuePepsBase);
+            AssertEq(stateAfterBuy1.MinusValuePepsBase, stateAfterDividend1.MinusValuePepsBase);
+            AssertEq(stateAfterBuy1.PlusValueCryptoBase, stateAfterDividend1.PlusValueCryptoBase);
+            AssertEq(stateAfterBuy1.MinusValueCryptoBase, stateAfterDividend1.MinusValueCryptoBase);
+
+            // The PEPS current index and sold quantity are the same as before the dividend
+            AssertEq(stateAfterBuy1.PepsCurrentIndex, stateAfterDividend1.PepsCurrentIndex);
+            AssertEq(stateAfterBuy1.PepsCurrentIndexSoldQuantity, stateAfterDividend1.PepsCurrentIndexSoldQuantity);
+
+            // Total dividends are increased accordingly
+            AssertEq(25.5m / 2m, stateAfterDividend1.NetDividendsBase); // 25.5 USD / (2 USD/EUR)
+            AssertEq(4.5m / 2m, stateAfterDividend1.WhtDividendsBase); // 15% of 30 USD / (2 USD/EUR)
+            AssertEq(30m / 2m, stateAfterDividend1.GrossDividendsBase); // 30 USD / (2 USD/EUR)
+        }
+
+        // Then dividend of 34 USD: 4 USD per share for 10 shares, with withholding tax of 15% from US =>
+        // Total Amount Local of 40 USD - (15% * 40 USD) = 34 USD
+        var dividend2 = new Event(T0 + 2 * D, Dividend, Ticker, null, null, 34m, null, localCurrency, fxRate, -1);
+        var stateAfterDividend2 = tickerProcessing.ProcessDividend(
+            dividend2, [buy1, dividend1, dividend2], 2, stateAfterDividend1, NoOut);
+
+        AssertStateAfterDividend2();
+
+        void AssertStateAfterDividend2()
+        {
+            // The total quantity and amount are the same as before the dividend
+            AssertEq(stateAfterDividend1.TotalQuantity, stateAfterDividend2.TotalQuantity);
+            AssertEq(stateAfterDividend1.TotalAmountBase, stateAfterDividend2.TotalAmountBase);
+
+            // The plus and minus values CUMP, PEPS and crypto remain the same
+            AssertEq(stateAfterDividend1.PlusValueCumpBase, stateAfterDividend2.PlusValueCumpBase);
+            AssertEq(stateAfterDividend1.MinusValueCumpBase, stateAfterDividend2.MinusValueCumpBase);
+            AssertEq(stateAfterDividend1.PlusValuePepsBase, stateAfterDividend2.PlusValuePepsBase);
+            AssertEq(stateAfterDividend1.MinusValuePepsBase, stateAfterDividend2.MinusValuePepsBase);
+            AssertEq(stateAfterDividend1.PlusValueCryptoBase, stateAfterDividend2.PlusValueCryptoBase);
+            AssertEq(stateAfterDividend1.MinusValueCryptoBase, stateAfterDividend2.MinusValueCryptoBase);
+
+            // The PEPS current index and sold quantity are the same as before the dividend
+            AssertEq(stateAfterDividend1.PepsCurrentIndex, stateAfterDividend2.PepsCurrentIndex);
+            AssertEq(stateAfterDividend1.PepsCurrentIndexSoldQuantity, stateAfterDividend2.PepsCurrentIndexSoldQuantity);
+
+            // Total dividends are increased accordingly
+            AssertEq(59.5m / 2m, stateAfterDividend2.NetDividendsBase); // (25.5 USD + 34 USD) / (2 USD/EUR)
+            AssertEq(10.5m / 2m, stateAfterDividend2.WhtDividendsBase); // (4.5 USD + 6 USD) / (2 USD/EUR)
+            AssertEq(70m / 2m, stateAfterDividend2.GrossDividendsBase); // (30 USD + 40 USD) / (2 USD/EUR)
+        }
+    }
+
     [AssertionMethod]
     private void AssertEq(decimal expected, decimal actual, string message = "") => 
         Assert.AreEqual(expected, actual, Instance.Basics.Precision, message);
