@@ -39,6 +39,7 @@ partial class StockEventsReader(Basics basics)
                 throw new InvalidOperationException($"Invalid FX Rate {record.FXRate} for base currency {basics.BaseCurrency}");
 
             var date = ReadDateTime(record);
+            var type = basics.StringToEventType[record.Type];
 
             if (!fxRates.Rates.TryGetValue(currency, out var currencyRates)
                 || !currencyRates.TryGetValue(date.Date, out var fxRate))
@@ -52,12 +53,22 @@ partial class StockEventsReader(Basics basics)
             decimal? sharesPriceLocal = pricePerShareLocal * quantity;
             decimal totalAmountLocal =  decimal.Parse(Sanitize(record.TotalAmount));
 
-            // The difference between total amount and shares price is GENERALLY positive for BUY and negative for SELL
-            decimal? feesLocal = sharesPriceLocal == null ? null : Math.Abs(totalAmountLocal - sharesPriceLocal.Value);
+            // The difference between total amount and shares price is GENERALLY positive for BUY and negative for SELL.
+            // However, due to rounding, it can be negative for BUY and positive for SELL.
+            // In those cases, fees are set to zero.
+            decimal? feesLocal = (sharesPriceLocal, type) switch
+            {
+                (null, _) => null,
+                (not null, EventType.BuyLimit or EventType.BuyMarket) => 
+                    Math.Max(0, totalAmountLocal - sharesPriceLocal.Value),
+                (not null, EventType.SellLimit or EventType.SellMarket) =>
+                    Math.Max(0, sharesPriceLocal.Value - totalAmountLocal),
+                (not null, _) => throw new InvalidOperationException($"Invalid type {type}")
+            };
 
             events.Add(new(
                 Date: date,
-                Type: basics.StringToEventType[record.Type],
+                Type: type,
                 Ticker: string.IsNullOrWhiteSpace(record.Ticker) ? null : record.Ticker,
                 Quantity: quantity,
                 PricePerShareLocal: pricePerShareLocal,

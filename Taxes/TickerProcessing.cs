@@ -128,7 +128,8 @@ class TickerProcessing(Basics basics)
         var buyFeesLocal = tickerEvent.FeesLocal.Value;
         outWriter.WriteLine($"\tBuy Fees ({tickerCurrency}) = {buyFeesLocal.R(basics)}");
 
-        var buyFees1Base = Math.Abs(sharesBuyPriceBase - totalBuyPriceBase);
+        // In buy events, fees are added to the total amount, so total buy price is higher than shares buy price
+        var buyFees1Base = Math.Max(0, totalBuyPriceBase - sharesBuyPriceBase);
         var buyFees2Base = tickerEvent.FeesLocal.Value / tickerEvent.FXRate;
         if (Math.Abs(buyFees1Base - buyFees2Base) >= basics.Precision)
             throw new InvalidDataException($"Invalid event - Fees are inconsistent");
@@ -192,7 +193,8 @@ class TickerProcessing(Basics basics)
         var totalSellPriceBase = totalSellPriceLocal / tickerEvent.FXRate;
         outWriter.WriteLine($"\tTotal Sell Price ({basics.BaseCurrency}) = {totalSellPriceBase.R(basics)}");
 
-        var sellFees1Base = Math.Abs(sharesSellPriceBase - totalSellPriceBase);
+        // In sell events, fees are deducted from the proceeding, so shares sell price is higher than total amount
+        var sellFees1Base = Math.Max(0, sharesSellPriceBase - totalSellPriceBase);
         var sellFees2Base = tickerEvent.FeesLocal.Value / tickerEvent.FXRate;
         if (Math.Abs(sellFees1Base - sellFees2Base) >= basics.Precision)
             throw new InvalidDataException($"Invalid event - Fees are inconsistent");
@@ -236,19 +238,19 @@ class TickerProcessing(Basics basics)
         (decimal, int, decimal) CalculatePlusValuePepsBase(
             Event tickerEvent, IList<Event> tickerEvents, TickerState tickerState, decimal totalSellPriceBase)
         {
-            var remainingQuantity = tickerEvent.Quantity.Value;
+            var remainingQuantityToSell = tickerEvent.Quantity!.Value;
             var pepsCurrentIndex = tickerState.PepsCurrentIndex;
             var pepsCurrentIndexSoldQuantity = tickerState.PepsCurrentIndexSoldQuantity;
             var totalPepsBuyPriceBase = 0m;
-            while (remainingQuantity >= 0m)
+            while (remainingQuantityToSell >= 0m)
             {
-                if (remainingQuantity > 0m)
+                if (remainingQuantityToSell > 0m)
                 {
-                    outWriter.WriteLine($"\tPEPS Remaining Quantity to match: {remainingQuantity.R(basics)} => FIND Buy Event");
+                    outWriter.WriteLine($"\tPEPS Remaining Quantity to match: {remainingQuantityToSell.R(basics)} => FIND Buy Event");
                 }
                 else
                 {
-                    outWriter.WriteLine($"\tPEPS Remaining Quantity to match: {remainingQuantity.R(basics)} => DONE");
+                    outWriter.WriteLine($"\tPEPS Remaining Quantity to match: {remainingQuantityToSell.R(basics)} => DONE");
                     break;
                 }
 
@@ -263,17 +265,23 @@ class TickerProcessing(Basics basics)
                 if (pepsCurrentIndexSoldQuantity > pepsBuyEventQuantity)
                     throw new InvalidDataException($"PEPS Current Index Sold Quantity > Total Event Quantity");
                 
-                var boughtQuantity = Math.Min(remainingQuantity, pepsBuyEventQuantity - pepsCurrentIndexSoldQuantity);
-                pepsCurrentIndexSoldQuantity += boughtQuantity;
-                remainingQuantity -= boughtQuantity;
+                // Tries to match the remaining quantity to sell against the quantity of current buy event according to
+                // PEPS (part of which may have already been sold during a previous iteration of this loop or during
+                // the processing of a previous sell transaction).
+                var soldQuantity = Math.Min(remainingQuantityToSell, pepsBuyEventQuantity - pepsCurrentIndexSoldQuantity);
+                pepsCurrentIndexSoldQuantity += soldQuantity;
+                remainingQuantityToSell -= soldQuantity;
 
                 var pepsBuyEventShareOfFeesLocal = 
-                    (boughtQuantity / pepsBuyEvent.Quantity.Value) * pepsBuyEvent.FeesLocal!.Value;
+                    (soldQuantity / pepsBuyEvent.Quantity.Value) * pepsBuyEvent.FeesLocal!.Value;
                 var pepsBuyEventBuyPriceBase1 = 
-                    (boughtQuantity * pepsBuyEvent.PricePerShareLocal.Value + pepsBuyEventShareOfFeesLocal) / pepsBuyEvent.FXRate;
+                    (soldQuantity * pepsBuyEvent.PricePerShareLocal.Value + pepsBuyEventShareOfFeesLocal) / pepsBuyEvent.FXRate;
                 var pepsBuyEventBuyPriceBase2 =
-                    (boughtQuantity / pepsBuyEvent.Quantity.Value) * pepsBuyEvent.TotalAmountLocal / pepsBuyEvent.FXRate;
-                if (Math.Abs(pepsBuyEventBuyPriceBase1 - pepsBuyEventBuyPriceBase2) >= basics.Precision)
+                    (soldQuantity / pepsBuyEvent.Quantity.Value) * pepsBuyEvent.TotalAmountLocal / pepsBuyEvent.FXRate;
+                // The precision of the shares buy price is given by the precision of the price for a single share,
+                // multiplied by the number of sold shares: e.g. if the price per share has 2 decimal-digits precision,
+                // the max error is 0.01 for 1 share, so 0.01 * n for n shares.
+                if (Math.Abs(pepsBuyEventBuyPriceBase1 - pepsBuyEventBuyPriceBase2) >= basics.Precision * soldQuantity)
                     throw new InvalidDataException($"PEPS Buy Price Base is inconsistent");
                 totalPepsBuyPriceBase += pepsBuyEventBuyPriceBase1;
 
@@ -378,8 +386,8 @@ class TickerProcessing(Basics basics)
             {
                 var normalizedEvent = tickerEvents[i] with
                 {
-                    Quantity = tickerEvents[i].Quantity * splitRatio,
-                    PricePerShareLocal = tickerEvents[i].PricePerShareLocal / splitRatio,
+                    Quantity = tickerEvents[i].Quantity!.Value * splitRatio,
+                    PricePerShareLocal = tickerEvents[i].PricePerShareLocal!.Value / splitRatio,
                 };
                 outWriter.WriteLine($"\t\t{tickerEvents[i]}");
                 outWriter.WriteLine($"\t\t\tbecomes {normalizedEvent}");
