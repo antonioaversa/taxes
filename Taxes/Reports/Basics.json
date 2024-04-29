@@ -57,5 +57,5 @@
   ],
   "CryptoPortfolioValuesCurrency": "USD",
   "CryptoPortfolioValuesFilePath": "Crypto Portfolio Values USD.csv",
-  "FXRatesFilePath": "Webstat_Export_20240414.csv"
+  "FXRatesFilePath": "FX Rates ECB 2024-04-14.csv"
 }
