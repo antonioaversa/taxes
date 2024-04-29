@@ -1,6 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-
-namespace Taxes.Test;
+﻿namespace Taxes.Test;
 
 [TestClass]
 public class FxRatesReaderTest
