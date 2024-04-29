@@ -398,9 +398,4 @@ FodyWeavers.xsd
 *.sln.iml
 
 # Project specific
-Taxes/Reports/crypto.csv
-Taxes/Reports/stocks.csv
-Taxes/Reports/crypto_*.csv
-Taxes/Reports/stocks_*.csv
-Taxes/Reports/cryptoportfoliovalues.csv
-Taxes/Reports/cryptoportfoliovalues-*.csv
+Taxes/Reports/**/*.csv

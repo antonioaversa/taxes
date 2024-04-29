@@ -47,12 +47,13 @@
     "ZRX": "CRYPTO_ZRX"
   },
   "StockEventsFilePaths": [
-    "stocks_2022.csv",
-    "stocks_2023.csv"
+    "2022 Revolut All Stocks Transactions.csv",
+    "2023 Revolut All Stocks Transactions.csv"
   ],
   "CryptoEventsFilePaths": [
-    "crypto_2022_*.csv",
-    "crypto_2023_*.csv"
+    "2022 Revolut All Crypto Transactions.csv",
+    "2022 Revolut NuCypher Transactions.csv",
+    "2023 Revolut All Crypto Transactions.csv"
   ],
   "CryptoPortfolioValuesCurrency": "USD",
   "CryptoPortfolioValuesFilePath": "cryptoportfoliovalues-USD.csv",

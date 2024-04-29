@@ -16,11 +16,12 @@ var stockEvents = basics.StockEventsFilePaths
 ProcessEvents(stockEvents, basics);
 
 var cryptoEventsReader = new CryptoEventsReader(basics);
+var cryptoPortfolioValuesFilePath = Path.Combine(basics.ReportsDirectoryPath, basics.CryptoPortfolioValuesFilePath);
 var cryptoEvents = basics.CryptoEventsFilePaths
     .SelectMany(pattern => Directory.GetFiles(basics.ReportsDirectoryPath, pattern))
     .Order()
     .SelectMany(filePath => cryptoEventsReader.Parse(
-        filePath, basics.CryptoPortfolioValuesCurrency, basics.CryptoPortfolioValuesFilePath, fxRates))
+        filePath, basics.CryptoPortfolioValuesCurrency, cryptoPortfolioValuesFilePath, fxRates))
     .ToList();
 ProcessEvents(cryptoEvents, basics);
 
