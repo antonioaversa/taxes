@@ -56,6 +56,6 @@
     "2023 Revolut All Crypto Transactions.csv"
   ],
   "CryptoPortfolioValuesCurrency": "USD",
-  "CryptoPortfolioValuesFilePath": "cryptoportfoliovalues-USD.csv",
+  "CryptoPortfolioValuesFilePath": "Crypto Portfolio Values USD.csv",
   "FXRatesFilePath": "Webstat_Export_20240414.csv"
 }
