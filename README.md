@@ -233,6 +233,19 @@ TRANSFER,Current,2022-05-19 10:09:31,2022-05-19 10:09:31,Balance migration to an
 EXCHANGE,Current,2022-10-21 09:14:13,2022-10-21 09:14:13,Exchanged to SOL,10.000000,SOL,280.11,284.28,4.17,EUR,COMPLETED,13.000000
 ```
 
+When exporting the data from the Revolut app, make sure to select all the crypto option, to get all the events of all
+crypto currencies.
+
+Also, it seems that old transactions for crypto currencies that are not available anymore on Revolut, such as NuCypher,
+are not exported anymore. In this case, make sure you can integrate the report with the missing transactions, or the 
+software will not be able to calculate the taxes for those.
+
+The exported file is in xlsx format, and should be converted to CSV using a spreadsheet software, such as Excel. 
+Before making the conversion, ensure that:
+- the dates (`Started Date`, `Completed Date`) are in the format `yyyy-MM-dd HH:mm:ss`
+- the numeric values (`Amount`, `Fiat amount`, `Fiat amount (inc. fees)`, `Fee`, `Balance`) have `.` as decimal 
+  separator, no thousands separator and a very high precision after the decimal separator (e.g. 10-digit)
+
 ### Setup crypto portfolio values
 
 Unlike stocks, crypto taxes calculation require knowning the value of the entire crypto portfolio after each taxable 
