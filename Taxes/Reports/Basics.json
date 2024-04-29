@@ -57,7 +57,5 @@
   ],
   "CryptoPortfolioValuesCurrency": "USD",
   "CryptoPortfolioValuesFilePath": "cryptoportfoliovalues-USD.csv",
-  "FXRatesInputType": "MultiCurrency",
-  // "FXRatesSingleCurrency": "USD", // Only relevant when FXRatesInputType is SingleCurrency
   "FXRatesFilePath": "Webstat_Export_20240414.csv"
 }

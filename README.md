@@ -187,10 +187,6 @@ Make sure that `Basics.json` is up-to-date:
     for each relevant day 
   - data extraction from Revolut and format described in the [Setup crypto portfolio values section](#Setup-crypto-portfolio-values) 
 - define FX Rates settings: 
-  - `FXRatesInputType`, as the input type for FX Rates in local currency
-    - possible values: `MultiCurrency` (recommended) and `SingleCurrency` (legacy) 
-  - `FXRatesSingleCurrency`, as the single local currency for which FX Rates are provided
-    - only relevant when `FXRatesInputType` is set to `SingleCurrency`
   - `FXRatesFilePath`, as the path of the file that contains the FX Rates
   - data extraction from the web and format described in the [Setup FX Rates section](#Setup-FX-Rates)
 
@@ -267,12 +263,6 @@ Date,PortfolioValue
 
 ### Setup FX Rates
 
-There are two ways to setup the FX Rates: multi-currency FX Rates, and single currency FX Rates.
-
-The recommended way to setup the FX Rates is to use the 
-
-#### Multi-currency FX Rates
-
 The FX Rates are provided by the ECB only for working days. It's OK: the software will use the FX Rate as defined in
 other reports, or the closest FX Rate available, when the ECB didn't provide an FX Rate for the date of a ticker event.
 
@@ -284,47 +274,3 @@ CSV format, for all conversions. The downloaded CSV file has a complete history 
 and for all currencies.
 
 When using the multi-currency FX Rates option, the file can be used as-is, without any modification.
-
-#### Single-currency FX Rates
-
-Make sure that the file (name example `BCE-FXRate-<base_currency>-<local_currency_>.txt`) is up-to-date.
-
-That means it has to contains all the FX Rates defined by the ECB between the base currency (e.g. `EUR`) and the local 
-currency (e.g. `USD`) for a contiguous period of time including all dates of ticker events, of any type (buy, sell, 
-dividends, for both stocks and crypto).
-
-This file can be generated from the [Multi-currency FX Rates file](#Multi-currency-FX-Rates), by retaining only the FX
-Rates between the local currency and the base currency.
-
-The resulting file should define FX Rates in the following format:
-
-```text
-<date>\t<decimalNumber>
-```
-
-Where:
-- `<date>` is in the format `d/MM/yyyy`	
-- `<decimalNumber>` uses `.` as decimal separator, and no thousands separator
-
-For example:
-
-```text
-4/14/2023	1.1057 
-4/13/2023	1.1015
-4/12/2023	1.0922
-4/11/2023	1.0905
-4/10/2023	-
-4/9/2023	-
-4/8/2023	-
-```
-
-Comments are allowed, in the following format:
-
-```text
-// Titre :	Dollar des Etats-Unis (USD)
-// Code série :	EXR.D.USD.EUR.SP00.A
-// Unité :	Dollar des Etats-Unis (USD)
-// Magnitude :	Unités (0)
-// Méthode d'observation :	Fin de période (E)
-// Source :	BCE (Banque Centrale Européenne) (4F0)
-```

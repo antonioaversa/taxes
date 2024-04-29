@@ -5,8 +5,6 @@ using System.Text.RegularExpressions;
 
 namespace Taxes;
 
-public enum FXRatesInputType { SingleCurrency, MultiCurrency }
-
 public partial class Basics
 {
     public string ReportsDirectoryPath { get; }
@@ -46,8 +44,6 @@ public partial class Basics
     public ReadOnlyCollection<string> CryptoEventsFilePaths { get; init; }
     public string CryptoPortfolioValuesCurrency { get; init; }
     public string CryptoPortfolioValuesFilePath { get; init; }
-    public FXRatesInputType FXRatesInputType { get; init; }
-    public string FXRatesSingleCurrency { get; init; }
     public string FXRatesFilePath { get; init; }
 
     public Basics(string reportsDirectoryPath = "Reports", string basicsFileName = "Basics.json")
@@ -95,11 +91,6 @@ public partial class Basics
         CryptoPortfolioValuesFilePath = basicsFile.CryptoPortfolioValuesFilePath
             ?? throw new InvalidDataException($"Invalid {nameof(CryptoPortfolioValuesFilePath)} in {basicsFileName}");
 
-        FXRatesInputType = Enum.Parse<FXRatesInputType>(basicsFile.FXRatesInputType
-            ?? throw new InvalidDataException($"Invalid {nameof(FXRatesInputType)} in {basicsFileName}"));
-        FXRatesSingleCurrency = FXRatesInputType == FXRatesInputType.MultiCurrency == string.IsNullOrEmpty(basicsFile.FXRatesSingleCurrency)
-            ? basicsFile.FXRatesSingleCurrency!
-            : throw new InvalidDataException($"Inconsistent {nameof(FXRatesInputType)} and {nameof(FXRatesSingleCurrency)} in {basicsFileName}");
         FXRatesFilePath = basicsFile.FXRatesFilePath
             ?? throw new InvalidDataException($"Invalid {nameof(FXRatesFilePath)} in {basicsFileName}");
 

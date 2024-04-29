@@ -3,9 +3,7 @@
 var basics = new Basics();
 var fxRatesFilePath = Path.Combine(basics.ReportsDirectoryPath, basics.FXRatesFilePath);
 var fxRatesReader = new FxRatesReader(basics);
-var fxRates = basics.FXRatesInputType == FXRatesInputType.SingleCurrency
-    ? fxRatesReader.ParseSingleCurrencyFromFile(basics.FXRatesSingleCurrency, fxRatesFilePath)
-    : fxRatesReader.ParseMultiCurrenciesFromFile(fxRatesFilePath);
+var fxRates = fxRatesReader.ParseMultiCurrenciesFromFile(fxRatesFilePath);
 
 var stockEventsReader = new StockEventsReader(basics);
 var stockEvents = basics.StockEventsFilePaths
