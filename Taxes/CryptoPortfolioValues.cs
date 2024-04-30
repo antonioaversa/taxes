@@ -5,14 +5,12 @@ namespace Taxes;
 
 class CryptoPortfolioValues
 {
-    private Basics Basics { get; }
     private FxRates FxRates { get; }
     private string PortfolioValuesCurrency { get; }
     private Dictionary<DateTime, decimal> PortfolioValuesLocal { get; }
 
     public CryptoPortfolioValues(Basics basics, FxRates fxRates, string portfolioValuesCurrency, string portfolioValuesPath)
     {
-        Basics = basics;
         FxRates = fxRates;
         PortfolioValuesCurrency = portfolioValuesCurrency;
         using var tpvReader = new StreamReader(portfolioValuesPath);
