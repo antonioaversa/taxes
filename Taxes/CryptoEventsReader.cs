@@ -7,6 +7,7 @@ class CryptoEventsReader(Basics basics)
 {
     const string Type_Transfer = "TRANSFER";
     const string Type_Exchange = "EXCHANGE";
+    const string Type_Reward = "REWARD";
     const string Product_Current = "Current";
     const string State_Completed = "COMPLETED";
 
@@ -14,7 +15,7 @@ class CryptoEventsReader(Basics basics)
 
     public IList<Event> Parse(string pattern, string portfolioValuesCurrency, string portfolioValuesPath, FxRates fxRates)
     {
-        var portfolioValuesLocal = ParsePortfolioValues(portfolioValuesPath);
+        var portfolioValues = new CryptoPortfolioValues(basics, fxRates, portfolioValuesCurrency, portfolioValuesPath);
 
         var events = new List<Event>();
 
@@ -28,6 +29,13 @@ class CryptoEventsReader(Basics basics)
                 if (record.Type == Type_Transfer)
                 {
                     Console.WriteLine($"Ignore record type {Type_Transfer}: {record}");
+                    continue;
+                }
+
+                // TODO: fix
+                if (record.Type == Type_Reward)
+                {
+                    Console.WriteLine($"Ignore record type {Type_Reward}: {record}");
                     continue;
                 }
 
@@ -59,7 +67,7 @@ class CryptoEventsReader(Basics basics)
                 var fxRate = 1m;
 
                 // Portfolio value is calculated in Local FIAT, so it needs to be converted in Base FIAT
-                var portfolioCurrentValueBase = CalculatePortfolioValueBase(portfolioValuesCurrency, portfolioValuesLocal, fxRates, date);
+                var portfolioCurrentValueBase = portfolioValues[date];
 
                 events.Add(new(
                     Date: date,
@@ -78,51 +86,8 @@ class CryptoEventsReader(Basics basics)
         return events;
     }
 
-    private static decimal CalculatePortfolioValueBase(
-        string portfolioValuesCurrency,
-        Dictionary<DateTime, decimal> portfolioValuesLocal,
-        FxRates fxRates,
-        DateTime date)
-    {
-        // We don't have portfolio current value for all events, we barely have it for sell events
-        if (!portfolioValuesLocal.TryGetValue(date.Date, out var portfolioValueLocal))
-            return -1m;
-
-        // An FX Rate is considered valid if it's found for the local currency of the portfolio and for the day or,
-        // in case of weekend days, one of the next two days following the date
-        decimal fxRate = 0m;
-        var validFxRateFound = 
-            fxRates.Rates.TryGetValue(portfolioValuesCurrency, out var currencyFxRates) &&
-            (
-                currencyFxRates.TryGetValue(date.Date, out fxRate) || 
-                (IsWeekend(date) && TryGetForTheFollowingTwoDays(date, currencyFxRates, out fxRate))
-            );
-
-        if (!validFxRateFound)
-            throw new InvalidDataException($"Missing FX Rate for currency {portfolioValuesCurrency} and day {date.Date}");
-
-        // FX Rates are Base/Local and portfolio value is in Local, so we need to divide to get the value in Bases
-        return portfolioValueLocal / fxRate;
-
-        static bool IsWeekend(DateTime date) => 
-            date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday;
-
-        static bool TryGetForTheFollowingTwoDays(DateTime date, Dictionary<DateTime, decimal> currencyFxRates, out decimal fxRate) =>
-            currencyFxRates.TryGetValue(date.Date.AddDays(1), out fxRate) ||
-            currencyFxRates.TryGetValue(date.Date.AddDays(2), out fxRate);
-    }
-
-    private Dictionary<DateTime, decimal> ParsePortfolioValues(string portfolioValuesPath)
-    {
-        using var tpvReader = new StreamReader(portfolioValuesPath);
-        using var tpvCsv = new CsvReader(tpvReader, basics.DefaultCulture);
-        return tpvCsv.GetRecords<PortfolioValueStr>().ToDictionary(
-            record => DateTime.ParseExact(record.Date, "yyyy-MM-dd", basics.DefaultCulture),
-            record => decimal.Parse(record.PortfolioValue, basics.DefaultCulture));
-    }
-
     [Delimiter(",")]
-    class EventStr
+    private sealed class EventStr
     {
         [Name("Type")] public string Type { get; set; } = string.Empty;
         [Name("Product")] public string Product { get; set; } = string.Empty;
@@ -137,11 +102,5 @@ class CryptoEventsReader(Basics basics)
         [Name("Base currency")] public string BaseCurrency { get; set; } = string.Empty;
         [Name("State")] public string State { get; set; } = string.Empty;
         [Name("Balance")] public string Balance { get; set; } = string.Empty;
-    }
-
-    class PortfolioValueStr
-    {
-        [Name("Date")] public string Date { get; set; } = string.Empty;
-        [Name("PortfolioValue")] public string PortfolioValue { get; set; } = string.Empty;
     }
 }
