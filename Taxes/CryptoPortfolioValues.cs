@@ -9,16 +9,30 @@ class CryptoPortfolioValues
     private string PortfolioValuesCurrency { get; }
     private Dictionary<DateTime, decimal> PortfolioValuesLocal { get; }
 
-    public CryptoPortfolioValues(Basics basics, FxRates fxRates, string portfolioValuesCurrency, string portfolioValuesPath)
+    public CryptoPortfolioValues(
+        Basics basics, FxRates fxRates, string portfolioValuesCurrency, string portfolioValuesPath)
     {
         FxRates = fxRates;
         PortfolioValuesCurrency = portfolioValuesCurrency;
-        using var tpvReader = new StreamReader(portfolioValuesPath);
-        using var tpvCsv = new CsvReader(tpvReader, basics.DefaultCulture);
-        PortfolioValuesLocal = tpvCsv.GetRecords<PortfolioValueStr>().ToDictionary(
+        using var portfolioValuesReader = new StreamReader(portfolioValuesPath);
+        using var portfolioValuesCsvReader = new CsvReader(portfolioValuesReader, basics.DefaultCulture);
+        PortfolioValuesLocal = LoadPortfolioValues(basics, portfolioValuesCsvReader);
+    }
+
+    internal /* for testing */ CryptoPortfolioValues(
+        Basics basics, FxRates fxRates, string portfolioValuesCurrency, TextReader portfolioValuesReader)
+    {
+        FxRates = fxRates;
+        PortfolioValuesCurrency = portfolioValuesCurrency;
+        using var portfolioValuesCsvReader = new CsvReader(portfolioValuesReader, basics.DefaultCulture);
+        PortfolioValuesLocal = LoadPortfolioValues(basics, portfolioValuesCsvReader);
+    }
+
+    private static Dictionary<DateTime, decimal> LoadPortfolioValues(
+        Basics basics, CsvReader portfolioValuesCsvReader) => 
+        portfolioValuesCsvReader.GetRecords<PortfolioValueStr>().ToDictionary(
             record => DateTime.ParseExact(record.Date, "yyyy-MM-dd", basics.DefaultCulture),
             record => decimal.Parse(record.PortfolioValue, basics.DefaultCulture));
-    }
 
     public decimal this[DateTime date]
     {
