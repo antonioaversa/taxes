@@ -8,19 +8,19 @@ public class StockEventsReaderTests
     {
         ["USD"] = new()
         {
-            [new(2022, 3, 30)] = 1.11m,
-            [new(2022, 5, 2)] = 1.06m,
-            [new(2022, 6, 2)] = 1.08m,
-            [new(2022, 6, 6)] = 1.08m,
-            [new(2022, 6, 10)] = 1.07m,
-            [new(2022, 6, 23)] = 1.06m,
-            [new(2022, 6, 29)] = 1.05m,
-            [new(2022, 7, 7)] = 1.03m,
-            [new(2022, 7, 19)] = 1.02m,
-            [new(2023, 1, 1)] = 1.059m,
-            [new(2023, 11, 26)] = 1.10m,
-            [new(2023, 12, 11)] = 1.08m,
-            [new(2023, 12, 18)] = 1.10m,
+            [(2022, 3, 30).ToUtc()] = 1.11m,
+            [(2022, 5, 2).ToUtc()] = 1.06m,
+            [(2022, 6, 2).ToUtc()] = 1.08m,
+            [(2022, 6, 6).ToUtc()] = 1.08m,
+            [(2022, 6, 10).ToUtc()] = 1.07m,
+            [(2022, 6, 23).ToUtc()] = 1.06m,
+            [(2022, 6, 29).ToUtc()] = 1.05m,
+            [(2022, 7, 7).ToUtc()] = 1.03m,
+            [(2022, 7, 19).ToUtc()] = 1.02m,
+            [(2023, 1, 1).ToUtc()] = 1.059m,
+            [(2023, 11, 26).ToUtc()] = 1.10m,
+            [(2023, 12, 11).ToUtc()] = 1.08m,
+            [(2023, 12, 18).ToUtc()] = 1.10m,
         }
     });
 
@@ -178,7 +178,7 @@ public class StockEventsReaderTests
             Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
             2022-03-30T23:48:44.882381Z,,CASH TOP-UP,,,"3000",IDR,17153.90
             """);
-        var fxRates = new FxRates(new() { ["USD"] = new() { [new(2022, 03, 30)] = 1.1126m } });
+        var fxRates = new FxRates(new() { ["USD"] = new() { [(2022, 03, 30).ToUtc()] = 1.1126m } });
         // A FX Rate is provided for the date of the event. However, it's not for the right currency.
         // So, the value provided in the input file should be used, that is expressed as Base/Local.
         var events = Instance.Parse(textReader, fxRates);
@@ -193,7 +193,7 @@ public class StockEventsReaderTests
             Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
             2022-03-30T23:48:44.882381Z,,CASH TOP-UP,,,"3000",IDR,17153.90
             """);
-        var fxRates = new FxRates(new() { ["IDR"] = new() { [new(2022, 03, 30)] = 17250.00m } });
+        var fxRates = new FxRates(new() { ["IDR"] = new() { [(2022, 03, 30).ToUtc()] = 17250.00m } });
         // FX Rates are expressed in Base/Local, that is the same as in the input file. So, no need to invert them.
         // FX Rates provides a slightly different value for that currency that day, that is 17250m.
         // So, the value to be used is the one provided by fxRates.
@@ -209,7 +209,7 @@ public class StockEventsReaderTests
             Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
             2022-03-30T23:48:44.882381Z,,CASH TOP-UP,,,"3000",IDR,17153.90
             """);
-        var fxRates = new FxRates(new() { ["IDR"] = new() { [new(2022, 03, 29)] = 17250.00m } });
+        var fxRates = new FxRates(new() { ["IDR"] = new() { [(2022, 03, 29).ToUtc()] = 17250.00m } });
         // A FX Rate is provided for the currency of the event. However, it's not for the right date.
         // So, the value provided in the input file should be used.
         var events = Instance.Parse(textReader, fxRates);
@@ -228,8 +228,8 @@ public class StockEventsReaderTests
             """);
         var fxRates = new FxRates(new()
         {
-            ["IDR"] = new() { [new(2022, 03, 30)] = 17250.00m },
-            ["USD"] = new() { [new(2022, 03, 30)] = 1.09m }
+            ["IDR"] = new() { [(2022, 03, 30).ToUtc()] = 17250.00m },
+            ["USD"] = new() { [(2022, 03, 30).ToUtc()] = 1.09m }
         });
         // The first event is in IDR, so the FX Rate for that currency should be used.
         var events = Instance.Parse(textReader, fxRates);
@@ -391,14 +391,14 @@ public class StockEventsReaderTests
             """);
         var events = Instance.Parse(textReader, OnlyUSDFxRates);
         events[0].AssertEvent(
-            date: new(2022, 3, 29), type: EventType.CashTopUp, totalAmountLocal: 3000, currency: "USD", fxRate: 1.12m);
+            date: (2022, 3, 29).ToUtc(), type: EventType.CashTopUp, totalAmountLocal: 3000, currency: "USD", fxRate: 1.12m);
         events[1].AssertEvent(
-            date: new(2022, 3, 30), type: EventType.CashTopUp, totalAmountLocal: 3000, currency: "USD", fxRate: 1.11m);
+            date: (2022, 3, 30).ToUtc(), type: EventType.CashTopUp, totalAmountLocal: 3000, currency: "USD", fxRate: 1.11m);
         events[2].AssertEvent(
-            date: new(2022, 5, 2), type: EventType.BuyMarket, ticker: "TSLA", quantity: 1.018999m, 
+            date: (2022, 5, 2).ToUtc(), type: EventType.BuyMarket, ticker: "TSLA", quantity: 1.018999m, 
             pricePerShareLocal: 861.63m, totalAmountLocal: 878, currency: "USD", fxRate: 1.06m);
         events[3].AssertEvent(
-            date: new(2022, 6, 2), type: EventType.CustodyFee, totalAmountLocal: 1.35m, currency: "USD", fxRate: 1.08m);
+            date: (2022, 6, 2).ToUtc(), type: EventType.CustodyFee, totalAmountLocal: 1.35m, currency: "USD", fxRate: 1.08m);
     }
 
     [TestMethod]

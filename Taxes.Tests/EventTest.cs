@@ -3,7 +3,7 @@
 [TestClass]
 public class EventTest
 {
-    private static readonly DateTime Date = new(2021, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+    private static readonly DateTime Date = (2021, 1, 1).ToUtc();
     private const string Ticker = "AAPL";
     private const string Currency = "USD";
 

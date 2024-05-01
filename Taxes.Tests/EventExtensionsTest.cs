@@ -5,7 +5,7 @@ public class EventExtensionsTest
 {
     private const string Ticker = "AAPL";
     private const string Currency = "USD";
-    private static readonly DateTime Date = new(2021, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+    private static readonly DateTime Date = (2021, 1, 1).ToUtc();
 
     [TestMethod]
     public void AssertEvent_ThrowsWhenExpectedAndActualAreDifferent()

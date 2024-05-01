@@ -13,7 +13,7 @@ public class TickerProcessingTest
     private const string Isin = "US0378331005";
     private const string AnotherTicker = "GOOGL";
     private const string AnotherIsin = "US02079K3059";
-    private static readonly DateTime T0 = new(2022, 01, 01, 00, 00, 00, DateTimeKind.Utc);
+    private static readonly DateTime T0 = (2022, 1, 1).ToUtc();
     private static readonly TimeSpan D = TimeSpan.FromDays(1);
     private static readonly TextWriter NoOut = TextWriter.Null;
 

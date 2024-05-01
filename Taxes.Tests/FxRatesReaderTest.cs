@@ -40,8 +40,8 @@ public class FxRatesReaderTest
 
             var fxRates = Instance.ParseSingleCurrencyFromFile(CurrencyUSD, path);
             Assert.AreEqual(2, fxRates[CurrencyUSD].Count);
-            Assert.AreEqual(1.23m, fxRates[CurrencyUSD, new(2021, 01, 01)]);
-            Assert.AreEqual(1.24m, fxRates[CurrencyUSD, new(2021, 01, 02)]);
+            Assert.AreEqual(1.23m, fxRates[CurrencyUSD, (2021, 01, 01).ToUtc()]);
+            Assert.AreEqual(1.24m, fxRates[CurrencyUSD, (2021, 01, 02).ToUtc()]);
         }
         finally
         {
@@ -64,7 +64,7 @@ public class FxRatesReaderTest
     {
         var fxRates = Instance.ParseSingleCurrencyFromContent(CurrencyUSD, ["1/1/2021\t1.23"]);
         Assert.AreEqual(1, fxRates[CurrencyUSD].Count);
-        Assert.AreEqual(1.23m, fxRates[CurrencyUSD, new(2021, 01, 01)]);
+        Assert.AreEqual(1.23m, fxRates[CurrencyUSD, (2021, 01, 01).ToUtc()]);
     }
 
     [TestMethod]
@@ -72,8 +72,8 @@ public class FxRatesReaderTest
     {
         var fxRates = Instance.ParseSingleCurrencyFromContent(CurrencyUSD, ["1/1/2021\t1.23", "1/2/2021\t1.24"]);
         Assert.AreEqual(2, fxRates[CurrencyUSD].Count);
-        Assert.AreEqual(1.23m, fxRates[CurrencyUSD, new(2021, 01, 01)]);
-        Assert.AreEqual(1.24m, fxRates[CurrencyUSD, new(2021, 01, 02)]);
+        Assert.AreEqual(1.23m, fxRates[CurrencyUSD, (2021, 01, 01).ToUtc()]);
+        Assert.AreEqual(1.24m, fxRates[CurrencyUSD, (2021, 01, 02).ToUtc()]);
     }
 
     [TestMethod]
@@ -81,7 +81,7 @@ public class FxRatesReaderTest
     {
         var fxRates = Instance.ParseSingleCurrencyFromContent(CurrencyUSD, ["// 1/1/2021\t1.23", "1/2/2021\t1.24"]);
         Assert.AreEqual(1, fxRates[CurrencyUSD].Count);
-        Assert.AreEqual(1.24m, fxRates[CurrencyUSD, new(2021, 01, 02)]);
+        Assert.AreEqual(1.24m, fxRates[CurrencyUSD, (2021, 01, 02).ToUtc()]);
     }
 
     [TestMethod]
@@ -114,7 +114,7 @@ public class FxRatesReaderTest
     {
         var fxRates = Instance.ParseSingleCurrencyFromContent(CurrencyUSD, ["1/1/2021\t-", "1/2/2021\t1.24"]);
         Assert.AreEqual(1, fxRates[CurrencyUSD].Count);
-        Assert.AreEqual(1.24m, fxRates[CurrencyUSD, new(2021, 01, 02)]);
+        Assert.AreEqual(1.24m, fxRates[CurrencyUSD, (2021, 01, 02).ToUtc()]);
     }
 
     [TestMethod]
@@ -149,8 +149,8 @@ public class FxRatesReaderTest
 
             var fxRates = Instance.ParseSingleCurrencyFromFile(CurrencyUSD, path);
             Assert.AreEqual(2, fxRates[CurrencyUSD].Count);
-            Assert.AreEqual(1.23m, fxRates[CurrencyUSD, new(2021, 01, 01)]);
-            Assert.AreEqual(1.24m, fxRates[CurrencyUSD, new(2021, 01, 02)]);
+            Assert.AreEqual(1.23m, fxRates[CurrencyUSD, (2021, 01, 01).ToUtc()]);
+            Assert.AreEqual(1.24m, fxRates[CurrencyUSD, (2021, 01, 02).ToUtc()]);
         }
         finally
         {
@@ -178,12 +178,12 @@ public class FxRatesReaderTest
             Assert.AreEqual(2, fxRates[CurrencyUSD].Count);
             Assert.AreEqual(2, fxRates[CurrencyCHF].Count);
             Assert.AreEqual(2, fxRates[CurrencyGBP].Count);
-            Assert.AreEqual(1.23m, fxRates[CurrencyUSD, new(2021, 01, 01)]);
-            Assert.AreEqual(1.26m, fxRates[CurrencyUSD, new(2021, 01, 02)]);
-            Assert.AreEqual(1.24m, fxRates[CurrencyCHF, new(2021, 01, 01)]);
-            Assert.AreEqual(1.27m, fxRates[CurrencyCHF, new(2021, 01, 02)]);
-            Assert.AreEqual(1.25m, fxRates[CurrencyGBP, new(2021, 01, 01)]);
-            Assert.AreEqual(1.28m, fxRates[CurrencyGBP, new(2021, 01, 02)]);
+            Assert.AreEqual(1.23m, fxRates[CurrencyUSD, (2021, 01, 01).ToUtc()]);
+            Assert.AreEqual(1.26m, fxRates[CurrencyUSD, (2021, 01, 02).ToUtc()]);
+            Assert.AreEqual(1.24m, fxRates[CurrencyCHF, (2021, 01, 01).ToUtc()]);
+            Assert.AreEqual(1.27m, fxRates[CurrencyCHF, (2021, 01, 02).ToUtc()]);
+            Assert.AreEqual(1.25m, fxRates[CurrencyGBP, (2021, 01, 01).ToUtc()]);
+            Assert.AreEqual(1.28m, fxRates[CurrencyGBP, (2021, 01, 02).ToUtc()]);
         }
         finally
         {
@@ -290,8 +290,8 @@ public class FxRatesReaderTest
         Assert.AreEqual(1, fxRates.Rates.Count);
         Assert.IsTrue(fxRates.Rates.ContainsKey("100 paise"));
         Assert.AreEqual(2, fxRates["100 paise"].Count);
-        Assert.AreEqual(11.2m, fxRates["100 paise", new(2021, 01, 01)]);
-        Assert.AreEqual(11.3m, fxRates["100 paise", new(2021, 01, 02)]);
+        Assert.AreEqual(11.2m, fxRates["100 paise", (2021, 01, 01).ToUtc()]);
+        Assert.AreEqual(11.3m, fxRates["100 paise", (2021, 01, 02).ToUtc()]);
     }
 
     [TestMethod]
@@ -308,9 +308,9 @@ public class FxRatesReaderTest
             [.. BuildHeaderLines(CurrencyUSDHeader, CurrencyCHFHeader), "01/01/2021;1,23;1,24", "02/01/2021;-;1,26"]);
         Assert.AreEqual(1, fxRates[CurrencyUSD].Count);
         Assert.AreEqual(2, fxRates[CurrencyCHF].Count);
-        Assert.AreEqual(1.23m, fxRates[CurrencyUSD, new(2021, 01, 01)]);
-        Assert.AreEqual(1.24m, fxRates[CurrencyCHF, new(2021, 01, 01)]);
-        Assert.AreEqual(1.26m, fxRates[CurrencyCHF, new(2021, 01, 02)]);
+        Assert.AreEqual(1.23m, fxRates[CurrencyUSD, (2021, 01, 01).ToUtc()]);
+        Assert.AreEqual(1.24m, fxRates[CurrencyCHF, (2021, 01, 01).ToUtc()]);
+        Assert.AreEqual(1.26m, fxRates[CurrencyCHF, (2021, 01, 02).ToUtc()]);
     }
 
     [TestMethod]
@@ -320,9 +320,9 @@ public class FxRatesReaderTest
         [.. BuildHeaderLines(CurrencyUSDHeader, CurrencyCHFHeader), "01/01/2021;1,23;1,24", "02/01/2021;;1,26"]);
         Assert.AreEqual(1, fxRates[CurrencyUSD].Count);
         Assert.AreEqual(2, fxRates[CurrencyCHF].Count);
-        Assert.AreEqual(1.23m, fxRates[CurrencyUSD, new(2021, 01, 01)]);
-        Assert.AreEqual(1.24m, fxRates[CurrencyCHF, new(2021, 01, 01)]);
-        Assert.AreEqual(1.26m, fxRates[CurrencyCHF, new(2021, 01, 02)]);
+        Assert.AreEqual(1.23m, fxRates[CurrencyUSD, (2021, 01, 01).ToUtc()]);
+        Assert.AreEqual(1.24m, fxRates[CurrencyCHF, (2021, 01, 01).ToUtc()]);
+        Assert.AreEqual(1.26m, fxRates[CurrencyCHF, (2021, 01, 02).ToUtc()]);
     }
 
     [TestMethod]
@@ -334,8 +334,8 @@ public class FxRatesReaderTest
         Assert.AreEqual(1, fxRates[CurrencyUSD].Count);
         Assert.AreEqual(1, fxRates[CurrencyCHF].Count);
         Assert.AreEqual(1, fxRates[CurrencyGBP].Count);
-        Assert.AreEqual(1.23m, fxRates[CurrencyUSD, new(2021, 01, 01)]);
-        Assert.AreEqual(1.24m, fxRates[CurrencyCHF, new(2021, 01, 01)]);
-        Assert.AreEqual(1.25m, fxRates[CurrencyGBP, new(2021, 01, 02)]);
+        Assert.AreEqual(1.23m, fxRates[CurrencyUSD, (2021, 01, 01).ToUtc()]);
+        Assert.AreEqual(1.24m, fxRates[CurrencyCHF, (2021, 01, 01).ToUtc()]);
+        Assert.AreEqual(1.25m, fxRates[CurrencyGBP, (2021, 01, 02).ToUtc()]);
     }
 }
