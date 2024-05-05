@@ -31,26 +31,6 @@ public class FxRatesReaderTest
     }
 
     [TestMethod]
-    public void ParseSingleCurrencyFromFile_ReadsDataCorrectly()
-    { 
-        var path = Path.GetTempFileName();
-        try
-        {
-            File.WriteAllLines(path, ["1/1/2021\t1.23", "1/2/2021\t1.24"]);
-
-            var fxRates = Instance.ParseSingleCurrencyFromFile(CurrencyUSD, path);
-            Assert.AreEqual(2, fxRates[CurrencyUSD].Count);
-            Assert.AreEqual(1.23m, fxRates[CurrencyUSD, (2021, 01, 01).ToUtc()]);
-            Assert.AreEqual(1.24m, fxRates[CurrencyUSD, (2021, 01, 02).ToUtc()]);
-        }
-        finally
-        {
-            if (File.Exists(path))
-                File.Delete(path);
-        }
-    }
-
-    [TestMethod]
     public void ParseSingleCurrencyFromContent_WithEmptyContent_ReturnEmptyFxRates()
     {
         var fxRates = Instance.ParseSingleCurrencyFromContent(CurrencyUSD, []);

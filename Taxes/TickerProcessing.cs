@@ -1,6 +1,6 @@
 ﻿namespace Taxes;
 
-class TickerProcessing(Basics basics)
+class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValues = null)
 {
     public Basics Basics => basics;
 
@@ -315,11 +315,17 @@ class TickerProcessing(Basics basics)
         (decimal, decimal) CalculatePlusValueCryptoBase(
             Event tickerEvent, TickerState tickerState, decimal totalSellPriceBase, decimal sellFeesBase)
         {
-            var portfolioCurrentValueBase = tickerEvent.PortfolioCurrentValueBase;
+            if (cryptoPortfolioValues == null)
+            {
+                outWriter.WriteLine($"\tCrypto Portfolio Values not known => Skipping Crypto +/- value calculation...");
+                return (0m, 0m);
+            }
+
+            var portfolioCurrentValueBase = cryptoPortfolioValues[tickerEvent.Date];
 
             if (portfolioCurrentValueBase < 0)
             {
-                outWriter.WriteLine($"\tPortfolio Current Value not known => Skipping Crypto +/- value calculation...");
+                outWriter.WriteLine($"\tCurrent Crypto Portfolio Value not known => Skipping Crypto +/- value calculation...");
                 return (0m, 0m);
             }
 

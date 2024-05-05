@@ -75,8 +75,7 @@ partial class StockEventsReader(Basics basics)
                 TotalAmountLocal: totalAmountLocal,
                 FeesLocal: feesLocal,
                 Currency: currency,
-                FXRate: fxRate,
-                PortfolioCurrentValueBase: -1m // Info not available, only available in crypto sell events
+                FXRate: fxRate
             ));
         }
 

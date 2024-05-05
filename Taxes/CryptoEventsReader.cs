@@ -13,10 +13,8 @@ class CryptoEventsReader(Basics basics)
 
     public Basics Basics => basics;
 
-    public IList<Event> Parse(string pattern, string portfolioValuesCurrency, string portfolioValuesPath, FxRates fxRates)
+    public IList<Event> Parse(string pattern)
     {
-        var portfolioValues = new CryptoPortfolioValues(basics, fxRates, portfolioValuesCurrency, portfolioValuesPath);
-
         var events = new List<Event>();
 
         foreach (var path in Directory.GetFiles(".", pattern))
@@ -66,9 +64,6 @@ class CryptoEventsReader(Basics basics)
                 // Unlike stocks, which are exchanged against Local FIAT, crypto are exchanged against Base FIAT
                 var fxRate = 1m;
 
-                // Portfolio value is calculated in Local FIAT, so it needs to be converted in Base FIAT
-                var portfolioCurrentValueBase = portfolioValues[date];
-
                 events.Add(new(
                     Date: date,
                     Type: type,
@@ -78,8 +73,7 @@ class CryptoEventsReader(Basics basics)
                     TotalAmountLocal: totalAmountLocal,
                     FeesLocal: feesLocal,
                     Currency: record.BaseCurrency,
-                    FXRate: fxRate,
-                    PortfolioCurrentValueBase: portfolioCurrentValueBase));
+                    FXRate: fxRate));
             }
         }
 

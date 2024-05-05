@@ -4,6 +4,7 @@ var basics = new Basics();
 var fxRatesFilePath = Path.Combine(basics.ReportsDirectoryPath, basics.FXRatesFilePath);
 var fxRatesReader = new FxRatesReader(basics);
 var fxRates = fxRatesReader.ParseMultiCurrenciesFromFile(fxRatesFilePath);
+var cryptoPortfolioValues = new CryptoPortfolioValues(basics, fxRates, basics.CryptoPortfolioValuesCurrency, basics.CryptoPortfolioValuesFilePath);
 
 var stockEventsReader = new StockEventsReader(basics);
 var stockEvents = basics.StockEventsFilePaths
@@ -11,21 +12,19 @@ var stockEvents = basics.StockEventsFilePaths
     .Order()
     .SelectMany(filePath => stockEventsReader.Parse(filePath, fxRates))
     .ToList();
-ProcessEvents(stockEvents, basics);
+ProcessEvents(stockEvents, basics, cryptoPortfolioValues);
 
 var cryptoEventsReader = new CryptoEventsReader(basics);
-var cryptoPortfolioValuesFilePath = Path.Combine(basics.ReportsDirectoryPath, basics.CryptoPortfolioValuesFilePath);
 var cryptoEvents = basics.CryptoEventsFilePaths
     .SelectMany(pattern => Directory.GetFiles(basics.ReportsDirectoryPath, pattern))
     .Order()
-    .SelectMany(filePath => cryptoEventsReader.Parse(
-        filePath, basics.CryptoPortfolioValuesCurrency, cryptoPortfolioValuesFilePath, fxRates))
+    .SelectMany(cryptoEventsReader.Parse)
     .ToList();
-ProcessEvents(cryptoEvents, basics);
+ProcessEvents(cryptoEvents, basics, cryptoPortfolioValues);
 
-static void ProcessEvents(IList<Event> events, Basics basics)
+static void ProcessEvents(IList<Event> events, Basics basics, CryptoPortfolioValues cryptoPortfolioValues)
 {
-    var tickerProcessing = new TickerProcessing(basics);
+    var tickerProcessing = new TickerProcessing(basics, cryptoPortfolioValues);
 
     var eventsByTicker = (
         from e in events

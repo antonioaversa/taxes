@@ -100,9 +100,7 @@ record Event(
     /// 
     /// Therefore, to convert to the base currency, one needs to divide the local amount by the FXRate.
     /// </summary>
-    decimal FXRate,
-
-    decimal PortfolioCurrentValueBase)
+    decimal FXRate)
 {
     public bool IsBuy => Type is EventType.BuyMarket or EventType.BuyLimit;
     public bool IsSell => Type is EventType.SellMarket or EventType.SellLimit;

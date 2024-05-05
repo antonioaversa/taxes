@@ -13,8 +13,7 @@ static class EventExtensions
         decimal? totalAmountLocal = null, 
         decimal? feesLocal = null, 
         string? currency = null, 
-        decimal? fxRate = null, 
-        decimal? portfolioCurrentValueBase = null,
+        decimal? fxRate = null,
         decimal defaultDelta = 0.01m)
     {
         if (date is not null)
@@ -35,7 +34,5 @@ static class EventExtensions
             Assert.AreEqual(currency, @event.Currency);
         if (fxRate is not null)
             Assert.AreEqual(fxRate.Value, @event.FXRate, defaultDelta);
-        if (portfolioCurrentValueBase is not null)
-            Assert.AreEqual(portfolioCurrentValueBase.Value, @event.PortfolioCurrentValueBase, defaultDelta);
     }
 }

@@ -72,7 +72,7 @@ public class CryptoPortfolioValuesTest
                     },
             });
 
-        static StringReader portfolioValuesReader() => new StringReader("""
+        static StringReader portfolioValuesReader() => new("""
             Date,PortfolioValue
             2024-01-01,0
             2024-01-02,1234

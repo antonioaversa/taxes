@@ -16,7 +16,7 @@ public class EventTest
     [DataRow(EventType.SellLimit, false)]
     public void IsBuy(EventType eventType, bool expected)
     {
-        var tickerEvent = new Event(Date, eventType, Ticker, 0, 0, 0, 0, Currency, 0, 0);
+        var tickerEvent = new Event(Date, eventType, Ticker, 0, 0, 0, 0, Currency, 0);
         Assert.AreEqual(expected, tickerEvent.IsBuy);
     }
 
@@ -29,7 +29,7 @@ public class EventTest
     [DataRow(EventType.SellLimit, true)]
     public void IsSell(EventType eventType, bool expected)
     {
-        var tickerEvent = new Event(Date, eventType, Ticker, 0, 0, 0, 0, Currency, 0, 0);
+        var tickerEvent = new Event(Date, eventType, Ticker, 0, 0, 0, 0, Currency, 0);
         Assert.AreEqual(expected, tickerEvent.IsSell);
     }
 }
