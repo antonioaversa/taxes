@@ -1,10 +1,20 @@
 ﻿using CsvHelper;
+using CsvHelper.Configuration;
 using CsvHelper.Configuration.Attributes;
 
 namespace Taxes;
 
 class CryptoPortfolioValues
 {
+    private static CsvConfiguration CsvConfiguration(Basics basics) => 
+        new(basics.DefaultCulture)
+        {
+            Delimiter = ",",
+            DetectColumnCountChanges = true,
+            HasHeaderRecord = true,
+            IgnoreBlankLines = true,
+        };
+
     private FxRates FxRates { get; }
     private string PortfolioValuesCurrency { get; }
     private Dictionary<DateTime, decimal> PortfolioValuesLocal { get; }
@@ -15,7 +25,7 @@ class CryptoPortfolioValues
         FxRates = fxRates;
         PortfolioValuesCurrency = portfolioValuesCurrency;
         using var portfolioValuesReader = new StreamReader(portfolioValuesPath);
-        using var portfolioValuesCsvReader = new CsvReader(portfolioValuesReader, basics.DefaultCulture);
+        using var portfolioValuesCsvReader = new CsvReader(portfolioValuesReader, CsvConfiguration(basics));
         PortfolioValuesLocal = LoadPortfolioValues(basics, portfolioValuesCsvReader);
     }
 
@@ -24,7 +34,7 @@ class CryptoPortfolioValues
     {
         FxRates = fxRates;
         PortfolioValuesCurrency = portfolioValuesCurrency;
-        using var portfolioValuesCsvReader = new CsvReader(portfolioValuesReader, basics.DefaultCulture);
+        using var portfolioValuesCsvReader = new CsvReader(portfolioValuesReader, CsvConfiguration(basics));
         PortfolioValuesLocal = LoadPortfolioValues(basics, portfolioValuesCsvReader);
     }
 
