@@ -13,10 +13,11 @@ public class TickerProcessingTest
     private const string Isin = "US0378331005";
     private const string AnotherTicker = "GOOGL";
     private const string AnotherIsin = "US02079K3059";
-    private static readonly DateTime T0 = (2022, 1, 1).ToUtc();
-    private static readonly TimeSpan D = TimeSpan.FromDays(1);
+    private static readonly DateTime T0 = (2022, 1, 1).ToUtc(); // Date of the first event
+    private static readonly TimeSpan D = TimeSpan.FromDays(1); // Delta between events
     private static readonly TextWriter NoOut = TextWriter.Null;
 
+    // Instance without Crypto Portfolio Values => +/- values for crypto are not calculated
     private readonly TickerProcessing Instance = new(new());
 
     [TestMethod]
