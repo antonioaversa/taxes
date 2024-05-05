@@ -9,6 +9,8 @@ class CryptoPortfolioValues
     private static CsvConfiguration CsvConfiguration(Basics basics) => 
         new(basics.DefaultCulture)
         {
+            AllowComments = true,
+            Comment = '#',
             Delimiter = ",",
             DetectColumnCountChanges = true,
             HasHeaderRecord = true,

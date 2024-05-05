@@ -1,4 +1,5 @@
-﻿using Taxes.Test;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Taxes.Test;
 using static Taxes.Test.AssertExtensions;
 
 namespace Taxes.Tests;
@@ -206,6 +207,36 @@ public class CryptoPortfolioValuesTest
 
         var cryptoPortfolioValues = new CryptoPortfolioValues(Basics, fxRates, USD, portfolioValuesReader());
         ThrowsAny<InvalidDataException>(() => _ = cryptoPortfolioValues[(2021, 1, 6).ToUtc()]);
+    }
+
+    [TestMethod]
+    public void Parse_SupportsComments()
+    {
+        // The 1st of January 2021 was a Friday
+        var fxRates = new FxRates(new() 
+        { 
+            [USD] = new() 
+            { 
+                [(2021, 1, 1).ToUtc()] = 1.0m,
+                [(2021, 1, 4).ToUtc()] = 1.0m,
+                [(2021, 1, 5).ToUtc()] = 1.0m,
+            } 
+        });
+
+        static StringReader portfolioValuesReader() => new("""
+            Date,PortfolioValue
+            # This is a comment
+            2021-01-01,1000
+            # This is another comment
+            2021-01-04,1001
+            # 2021-01-04,1002
+            # 2021-01-05,1003
+            """);
+
+        var cryptoPortfolioValues = new CryptoPortfolioValues(Basics, fxRates, USD, portfolioValuesReader());
+        AssertEq(1000m, cryptoPortfolioValues[(2021, 1, 1).ToUtc()]);
+        AssertEq(1001m, cryptoPortfolioValues[(2021, 1, 4).ToUtc()]);
+        AssertEq(-1m, cryptoPortfolioValues[(2021, 1, 5).ToUtc()]); // The line is commented out
     }
 
     [AssertionMethod]
