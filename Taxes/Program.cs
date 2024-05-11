@@ -4,7 +4,8 @@ var basics = new Basics();
 var fxRatesFilePath = Path.Combine(basics.ReportsDirectoryPath, basics.FXRatesFilePath);
 var fxRatesReader = new FxRatesReader(basics);
 var fxRates = fxRatesReader.ParseMultiCurrenciesFromFile(fxRatesFilePath);
-var cryptoPortfolioValues = new CryptoPortfolioValues(basics, fxRates, basics.CryptoPortfolioValuesCurrency, basics.CryptoPortfolioValuesFilePath);
+var cryptoPortfolioValuesFilePath = Path.Combine(basics.ReportsDirectoryPath, basics.CryptoPortfolioValuesFilePath);
+var cryptoPortfolioValues = new CryptoPortfolioValues(basics, fxRates, basics.CryptoPortfolioValuesCurrency, cryptoPortfolioValuesFilePath);
 
 var stockEventsReader = new StockEventsReader(basics);
 var stockEvents = basics.StockEventsFilePaths
