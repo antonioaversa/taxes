@@ -7,7 +7,7 @@ public class TickerStateTest
     private const string Isin = "US0378331005";
 
     [TestMethod]
-    public void DefaultCtor_InitializesPropertiesToZero()
+    public void DefaultCtor_InitializesPropertiesToDefault()
     {
         var tickerState = new TickerState(Ticker, Isin);
 
@@ -28,7 +28,7 @@ public class TickerStateTest
         Assert.AreEqual(0m, tickerState.WhtDividendsBase);
         Assert.AreEqual(0m, tickerState.GrossDividendsBase);
 
-        Assert.AreEqual(0, tickerState.PepsCurrentIndex);
+        Assert.AreEqual(-1, tickerState.PepsCurrentIndex);
         Assert.AreEqual(0m, tickerState.PepsCurrentIndexSoldQuantity);
         Assert.AreEqual(0m, tickerState.PortfolioAcquisitionValueBase);
         Assert.AreEqual(0m, tickerState.CryptoFractionOfInitialCapital);

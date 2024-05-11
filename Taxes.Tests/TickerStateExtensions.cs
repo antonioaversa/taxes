@@ -55,8 +55,8 @@ static class TickerStateExtensions
             Assert.AreEqual(cryptoFractionOfInitialCapital, tickerState.CryptoFractionOfInitialCapital);
     }
 
-    // This is like the previous method, but asserts 0 when the value is null
-    public static void AssertZeroExceptFor(
+    // This is like the previous method, but asserts the default value (0 or -1) when the value is null
+    public static void AssertDefaultExceptFor(
         this TickerState tickerState,
         decimal? plusValueCumpBase = null,
         decimal? plusValuePepsBase = null,
@@ -88,7 +88,7 @@ static class TickerStateExtensions
             whtDividendsBase: whtDividendsBase ?? 0,
             grossDividendsBase: grossDividendsBase ?? 0,
                 
-            pepsCurrentIndex: pepsCurrentIndex ?? 0,
+            pepsCurrentIndex: pepsCurrentIndex ?? -1,
             pepsCurrentIndexSoldQuantity: pepsCurrentIndexSoldQuantity ?? 0,
             portfolioAcquisitionValueBase: portfolioAcquisitionValueBase ?? 0,
             cryptoFractionOfInitialCapital: cryptoFractionOfInitialCapital ?? 0);

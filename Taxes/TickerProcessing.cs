@@ -244,6 +244,13 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
             var totalPepsBuyPriceBase = 0m;
             while (remainingQuantityToSell >= 0m)
             {
+                if (pepsCurrentIndex < 0)
+                {
+                    outWriter.WriteLine($"\tPEPS Move Current Index to first buy event");
+                    do { pepsCurrentIndex++; }
+                    while (pepsCurrentIndex < tickerEvents.Count && !tickerEvents[pepsCurrentIndex].IsBuy);
+                }
+
                 if (remainingQuantityToSell > 0m)
                 {
                     outWriter.WriteLine($"\tPEPS Remaining Quantity to match: {remainingQuantityToSell.R(basics)} => FIND Buy Event");

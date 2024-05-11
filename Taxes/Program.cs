@@ -27,11 +27,17 @@ static void ProcessEvents(IList<Event> events, Basics basics, CryptoPortfolioVal
 {
     var tickerProcessing = new TickerProcessing(basics, cryptoPortfolioValues);
 
+    // Taken into account in each ticker
+    var nonTickerRelatedEvents = (
+        from e in events
+        where string.IsNullOrWhiteSpace(e.Ticker)
+        select e)
+        .ToList();
     var eventsByTicker = (
         from e in events
         group e by e.Ticker into g
         orderby g.Key
-        select (ticker: g.Key, tickerEvents: g.OrderBy(e1 => e1.Date).ToArray()))
+        select (ticker: g.Key, tickerEvents: g.Concat(nonTickerRelatedEvents).OrderBy(e1 => e1.Date).ToArray()))
         .ToList();
 
     var tickerStates = (

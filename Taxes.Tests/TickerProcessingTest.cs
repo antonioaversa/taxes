@@ -23,7 +23,7 @@ public class TickerProcessingTest
     [TestMethod]
     public void ProcessTicker_NoEvents()
     {
-        Instance.ProcessTicker(Ticker, []).AssertZeroExceptFor();
+        Instance.ProcessTicker(Ticker, []).AssertDefaultExceptFor();
     }
 
     [TestMethod]
@@ -31,16 +31,16 @@ public class TickerProcessingTest
     {
         // Quantity, PricePerShareLocal, TotalAmountLocal, FeesLocal
         List<Event> e = [new(T0, BuyLimit, Ticker, 3, 100, 303, 3, EUR, 1)];
-        Instance.ProcessTicker(Ticker, e).AssertZeroExceptFor(
+        Instance.ProcessTicker(Ticker, e).AssertDefaultExceptFor(
             totalQuantity: 3, totalAmountBase: 303, portfolioAcquisitionValueBase: 303);
         e.Add(new(T0 + 1 * D, BuyLimit, Ticker, 2, 110, 222, 2, EUR, 1));
-        Instance.ProcessTicker(Ticker, e).AssertZeroExceptFor(
+        Instance.ProcessTicker(Ticker, e).AssertDefaultExceptFor(
             totalQuantity: 5, totalAmountBase: 525, portfolioAcquisitionValueBase: 525);
         e.Add(new(T0 + 2 * D, BuyLimit, Ticker, 1, 90, 91, 1, EUR, 1));
-        Instance.ProcessTicker(Ticker, e).AssertZeroExceptFor(
+        Instance.ProcessTicker(Ticker, e).AssertDefaultExceptFor(
             totalQuantity: 6, totalAmountBase: 616, portfolioAcquisitionValueBase: 616);
         e.Add(new(T0 + 2 * D, BuyLimit, Ticker, 1, 90, 92, 2, EUR, 1));
-        Instance.ProcessTicker(Ticker, e).AssertZeroExceptFor(
+        Instance.ProcessTicker(Ticker, e).AssertDefaultExceptFor(
             totalQuantity: 7, totalAmountBase: 708, portfolioAcquisitionValueBase: 708);
     }
 
@@ -48,7 +48,7 @@ public class TickerProcessingTest
     public void ProcessTicker_BuyLimit_DifferentCurrency_ConvertsToBase()
     {
         List<Event> e = [new(T0, BuyLimit, Ticker, 3, 100, 303, 3, USD, 1.2m)];
-        Instance.ProcessTicker(Ticker, e).AssertZeroExceptFor(
+        Instance.ProcessTicker(Ticker, e).AssertDefaultExceptFor(
             totalQuantity: 3, totalAmountBase: 303 / 1.2m, portfolioAcquisitionValueBase: 303 / 1.2m);
     }
 
@@ -609,17 +609,17 @@ public class TickerProcessingTest
             // The minus value CUMP is 0, since no minus value has been realized
             var averageBuyPriceTwoShares = totalAmountBaseAfterSell1 * 2;
             var plusValueCumpSell1 = 297.50m / 4m - averageBuyPriceTwoShares;
-            AssertEq(plusValueCumpSell1, stateAfterSell1.PlusValueCumpBase);
-            AssertEq(0, stateAfterSell1.MinusValueCumpBase);
+            AssertEq(stateAfterBuy1.PlusValueCumpBase + plusValueCumpSell1, stateAfterSell1.PlusValueCumpBase);
+            AssertEq(stateAfterBuy1.MinusValueCumpBase + 0, stateAfterSell1.MinusValueCumpBase);
 
             // The plus value PEPS is the difference between the sell price and the buy price of the first two shares bought
             // The minus value PEPS is 0, since no minus value has been realized
             var buyPriceFirstTwoShares = (2 * 303.20m / 3) / 4m;
             var plusValuePepsSell1 = 297.50m / 4m - buyPriceFirstTwoShares;
-            AssertEq(plusValuePepsSell1, stateAfterSell1.PlusValuePepsBase);
-            AssertEq(0, stateAfterSell1.MinusValuePepsBase);
+            AssertEq(stateAfterBuy1.PlusValuePepsBase + plusValuePepsSell1, stateAfterSell1.PlusValuePepsBase);
+            AssertEq(stateAfterBuy1.MinusValuePepsBase + 0, stateAfterSell1.MinusValuePepsBase);
 
-            // The PEPS current index is 0, since only 2 shares out of 3 have been sold
+            // The PEPS current index is 0, since the first buy is at index 0 and only 2 shares out of 3 have been sold of it
             AssertEq(0, stateAfterSell1.PepsCurrentIndex);
             // The PEPS current index sold quantity is 2, since 2 shares out of 3 have been sold
             AssertEq(2, stateAfterSell1.PepsCurrentIndexSoldQuantity);
@@ -683,7 +683,7 @@ public class TickerProcessingTest
             var averageBuyPriceThreeShares = stateAfterBuy3.TotalAmountBase - totalAmountBaseAfterSell2;
             var plusValueCumpSell2 = 387m / 4m - averageBuyPriceThreeShares;
             AssertEq(stateAfterBuy3.PlusValueCumpBase + plusValueCumpSell2, stateAfterSell2.PlusValueCumpBase);
-            AssertEq(0, stateAfterSell2.MinusValueCumpBase);
+            AssertEq(stateAfterBuy3.MinusValueCumpBase + 0, stateAfterSell2.MinusValueCumpBase);
 
             // The plus value PEPS for the event is the difference between the sell price and the buy price of the oldest 3 shares bought,
             // among the 6 shares left after the third buy event:
@@ -695,7 +695,7 @@ public class TickerProcessingTest
             var buyPriceFirstThreeShares = 1 * 303.20m / 3m / 4m + 2 * 334m / 3m / 4m;
             var plusValuePepsSell2 = 387m / 4m - buyPriceFirstThreeShares;
             AssertEq(stateAfterBuy3.PlusValuePepsBase + plusValuePepsSell2, stateAfterSell2.PlusValuePepsBase);
-            AssertEq(0, stateAfterSell2.MinusValuePepsBase);
+            AssertEq(stateAfterBuy3.MinusValuePepsBase + 0, stateAfterSell2.MinusValuePepsBase);
 
             // The PEPS current index is 2, since the only remaining share of the first buy has been sold, together with
             // the first two shares of the second buy, where the last share is left not sold for now
@@ -727,8 +727,8 @@ public class TickerProcessingTest
             // This value is the first CUMP minus value realized. The plus value CUMP doesn't change.
             var averageBuyPriceOneShare = stateAfterSell2.TotalAmountBase - totalAmountBaseAfterSell3;
             var minusValueCumpSell3 = averageBuyPriceOneShare - 9m / 4m;
-            AssertEq(stateAfterSell3.PlusValueCumpBase, stateAfterSell2.PlusValueCumpBase);
-            AssertEq(minusValueCumpSell3, stateAfterSell3.MinusValueCumpBase);
+            AssertEq(stateAfterSell2.PlusValueCumpBase + 0, stateAfterSell3.PlusValueCumpBase);
+            AssertEq(stateAfterSell2.MinusValueCumpBase + minusValueCumpSell3, stateAfterSell3.MinusValueCumpBase);
 
             // The plus value PEPS for the event is the difference between the sell price and the buy price of the oldest share bought,
             // among the 3 shares left after the third sell event:
@@ -738,8 +738,8 @@ public class TickerProcessingTest
             // This value is the first PEPS minus value realized. The plus value PEPS doesn't change.
             var buyPriceOldestShare = 334m / 3m / 4m;
             var minusValuePepsSell3 = buyPriceOldestShare - 9m / 4m;
-            AssertEq(stateAfterSell3.PlusValuePepsBase, stateAfterSell2.PlusValuePepsBase);
-            AssertEq(minusValuePepsSell3, stateAfterSell3.MinusValuePepsBase);
+            AssertEq(stateAfterSell2.PlusValuePepsBase + 0, stateAfterSell3.PlusValuePepsBase);
+            AssertEq(stateAfterSell2.MinusValuePepsBase + minusValuePepsSell3, stateAfterSell3.MinusValuePepsBase);
 
             // The PEPS current index is 3, since the last share of the second buy has been sold, and the pointer moves
             // forward to the next buy event, that is in position 3 in the list of events
@@ -771,7 +771,7 @@ public class TickerProcessingTest
             // This value is the second CUMP minus value realized. The plus value CUMP doesn't change.
             var averageBuyPriceTwoSharesSell4 = stateAfterSell3.TotalAmountBase - totalAmountBaseAfterSell4;
             var minusValueCumpSell4 = averageBuyPriceTwoSharesSell4 - 19m / 4m;
-            AssertEq(stateAfterSell3.PlusValueCumpBase, stateAfterSell4.PlusValueCumpBase);
+            AssertEq(stateAfterSell3.PlusValueCumpBase + 0, stateAfterSell4.PlusValueCumpBase);
             AssertEq(stateAfterSell3.MinusValueCumpBase + minusValueCumpSell4, stateAfterSell4.MinusValueCumpBase);
 
             // The plus value PEPS for the event is the difference between the sell price and the buy price of the two
@@ -780,7 +780,7 @@ public class TickerProcessingTest
             // This value is the second PEPS minus value realized. The plus value PEPS doesn't change.
             var buyPriceTwoOldestShares = 243m / 4m;
             var minusValuePepsSell4 = buyPriceTwoOldestShares - 19m / 4m;
-            AssertEq(stateAfterSell3.PlusValuePepsBase, stateAfterSell4.PlusValuePepsBase);
+            AssertEq(stateAfterSell3.PlusValuePepsBase + 0, stateAfterSell4.PlusValuePepsBase);
             AssertEq(stateAfterSell3.MinusValuePepsBase + minusValuePepsSell4, stateAfterSell4.MinusValuePepsBase);
 
             // The PEPS current index is 4, since the last two shares of the third buy have been sold, and the pointer moves
@@ -825,15 +825,15 @@ public class TickerProcessingTest
             // The minus value CUMP is 0, since no minus value has been realized
             var averageBuyPriceFiveShares = totalAmountBaseAfterSell1;
             var plusValueCumpSell1 = 740m / 2m - averageBuyPriceFiveShares;
-            AssertEq(plusValueCumpSell1, stateAfterSell1.PlusValueCumpBase);
-            AssertEq(0, stateAfterSell1.MinusValueCumpBase);
+            AssertEq(stateAfterBuy1.PlusValueCumpBase + plusValueCumpSell1, stateAfterSell1.PlusValueCumpBase);
+            AssertEq(stateAfterBuy1.MinusValueCumpBase + 0, stateAfterSell1.MinusValueCumpBase);
 
             // The plus value PEPS for the event is the difference between the sell price and the buy price of the first 5 shares bought
             // The minus value PEPS is 0, since no minus value has been realized
             var buyPriceFirstFiveShares = 1020m / 2m / 2m;
             var plusValuePepsSell1 = 740m / 2m - buyPriceFirstFiveShares;
-            AssertEq(plusValuePepsSell1, stateAfterSell1.PlusValuePepsBase);
-            AssertEq(0, stateAfterSell1.MinusValuePepsBase);
+            AssertEq(stateAfterBuy1.PlusValuePepsBase + plusValuePepsSell1, stateAfterSell1.PlusValuePepsBase);
+            AssertEq(stateAfterBuy1.MinusValuePepsBase + 0, stateAfterSell1.MinusValuePepsBase);
 
             // The PEPS current index is 0, since only 5 shares out of 10 have been sold
             AssertEq(0, stateAfterSell1.PepsCurrentIndex);
@@ -889,8 +889,8 @@ public class TickerProcessingTest
             // This value is the first CUMP minus value realized. The plus value CUMP doesn't change.
             var averageBuyPriceTwoSharesSell2 = stateAfterReset1.TotalAmountBase - totalAmountBaseAfterSell2;
             var minusValueCumpSell2 = averageBuyPriceTwoSharesSell2 - 154m / 2m;
-            AssertEq(0, stateAfterSell2.PlusValueCumpBase);
-            AssertEq(minusValueCumpSell2, stateAfterSell2.MinusValueCumpBase);
+            AssertEq(stateAfterReset1.PlusValueCumpBase + 0, stateAfterSell2.PlusValueCumpBase);
+            AssertEq(stateAfterReset1.MinusValueCumpBase + minusValueCumpSell2, stateAfterSell2.MinusValueCumpBase);
 
             // The plus value PEPS for the event is the difference between the sell price and the buy price of the oldest
             // 2 shares bought:
@@ -899,8 +899,8 @@ public class TickerProcessingTest
             // This value is the first PEPS minus value realized. The plus value PEPS doesn't change.
             var buyPriceOldestTwoShares = 2 * 1020m / 10m / 2m;
             var minusValuePepsSell2 = buyPriceOldestTwoShares - 154m / 2m;
-            AssertEq(0, stateAfterSell2.PlusValuePepsBase);
-            AssertEq(minusValuePepsSell2, stateAfterSell2.MinusValuePepsBase);
+            AssertEq(stateAfterReset1.PlusValuePepsBase + 0, stateAfterSell2.PlusValuePepsBase);
+            AssertEq(stateAfterReset1.MinusValuePepsBase + minusValuePepsSell2, stateAfterSell2.MinusValuePepsBase);
 
             // The PEPS current index is 0, since there are still 3 shares left of the first buy that have not been sold
             AssertEq(0, stateAfterSell2.PepsCurrentIndex);
@@ -946,8 +946,8 @@ public class TickerProcessingTest
             // The minus value CUMP remains the same as before, since no new minus value has been realized
             var averageBuyPriceFourSharesSell3 = stateAfterCashWithdrawal1.TotalAmountBase - totalAmountBaseAfterSell3;
             var plusValueCumpSell3 = 472m / 2m - averageBuyPriceFourSharesSell3;
-            AssertEq(plusValueCumpSell3, stateAfterSell3.PlusValueCumpBase);
-            AssertEq(stateAfterCashWithdrawal1.MinusValueCumpBase, stateAfterSell3.MinusValueCumpBase);
+            AssertEq(stateAfterCashWithdrawal1.PlusValueCumpBase + plusValueCumpSell3, stateAfterSell3.PlusValueCumpBase);
+            AssertEq(stateAfterCashWithdrawal1.MinusValueCumpBase + 0, stateAfterSell3.MinusValueCumpBase);
 
             // The plus value PEPS for the event is the difference between the sell price and the buy price of the oldest 4 shares bought:
             // - oldest 3 shares bought at 1020 USD / 10 shares (local currency)
@@ -956,8 +956,8 @@ public class TickerProcessingTest
             // The minus value PEPS remains the same as before, since no new minus value has been realized
             var buyPriceOldestFourShares = 3 * 1020m / 10m / 2m + 1 * 102m / 1m / 2m;
             var plusValuePepsSell3 = 472m / 2m - buyPriceOldestFourShares;
-            AssertEq(plusValuePepsSell3, stateAfterSell3.PlusValuePepsBase);
-            AssertEq(stateAfterCashWithdrawal1.MinusValuePepsBase, stateAfterSell3.MinusValuePepsBase);
+            AssertEq(stateAfterCashWithdrawal1.PlusValuePepsBase + plusValuePepsSell3, stateAfterSell3.PlusValuePepsBase);
+            AssertEq(stateAfterCashWithdrawal1.MinusValuePepsBase + 0, stateAfterSell3.MinusValuePepsBase);
 
             // The PEPS current index is 5, since all the 3 oldest shares, together with the next 1 share, have been sold,
             // and the pointer moves to the next buy event (last 2 shares bought), that is in position 5 in the list of events
@@ -994,6 +994,99 @@ public class TickerProcessingTest
             AssertEq(stateAfterSell3.PepsCurrentIndex, stateAfterReset2.PepsCurrentIndex);
             AssertEq(stateAfterSell3.PepsCurrentIndexSoldQuantity, stateAfterReset2.PepsCurrentIndexSoldQuantity);
         }           
+    }
+
+    [TestMethod]
+    public void ProcessBuyAndSell_StartingWithNonTickerRelatedEvent_UpdateTickerStateCorrectly()
+    {
+        var tickerProcessing = Instance;
+        var localCurrency = USD; // FX rate between USD and EUR stays stable at 2 USD for 1 EUR across events
+        var initialState = new TickerState(Ticker, Isin);
+
+        // -------
+        // First cash top-up of 1000 USD
+        var cashTopUp1 = new Event(T0 + 0 * D, CashTopUp, Ticker, null, null, 1000m, 0, localCurrency, 2m);
+        var stateAfterCashTopUp1 = tickerProcessing.ProcessNoop(
+            cashTopUp1, [cashTopUp1], 0, initialState, NoOut);
+
+        // -------
+        // Buy 10 shares at 100 USD, with fees of 20 USD => Total Amount Local of 1000 USD + 20 USD = 1020 USD
+        var buy1 = new Event(T0 + 1 * D, BuyLimit, Ticker, 10, 100m, 1020m, 20m, localCurrency, 2m);
+        var stateAfterBuy1 = tickerProcessing.ProcessBuy(
+            buy1, [cashTopUp1, buy1], 1, stateAfterCashTopUp1, NoOut);
+
+        // -------
+        // Sell 5 shares at 150 USD, with fees of 10 USD => Total Amount Local of 750 USD - 10 USD = 740 USD
+        var sell1 = new Event(T0 + 2 * D, SellLimit, Ticker, 5, 150m, 740m, 10m, localCurrency, 2m);
+        var stateAfterSell1 = tickerProcessing.ProcessSell(
+            sell1, [cashTopUp1, buy1, sell1], 2, stateAfterBuy1, NoOut);
+
+        AssertStateAfterSell1();
+
+        void AssertStateAfterSell1()
+        {
+            // 5 shares left
+            AssertEq(5, stateAfterSell1.TotalQuantity);
+            // The total amount is decreased by half (5 remaining out of 10 shares), and not by the total amount of the sell event 1
+            var totalAmountBaseAfterSell1 = stateAfterBuy1.TotalAmountBase * (5m / 10m);
+            AssertEq(totalAmountBaseAfterSell1, stateAfterSell1.TotalAmountBase);
+
+            // The plus value CUMP for the event is the difference between the sell price and the average buy price for the 5 shares sold
+            // The minus value CUMP is 0, since no minus value has been realized
+            var averageBuyPriceFiveShares = totalAmountBaseAfterSell1;
+            var plusValueCumpSell1 = 740m / 2m - averageBuyPriceFiveShares;
+            AssertEq(stateAfterBuy1.PlusValueCumpBase + plusValueCumpSell1, stateAfterSell1.PlusValueCumpBase);
+            AssertEq(stateAfterBuy1.MinusValueCumpBase + 0, stateAfterSell1.MinusValueCumpBase);
+
+            // The plus value PEPS for the event is the difference between the sell price and the buy price of the first 5 shares bought
+            // The minus value PEPS is 0, since no minus value has been realized
+            var buyPriceFirstFiveShares = 1020m / 2m / 2m;
+            var plusValuePepsSell1 = 740m / 2m - buyPriceFirstFiveShares;
+            AssertEq(stateAfterBuy1.PlusValuePepsBase + plusValuePepsSell1, stateAfterSell1.PlusValuePepsBase);
+            AssertEq(stateAfterBuy1.MinusValuePepsBase + 0, stateAfterSell1.MinusValuePepsBase);
+
+            // The PEPS current index is 1, since only 5 shares out of 10 have been sold, so the pointer stays to the first buy event
+            AssertEq(1, stateAfterSell1.PepsCurrentIndex);
+            // The PEPS current index sold quantity is 5, since 5 shares out of 10 have been sold
+            AssertEq(5, stateAfterSell1.PepsCurrentIndexSoldQuantity);
+        }
+
+        // -------
+        // Sell 5 shares at 130 USD, with fees of 3 USD => Total Amount Local of 650 USD - 3 USD = 647 USD
+        var sell2 = new Event(T0 + 3 * D, SellLimit, Ticker, 5, 130m, 647m, 3m, localCurrency, 2m);
+        var stateAfterSell2 = tickerProcessing.ProcessSell(
+            sell2, [cashTopUp1, buy1, sell1, sell2], 3, stateAfterSell1, NoOut);
+
+        AssertStateAfterSell2();
+
+        void AssertStateAfterSell2()
+        {
+            // No shares left
+            AssertEq(0, stateAfterSell2.TotalQuantity);
+            // The total amount is decreased to 0 (0 remaining out of 5 shares), and not by the total amount of the sell event 2
+            var totalAmountBaseAfterSell2 = stateAfterSell1.TotalAmountBase * (0m / 5m);
+            AssertEq(totalAmountBaseAfterSell2, stateAfterSell2.TotalAmountBase);
+
+            // The plus value CUMP for the event is the difference between the sell price and the average buy price for the 5 shares sold
+            // The minus value CUMP is 0, since no minus value has been realized
+            var averageBuyPriceFiveShares = stateAfterSell1.TotalAmountBase * (5m / 5m);
+            var plusValueCumpSell2 = 647m / 2m - averageBuyPriceFiveShares;
+            AssertEq(stateAfterSell1.PlusValueCumpBase + plusValueCumpSell2, stateAfterSell2.PlusValueCumpBase);
+            AssertEq(stateAfterSell1.MinusValueCumpBase + 0, stateAfterSell2.MinusValueCumpBase);
+
+            // The plus value PEPS for the event is the difference between the sell price and the buy price of the oldest 5 shares bought
+            // The minus value PEPS is 0, since no minus value has been realized
+            var buyPriceOldestFiveShares = 1020m / 2m / 2m;
+            var plusValuePepsSell2 = 647m / 2m - buyPriceOldestFiveShares;
+            AssertEq(stateAfterSell1.PlusValuePepsBase + plusValuePepsSell2, stateAfterSell2.PlusValuePepsBase);
+            AssertEq(stateAfterSell1.MinusValuePepsBase + 0, stateAfterSell2.MinusValuePepsBase);
+
+            // The PEPS current index is 1, since the first 5 shares have been sold, and the pointer moves to the next buy event
+            // Since there is no next buy event, the pointer is moved after the end of the list of events
+            AssertEq(4, stateAfterSell2.PepsCurrentIndex);
+            // The PEPS current index sold quantity is 0, since the current index has been moved forward
+            AssertEq(0, stateAfterSell2.PepsCurrentIndexSoldQuantity);
+        }
     }
 
     [TestMethod]

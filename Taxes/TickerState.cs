@@ -168,8 +168,28 @@ record TickerState(
     [property: Metric("Total Net Dividends")] decimal NetDividendsBase = 0m,
     [property: Metric("Total WHT Dividends")] decimal WhtDividendsBase = 0m,
     [property: Metric("Total Gross Dividends")] decimal GrossDividendsBase = 0m,
-    int PepsCurrentIndex = 0, 
+
+    /// <summary>
+    /// The index in the list of all events, of all types, of the first buy event that hasn't been fully sold yet,
+    /// according to the PEPS algorithm: either it has been partially sold, or it hasn't been sold at all.
+    /// All buy events before this index have been fully sold.
+    /// All buy events after this index haven't been sold at all.
+    /// Notice that the initial value is an invalid index, since 0 may be incorrect: for example, the event at index 0
+    /// may be a non-ticker related event such as a cash top-up.
+    /// So, at the first sell, the index is moved from -1 to the first buy event, that has to necessarily be at an
+    /// index lower than the index of the sell event, since you cannot sell more than owned.
+    /// </summary>
+    int PepsCurrentIndex = -1, 
+
+    /// <summary>
+    /// The quantity already sold for the buy event at the index PepsCurrentIndex.
+    /// This quantity is used to know when to move to the next buy event, when selling shares.
+    /// It is always less than or equal to the quantity of the buy event at the index PepsCurrentIndex.
+    /// When it is equal to the quantity of the buy event at the index PepsCurrentIndex, the index is moved to the 
+    /// next buy event for that ticker.
+    /// </summary>
     decimal PepsCurrentIndexSoldQuantity = 0m,
+
     decimal PortfolioAcquisitionValueBase = 0m, 
     decimal CryptoFractionOfInitialCapital = 0m)
 {
