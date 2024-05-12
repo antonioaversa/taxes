@@ -165,9 +165,9 @@ record TickerState(
     /// </summary>
     decimal TotalAmountBase = 0m,
 
-    [property: Metric("Total Net Dividends")] decimal NetDividendsBase = 0m,
-    [property: Metric("Total WHT Dividends")] decimal WhtDividendsBase = 0m,
-    [property: Metric("Total Gross Dividends")] decimal GrossDividendsBase = 0m,
+    [property: Metric("Total Net Dividends", true)] decimal NetDividendsBase = 0m,
+    [property: Metric("Total WHT Dividends", true)] decimal WhtDividendsBase = 0m,
+    [property: Metric("Total Gross Dividends", true)] decimal GrossDividendsBase = 0m,
 
     /// <summary>
     /// The index in the list of all events, of all types, of the first buy event that hasn't been fully sold yet,
@@ -206,7 +206,8 @@ delegate TickerState TickerAction(
     Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter);
 
 [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
-class MetricAttribute(string description) : Attribute
+class MetricAttribute(string description, bool aggregateByCountry = false) : Attribute
 {
     public string Description { get; } = description;
+    public bool AggregateByCountry { get; } = aggregateByCountry;
 }
