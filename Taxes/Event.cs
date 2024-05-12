@@ -63,14 +63,18 @@ record Event(
     /// In the case of Buy* and Sell*, it's the total amount of the transaction, including fees: 
     /// - for Buy* events, it's bigger than Quantity * PricePerShareLocal, as it includes the fees payed for those shares
     /// - for Sell* events, it's smaller than Quantity * PricePerShareLocal, as it includes the fees deducted from the proceeds
-    /// In the case of Dividend, it's the amount of the dividend.
+    /// In the case of Dividend, it's the Net amount of the dividend (Gross - WHT).
     /// In the case of StockSplit, it's non-relevant, and set to 0 mandatorily.
     /// </summary>
     decimal TotalAmountLocal,
 
     /// <summary>
     /// Mandatory for Buy* and Sell*. Null otherwise.
-    /// - It cannot be calculated for Dividend, as there is not enough information in the input file.
+    /// - It does not make sense for Dividend, since there are no fees associated with it, only taxes.
+    ///   - Regarding taxes on dividends: there is not enough information in the input file to calculate them.
+    ///   - The Dividend event only contains the Net amount, but not the Gross amount, nor the WHT amount.
+    ///   - So, Gross amount and WHT are calculated based on the country of the ticker, and the country of the owner.
+    ///   - For example for US stocks, the WHT is 15% for France residents, so the Net amount is divided by 85%.
     /// - It doesn't make sense for StockSplit, as it's not a transaction, so fees are not applied.
     /// - It's not defined for CustodyFee: the fee is conventionally defined as a TotalAmountLocal.
     /// It's always a positive number, both for Buy* and Sell* events. It's automatically calculated as follows:
