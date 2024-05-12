@@ -16,6 +16,14 @@ record Event(
     /// The date and time at which the event occurred.
     /// It's mandatory for all types of events, even synthetic ones like Reset.
     /// This is because it's necessary to sort events chronologically, in order to process them accordingly.
+    /// 
+    /// IBKR
+    /// This corresponds in IBKR Trades reporting to Date/Time, and in IBKR Dividends reporting to Date, 
+    /// although the formats of the CSV report from IBKR are different from the ones of Revolut Stocks:
+    /// - Revolut Stock transactions and Dividends, old format: "2022-06-10T18:58:44.270334Z"
+    /// - Revolut Stocks transactions and Dividends, new format: "2022-06-10T18:58:44.270Z" (old also present)
+    /// - IBKR Stocks transactions: "2023-01-01, 00:00:00"
+    /// - IBKR Dividends transactions: "2023-01-01" (no time part)
     /// </summary>
     DateTime Date,
 
@@ -27,6 +35,12 @@ record Event(
     /// For Buy* events, the TotalAmountLocal is bigger than Quantity * PricePerShareLocal, as it includes fees.
     /// For Sell* events, the TotalAmountLocal is instead smaller than Quantity * PricePerShareLocal, as fees are 
     /// deducted from the proceeds.
+    /// 
+    /// IBKR
+    /// IBKR has different sections of the Activity Statement (both in CSV and PDF), for the different types of events:
+    /// - Trades: Buy* and Sell* events
+    /// - Dividends and Withholding Tax: Dividend events
+    /// - Interest Accruals: InterestAccrual events
     /// </summary>
     EventType Type,
 
@@ -43,6 +57,12 @@ record Event(
     /// - The same applies for CashTopUp and CashWithdrawal.
     /// - It doesn't make sense for CustodyChange and Reset, as they are not transactions.
     /// When defined, must be strictly positive, even for Sell* events.
+    /// It's always strictly positive for Buy* and Sell* events.
+    /// It can be negative for StockSplit events, when the split is actually a merge.
+    /// 
+    /// IBKR
+    /// This corresponds in the IBKR Trades reporting to Quantity for Buy* events, and to -Quantity for Sell* events.
+    /// This is because Quantity is negative in IBKR for Sell* events.
     /// </summary>
     decimal? Quantity,
 
@@ -51,6 +71,10 @@ record Event(
     /// It's mandatory for Buy* and Sell* events, and null otherwise.
     /// For limit orders, it's the price at which the order was executed, not the limit price nor the market price at
     /// the time the order was placed.
+    /// 
+    /// IBKR
+    /// This corresponds in the IBKR Trades reporting to T.Price, for both Buy* and Sell* events.
+    /// This is because T.Price is positive in IBKR for both Buy* and Sell* events.
     /// </summary>
     decimal? PricePerShareLocal,
 
@@ -62,9 +86,39 @@ record Event(
     /// In the case of CustodyChange, it's non-relevant, and set to 0.
     /// In the case of Buy* and Sell*, it's the total amount of the transaction, including fees: 
     /// - for Buy* events, it's bigger than Quantity * PricePerShareLocal, as it includes the fees payed for those shares
-    /// - for Sell* events, it's smaller than Quantity * PricePerShareLocal, as it includes the fees deducted from the proceeds
+    /// - for Sell* events, it's smaller than Quantity * PricePerShareLocal, as it includes the fees deducted from the 
+    ///   proceeds
     /// In the case of Dividend, it's the Net amount of the dividend (Gross - WHT).
     /// In the case of StockSplit, it's non-relevant, and set to 0 mandatorily.
+    /// 
+    /// IBKR
+    /// - For Buy* events, this corresponds in IBKR Trades reporting to the Basis, calculated as 
+    ///   Basis = -(Proceeds + Comm/Fee), where Proceeds = -(Quantity * T.Price) so 
+    ///   Basis = Quantity * T.Price - Comm/Fee, knowing that:
+    ///   - Quantity is always a positive value for Buy* events
+    ///   - T.Price is always a positive value for both Buy* and Sell* events
+    ///   - So Proceeds is always a negative value for Buy* events
+    ///   - Comm/Fee is always a negative value for both Buy* and Sell* events
+    ///   - So Basis is bigger than Proceeds in absolute value, and it's a positive value (as in Sell* events)
+    /// - For Sell* events, this corresponds in IBKR Trades reporting to 
+    ///   X = Proceeds + Comm/Tax, where Proceeds = -(Quantity * T.Price), so 
+    ///   X = Quantity * T.Price - Comm/Tax, knowing that:
+    ///   - Quantity is always a negative value for Sell* events
+    ///   - T.Price is always a positive value for both Buy* and Sell* events
+    ///   - So Proceeds is always a positive value for Sell* events
+    ///   - Comm/Tax is always a negative value for both Buy* and Sell* events
+    ///   - So X is smaller than Proceeds in absolute value, and it's a positive value (as in Buy* events)
+    ///   - Notice that, unlike in Buy* events, it's not Basis, as the Basis for a Sell* event is the one for the 
+    ///     corresponding Buy* event (it is defined like so because it allows easy calculation of the capital 
+    ///     gain/loss)
+    ///   - X is not calculated and reported into a dedicated column in IBKR
+    /// - For Dividend events, this corresponds in IBKR Dividends and Withholding Tax reporting to
+    ///   - X = Dividends.Amount + WHT.Amount, knowing that:
+    ///   - Dividends.Amount is always a positive value for Dividend events, and corresponds to Gross dividend
+    ///   - WHT.Amount is always a negative value for Dividend events
+    ///   - So X is smaller than Dividends.Amount, and corresponds to the Net dividend
+    /// Check the "Trades", "Dividends", "Fees" and "Interests" sections in Chapter 3 of the Reporting Guide
+    /// Reference: https://www.interactivebrokers.com/download/reportingguide.pdf
     /// </summary>
     decimal TotalAmountLocal,
 
