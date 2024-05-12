@@ -154,8 +154,8 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
             throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.Ticker)} null");
         if (tickerEvent.PricePerShareLocal == null)
             throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.PricePerShareLocal)} null");
-        if (tickerEvent.Quantity == null)
-            throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.Quantity)} null");
+        if (tickerEvent.Quantity == null || tickerEvent.Quantity.Value <= 0)
+            throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.Quantity)} null or non-positive");
         if (tickerEvents.FirstOrDefault(e => e.Currency != tickerEvent.Currency) is { } previousEvent)
             throw new NotSupportedException($"Etherogenous currencies: {previousEvent} vs {tickerEvent}");
         if (tickerState.TotalQuantity - tickerEvent.Quantity.Value < -basics.Precision)
@@ -375,7 +375,7 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
             throw new NotSupportedException($"Unsupported type: {tickerEvent.Type}");
         if (tickerEvent.Ticker == null)
             throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.Ticker)} null");
-        if (tickerEvent.Quantity == null)
+        if (tickerEvent.Quantity == null) // Remark: can be negative, in case of stock merge
             throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.Quantity)} null");
         if (tickerEvent.PricePerShareLocal != null)
             throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.PricePerShareLocal)} not null");
