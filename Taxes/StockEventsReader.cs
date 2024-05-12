@@ -40,6 +40,7 @@ partial class StockEventsReader(Basics basics)
 
             var date = ReadDateTime(record);
             var type = basics.StringToEventType[record.Type];
+            var ticker = string.IsNullOrWhiteSpace(record.Ticker) ? null : record.Ticker;
 
             if (!fxRates.Rates.TryGetValue(currency, out var currencyRates)
                 || !currencyRates.TryGetValue(date.Date, out var fxRate))
@@ -69,7 +70,7 @@ partial class StockEventsReader(Basics basics)
             events.Add(new(
                 Date: date,
                 Type: type,
-                Ticker: string.IsNullOrWhiteSpace(record.Ticker) ? null : record.Ticker,
+                Ticker: ticker,
                 Quantity: quantity,
                 PricePerShareLocal: pricePerShareLocal,
                 TotalAmountLocal: totalAmountLocal,
