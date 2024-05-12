@@ -211,12 +211,12 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
         {
             TotalQuantity = tickerState.TotalQuantity - tickerEvent.Quantity.Value,
             TotalAmountBase = tickerState.TotalAmountBase - totalAvgBuyPriceBase, // And not - totalSellPriceBase
-            PlusValueCumpBase = tickerState.PlusValueCumpBase + (plusValueCumpBase >= 0 ? plusValueCumpBase : 0),
-            PlusValuePepsBase = tickerState.PlusValuePepsBase + (plusValuePepsBase >= 0 ? plusValuePepsBase : 0),
-            PlusValueCryptoBase = tickerState.PlusValueCryptoBase + (plusValueCryptoBase >= 0 ? plusValueCryptoBase : 0),
-            MinusValueCumpBase = tickerState.MinusValueCumpBase + (plusValueCumpBase < 0 ? -plusValueCumpBase : 0),
-            MinusValuePepsBase = tickerState.MinusValuePepsBase + (plusValuePepsBase < 0 ? -plusValuePepsBase : 0),
-            MinusValueCryptoBase = tickerState.MinusValueCryptoBase + (plusValueCryptoBase < 0 ? -plusValueCryptoBase : 0),
+            PlusValueCumpBase = tickerState.PlusValueCumpBase + Math.Max(plusValueCumpBase, 0),
+            PlusValuePepsBase = tickerState.PlusValuePepsBase + Math.Max(plusValuePepsBase, 0),
+            PlusValueCryptoBase = tickerState.PlusValueCryptoBase + Math.Max(plusValueCryptoBase, 0),
+            MinusValueCumpBase = tickerState.MinusValueCumpBase + Math.Max(-plusValueCumpBase, 0),
+            MinusValuePepsBase = tickerState.MinusValuePepsBase + Math.Max(-plusValuePepsBase, 0),
+            MinusValueCryptoBase = tickerState.MinusValueCryptoBase + Math.Max(-plusValueCryptoBase, 0),
             PepsCurrentIndex = pepsCurrentIndex,
             PepsCurrentIndexSoldQuantity = pepsCurrentIndexSoldQuantity,
             CryptoFractionOfInitialCapital = cryptoFractionInitialCapital,
