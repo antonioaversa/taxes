@@ -85,12 +85,22 @@ partial class StockEventsReader(Basics basics)
 
     private DateTime ReadDateTime(EventStr record)
     {
+        // Old Revolut Stocks and Dividends format
         if (DateTime.TryParseExact(record.Date, "yyyy-MM-ddTHH:mm:ss.ffffffK", basics.DefaultCulture, 
             DateTimeStyles.RoundtripKind, out var sixDecimalsDate))
             return sixDecimalsDate;
+        // New Revolut Stocks and Dividends format (the old one is also present in new reports)
         if (DateTime.TryParseExact(record.Date, "yyyy-MM-ddTHH:mm:ss.fffK", basics.DefaultCulture,
             DateTimeStyles.RoundtripKind, out var threeDecimalsDate))
             return threeDecimalsDate;
+        // IBKR Trades format
+        if (DateTime.TryParseExact(record.Date, "yyyy-MM-dd, HH:mm:ss", basics.DefaultCulture,
+            DateTimeStyles.RoundtripKind, out var commaDate))
+            return commaDate;
+        // IBKR Dividends and Withholding Tax format
+        if (DateTime.TryParseExact(record.Date, "yyyy-MM-dd", basics.DefaultCulture,
+            DateTimeStyles.RoundtripKind, out var date))
+            return date;
         throw new FormatException($"Unable to parse date: '{record.Date}'");
     }
 

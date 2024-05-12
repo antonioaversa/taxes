@@ -59,10 +59,10 @@ public class StockEventsReaderTests
     [TestMethod]
     public void Parse_WithInvalidDateTime_RaisesException()
     {
-        // Missing time
+        // Missing part of time
         AssertExtensions.ThrowsAny<Exception>(() => Instance.Parse(new StringReader("""
             Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
-            2022-03-29,,CASH TOP-UP,,,"$3,000",USD,1.12
+            2022-03-29T00,,CASH TOP-UP,,,"$3,000",USD,1.12
             """), NoFxRates));
         // dd-MM-yyyy instead of yyyy-MM-dd
         AssertExtensions.ThrowsAny<Exception>(() => Instance.Parse(new StringReader("""
@@ -74,6 +74,35 @@ public class StockEventsReaderTests
             Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
             2022-04-31T00:00:00.000Z,,CASH TOP-UP,,,"$3,000",USD,1.12
             """), NoFxRates));
+    }
+
+    [TestMethod]
+    public void Parse_SupportAllDateTimeFormats()
+    {
+        // Revolut old format
+        using var textReader1 = new StringReader("""
+            Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
+            2022-03-30T23:48:44.882381Z,,CASH TOP-UP,,,"$3,000",USD,1.12
+            """);
+        Assert.AreEqual(new(2022,03,30,23,48,44,882,381, DateTimeKind.Utc), Instance.Parse(textReader1, NoFxRates)[0].Date);
+        // Revolut new format
+        using var textReader2 = new StringReader("""
+            Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
+            2022-03-30T23:48:44.882Z,,CASH TOP-UP,,,"$3,000",USD,1.12
+            """);
+        Assert.AreEqual(new(2022,03,30,23,48,44,882, DateTimeKind.Utc), Instance.Parse(textReader2, NoFxRates)[0].Date);
+        // IBKR Trades format
+        using var textReader3 = new StringReader("""
+            Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
+            "2022-03-30, 23:48:44",,CASH TOP-UP,,,"$3,000",USD,1.12
+            """);
+        Assert.AreEqual(new(2022,03,30,23,48,44, DateTimeKind.Utc), Instance.Parse(textReader3, NoFxRates)[0].Date);
+        // IBKR Dividends and Withholding Tax format
+        using var textReader4 = new StringReader("""
+            Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
+            2022-03-30,,CASH TOP-UP,,,"$3,000",USD,1.12
+            """);
+        Assert.AreEqual(new(2022,03,30,0,0,0, DateTimeKind.Utc), Instance.Parse(textReader4, NoFxRates)[0].Date);
     }
 
     [TestMethod]
