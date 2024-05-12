@@ -26,6 +26,7 @@ public partial class Basics
         ["TRANSFER FROM REVOLUT TRADING LTD TO REVOLUT SECURITIES EUROPE UAB"] = EventType.CustodyChange,
         ["STOCK SPLIT"] = EventType.StockSplit,
         ["DIVIDEND"] = EventType.Dividend,
+        ["INTEREST"]  = EventType.Interest,
     };
 
     public string[] FxRatesHeaderLinesFirstWord { get; } =

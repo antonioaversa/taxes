@@ -69,4 +69,11 @@ public enum EventType
     /// It is also a tax-relevant event, since dividends are subject to both withholding and normal taxes.
     /// </summary>
     Dividend,
+
+    /// <summary>
+    /// A cash payment to the investor, for the interest on the cash credit in the investing account.
+    /// It changes the state of the portfolio, as the amount received by interest is tracked by the ticker states.
+    /// It is also a tax-relevant event, since interests are subject to both withholding and normal taxes.
+    /// </summary>
+    Interest,
 }

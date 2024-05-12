@@ -3,6 +3,7 @@
   "Precision": 0.01,
   "BaseCurrency": "EUR",
   "Positions": {
+    // Stocks and ETFs
     "AAPL": {
       "Country": "US",
       "ISIN": "US0378331005"
@@ -119,6 +120,7 @@
       "Country": "IE",
       "ISIN": "IE00BK5BQT80"
     },
+    // Crypto-currencies, mapped to no-country and with fake ISIN
     "CRYPTO": {
       "Country": "",
       "ISIN": "CRYPTO"
@@ -182,6 +184,11 @@
     "ZRX": {
       "Country": "",
       "ISIN": "CRYPTO_ZRX"
+    },
+    // Interests, mapped to a country and with fake ISIN
+    "INTEREST_IBKR": {
+      "Country": "IE",
+      "ISIN": "IE_INTEREST_IBKR"
     }
   },
   "StockEventsFilePaths": [
