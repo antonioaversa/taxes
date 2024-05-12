@@ -281,10 +281,12 @@ public class TickerProcessingTest
     }
 
     [TestMethod]
-    public void ProcessBuy_WhenQuantityIsNull_RaisesException()
+    public void ProcessBuy_WhenQuantityIsInvalid_RaisesException()
     {
-        var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, null, 100, 303, 3, EUR, 1);
         var state = new TickerState(Ticker, Isin);
+        var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, null, 100, 303, 3, EUR, 1);
+        ThrowsAny<Exception>(() => Instance.ProcessBuy(buy1, [buy1], 0, state, NoOut));
+        buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, -3, 100, 303, 3, EUR, 1);
         ThrowsAny<Exception>(() => Instance.ProcessBuy(buy1, [buy1], 0, state, NoOut));
     }
 
@@ -476,12 +478,14 @@ public class TickerProcessingTest
     [TestMethod]
     public void ProcessSell_WhenQuantityIsNull_RaisesException()
     {
-        // Selling NULL shares at 2.0 EUR, with fees of 0.2 EUR => Total Amount Local of 1.8 EUR
-        var sell1 = new Event(T0 + 0 * D, SellLimit, Ticker, null, 2.0m, 1.8m, 0.2m, EUR, 1);
         // While owning 3 shares for a total of 5.5 EUR
         var state = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
+        // Selling NULL shares at 2.0 EUR, with fees of 0.2 EUR => Total Amount Local of 1.8 EUR
+        var sell1 = new Event(T0 + 0 * D, SellLimit, Ticker, null, 2.0m, 1.8m, 0.2m, EUR, 1);
         ThrowsAny<Exception>(() => Instance.ProcessSell(sell1, [sell1], 0, state, NoOut));
-
+        // Selling -1 shares at 2.0 EUR, with fees of 0.2 EUR => Total Amount Local of 1.8 EUR
+        sell1 = new Event(T0 + 0 * D, SellLimit, Ticker, -1, 2.0m, 1.8m, 0.2m, EUR, 1);
+        ThrowsAny<Exception>(() => Instance.ProcessSell(sell1, [sell1], 0, state, NoOut));
     }
 
     [TestMethod]
