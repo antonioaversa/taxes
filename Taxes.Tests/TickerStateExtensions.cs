@@ -23,7 +23,7 @@ static class TickerStateExtensions
         if (plusValueCumpBase is not null) 
             Assert.AreEqual(plusValueCumpBase, tickerState.PlusValueCumpBase);
         if (plusValuePepsBase is not null) 
-            Assert.AreEqual(plusValuePepsBase ?? 0, tickerState.PlusValuePepsBase);
+            Assert.AreEqual(plusValuePepsBase, tickerState.PlusValuePepsBase);
         if (plusValueCryptoBase is not null) 
             Assert.AreEqual(plusValueCryptoBase, tickerState.PlusValueCryptoBase);
         if (minusValueCumpBase is not null) 
