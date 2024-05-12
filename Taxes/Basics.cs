@@ -39,7 +39,7 @@ public partial class Basics
     public Func<decimal, decimal> Rounding { get; init; }
     public decimal Precision { get; init; }
     public string BaseCurrency { get; init; }
-    public ReadOnlyDictionary<string, string> ISINs { get; init; }
+    public ReadOnlyDictionary<string, Position> Positions { get; init; }
     public ReadOnlyCollection<string> StockEventsFilePaths { get; init; }
     public ReadOnlyCollection<string> CryptoEventsFilePaths { get; init; }
     public string CryptoPortfolioValuesCurrency { get; init; }
@@ -79,8 +79,8 @@ public partial class Basics
             ?? throw new InvalidDataException($"Invalid {nameof(Precision)} in {basicsFileName}");
         BaseCurrency = basicsFile.BaseCurrency
             ?? throw new InvalidDataException($"Invalid {nameof(BaseCurrency)} in {basicsFileName}");
-        ISINs = new ReadOnlyDictionary<string, string>(basicsFile.ISINs
-            ?? throw new InvalidDataException($"Invalid {nameof(ISINs)} in {basicsFileName}"));
+        Positions = new ReadOnlyDictionary<string, Position>(basicsFile.Positions
+            ?? throw new InvalidDataException($"Invalid {nameof(Positions)} in {basicsFileName}"));
         StockEventsFilePaths = (basicsFile.StockEventsFilePaths
             ?? throw new InvalidDataException($"Invalid {nameof(StockEventsFilePaths)} in {basicsFileName}")).AsReadOnly();
         
@@ -101,12 +101,12 @@ public partial class Basics
             Math.Abs(Math.Round(value, numberOfDigits)) < resolutionAroundZero ? 0m : Math.Round(value, numberOfDigits);
     }
 
-    public static decimal WitholdingTaxFor(string isin) => 
-        isin switch
+    public static decimal WitholdingTaxFor(Position position) => 
+        position.Country switch
         {
-            var s when s.StartsWith("US") && s[2] - '0' <= 9 => 0.15m,
-            var s when s.StartsWith("BMG") && s[3] - '0' <= 9 => 0.15m,
-            var s => throw new NotSupportedException($"Unknown WHT for {s}"),
+            "US" => 0.15m,
+            "IE" => 0.00m, // TODO: check this
+            var country => throw new NotSupportedException($"Unknown WHT for {country}"),
         };
 
     [GeneratedRegex(@"^Fixed_(?<numberOfDigits>\d+)$")]
@@ -121,7 +121,7 @@ public partial class Basics
         public string? Rounding { get; set; } = null;
         public decimal? Precision { get; set; } = null;
         public string? BaseCurrency { get; set; } = null;
-        public Dictionary<string, string>? ISINs { get; set; } = null;
+        public Dictionary<string, Position>? Positions { get; set; } = null;
         public List<string>? StockEventsFilePaths { get; set; } = null;
 
         public List<string>? CryptoEventsFilePaths { get; set; } = null;
@@ -131,5 +131,11 @@ public partial class Basics
         public string? FXRatesInputType { get; set; } = null;
         public string? FXRatesSingleCurrency { get; set; } = null;
         public string? FXRatesFilePath { get; set; } = null;
+    }
+
+    public sealed class Position
+    {
+        public string? Country { get; set; } = null;
+        public string? ISIN { get; set; } = null;
     }
 }

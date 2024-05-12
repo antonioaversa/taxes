@@ -2,49 +2,187 @@
   "Rounding": "Fixed_4_0.0005",
   "Precision": 0.01,
   "BaseCurrency": "EUR",
-  "ISINs": {
-    "AAPL": "US0378331005",
-    "AMD": "US0079031078",
-    "AMZN": "US0231351067",
-    "BEP": "BMG162581083",
-    "CFLT": "US20717M1036",
-    "COIN": "US19260Q1076",
-    "CVNA": "US1468691027",
-    "GOOGL": "US02079K3059",
-    "GSK": "US37733W2044",
-    "GSK.WI": "US37733W2044",
-    "INTC": "US4581401001",
-    "HLN": "US4055521003",
-    "JKS": "US47759T1007",
-    "KO": "US1912161007",
-    "LLY": "US5324571083",
-    "META": "US30303M1027",
-    "MSFT": "US5949181045",
-    "NVDA": "US67066G1040",
-    "NVO": "US6701002056",
-    "ORCL": "US68389X1054",
-    "OXY": "US6745991058",
-    "PFE": "US7170811035",
-    "QCOM": "US7475251036",
-    "TSLA": "US88160R1014",
-    "TSM": "US8740391003",
-
-    "CRYPTO": "CRYPTO",
-    "AAVE": "CRYPTO_AAVE",
-    "ADA": "CRYPTO_ADA",
-    "BNT": "CRYPTO_BNT",
-    "BTC": "CRYPTO_BTC",
-    "DOGE": "CRYPTO_DOGE",
-    "ETH": "CRYPTO_ETH",
-    "NMR": "CRYPTO_NMR",
-    "NU": "CRYPTO_NU",
-    "PERP": "CRYPTO_PERP",
-    "RLC": "CRYPTO_RLC",
-    "SKL": "CRYPTO_SKL",
-    "SNX": "CRYPTO_SNX",
-    "SOL": "CRYPTO_SOL",
-    "STORJ": "CRYPTO_STORJ",
-    "ZRX": "CRYPTO_ZRX"
+  "Positions": {
+    "AAPL": {
+      "Country": "US",
+      "ISIN": "US0378331005"
+    },
+    "AMD": {
+      "Country": "US",
+      "ISIN": "US0079031078"
+    },
+    "AMZN": {
+      "Country": "US",
+      "ISIN": "US0231351067"
+    },
+    "BEP": {
+      "Country": "US",
+      "ISIN": "BMG162581083"
+    },
+    "CFLT": {
+      "Country": "US",
+      "ISIN": "US20717M1036"
+    },
+    "COIN": {
+      "Country": "US",
+      "ISIN": "US19260Q1076"
+    },
+    "CVNA": {
+      "Country": "US",
+      "ISIN": "US1468691027"
+    },
+    "CVX": {
+      "Country": "US",
+      "ISIN": "US1667641005"
+    },
+    "GOOG": {
+      "Country": "US",
+      "ISIN": "US02079K1079"
+    },
+    "GOOGL": {
+      "Country": "US",
+      "ISIN": "US02079K3059"
+    },
+    "GSK": {
+      "Country": "US",
+      "ISIN": "US37733W2044"
+    },
+    "GSK.WI": {
+      "Country": "US",
+      "ISIN": "US37733W2044"
+    },
+    "INTC": {
+      "Country": "US",
+      "ISIN": "US4581401001"
+    },
+    "HLN": {
+      "Country": "US",
+      "ISIN": "US4055521003"
+    },
+    "JKS": {
+      "Country": "US",
+      "ISIN": "US47759T1007"
+    },
+    "KO": {
+      "Country": "US",
+      "ISIN": "US1912161007"
+    },
+    "LLY": {
+      "Country": "US",
+      "ISIN": "US5324571083"
+    },
+    "META": {
+      "Country": "US",
+      "ISIN": "US30303M1027"
+    },
+    "MSFT": {
+      "Country": "US",
+      "ISIN": "US5949181045"
+    },
+    "NVDA": {
+      "Country": "US",
+      "ISIN": "US67066G1040"
+    },
+    "NVO": {
+      "Country": "US",
+      "ISIN": "US6701002056"
+    },
+    "ORCL": {
+      "Country": "US",
+      "ISIN": "US68389X1054"
+    },
+    "OXY": {
+      "Country": "US",
+      "ISIN": "US6745991058"
+    },
+    "PFE": {
+      "Country": "US",
+      "ISIN": "US7170811035"
+    },
+    "QCOM": {
+      "Country": "US",
+      "ISIN": "US7475251036"
+    },
+    "TSLA": {
+      "Country": "US",
+      "ISIN": "US88160R1014"
+    },
+    "TSM": {
+      "Country": "US",
+      "ISIN": "US8740391003"
+    },
+    "XOM": {
+      "Country": "US",
+      "ISIN": "US30231G1022"
+    },
+    "VWCE": {
+      "Country": "IE",
+      "ISIN": "IE00BK5BQT80"
+    },
+    "CRYPTO": {
+      "Country": "",
+      "ISIN": "CRYPTO"
+    },
+    "AAVE": {
+      "Country": "",
+      "ISIN": "CRYPTO_AAVE"
+    },
+    "ADA": {
+      "Country": "",
+      "ISIN": "CRYPTO_ADA"
+    },
+    "BNT": {
+      "Country": "",
+      "ISIN": "CRYPTO_BNT"
+    },
+    "BTC": {
+      "Country": "",
+      "ISIN": "CRYPTO_BTC"
+    },
+    "DOGE": {
+      "Country": "",
+      "ISIN": "CRYPTO_DOGE"
+    },
+    "ETH": {
+      "Country": "",
+      "ISIN": "CRYPTO_ETH"
+    },
+    "NMR": {
+      "Country": "",
+      "ISIN": "CRYPTO_NMR"
+    },
+    "NU": {
+      "Country": "",
+      "ISIN": "CRYPTO_NU"
+    },
+    "PERP": {
+      "Country": "",
+      "ISIN": "CRYPTO_PERP"
+    },
+    "RLC": {
+      "Country": "",
+      "ISIN": "CRYPTO_RLC"
+    },
+    "SKL": {
+      "Country": "",
+      "ISIN": "CRYPTO_SKL"
+    },
+    "SNX": {
+      "Country": "",
+      "ISIN": "CRYPTO_SNX"
+    },
+    "SOL": {
+      "Country": "",
+      "ISIN": "CRYPTO_SOL"
+    },
+    "STORJ": {
+      "Country": "",
+      "ISIN": "CRYPTO_STORJ"
+    },
+    "ZRX": {
+      "Country": "",
+      "ISIN": "CRYPTO_ZRX"
+    }
   },
   "StockEventsFilePaths": [
     "2022 Revolut All Stocks Transactions.csv",

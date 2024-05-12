@@ -8,7 +8,7 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
     {
         outWriter ??= TextWriter.Null;
 
-        var isin = (string.IsNullOrWhiteSpace(ticker) ? "" : basics.ISINs[ticker]);
+        var isin = (string.IsNullOrWhiteSpace(ticker) ? "" : basics.Positions[ticker].ISIN);
         if (string.IsNullOrWhiteSpace(ticker))
             outWriter.WriteLine($"PROCESS NON-TICKER-RELATED EVENTS");
         else 
@@ -433,7 +433,7 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
         var netDividendBase = netDividendLocal / tickerEvent.FXRate;
         outWriter.WriteLine($"\tNet Dividend ({basics.BaseCurrency}) = {netDividendBase.R(basics)}");
 
-        var witholdingTaxRate = Basics.WitholdingTaxFor(tickerState.Isin);
+        var witholdingTaxRate = Basics.WitholdingTaxFor(basics.Positions[tickerState.Ticker]);
         var whtDividendBase = netDividendBase * witholdingTaxRate / (1m - witholdingTaxRate);
         outWriter.WriteLine($"\tWHT Dividend ({basics.BaseCurrency}) = {whtDividendBase.R(basics)}");
 
