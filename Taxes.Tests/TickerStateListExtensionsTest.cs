@@ -85,4 +85,32 @@ public class TickerStateListExtensionsTest
         Assert.IsTrue(metrics.Contains("Total Gross Dividends - Country = C1 (EUR)  = 33"));
         Assert.IsTrue(metrics.Contains("Total Gross Dividends - Country = C2 (EUR)  = 300"));
     }
+
+    [TestMethod]
+    public void PrintAggregatedMetrics_AggregatesInterestsByCountry()
+    {
+        var basics = new Basics
+        {
+            Positions = new Dictionary<string, Position>
+            {
+                ["TICKER1"] = new() { Country = "C1", ISIN = "ISIN1" },
+                ["TICKER2"] = new() { Country = "C1", ISIN = "ISIN2" },
+                ["TICKER3"] = new() { Country = "C2", ISIN = "ISIN3" },
+            }.AsReadOnly()
+        };
+        List<TickerState> e = [
+            new("TICKER1", Isin, NetInterestsBase: 2, WhtInterestsBase: 1, GrossInterestsBase: 3),
+            new("TICKER2", Isin, NetInterestsBase: 20, WhtInterestsBase: 10, GrossInterestsBase: 30),
+            new("TICKER3", Isin, NetInterestsBase: 200, WhtInterestsBase: 100, GrossInterestsBase: 300),
+        ];
+        var writer = new StringWriter();
+        e.PrintAggregatedMetrics(writer, basics);
+        var metrics = writer.ToString().Split(Environment.NewLine);
+        Assert.IsTrue(metrics.Contains("Total Net Interests - Country = C1 (EUR)  = 22"));
+        Assert.IsTrue(metrics.Contains("Total Net Interests - Country = C2 (EUR)  = 200"));
+        Assert.IsTrue(metrics.Contains("Total WHT Interests - Country = C1 (EUR)  = 11"));
+        Assert.IsTrue(metrics.Contains("Total WHT Interests - Country = C2 (EUR)  = 100"));
+        Assert.IsTrue(metrics.Contains("Total Gross Interests - Country = C1 (EUR)  = 33"));
+        Assert.IsTrue(metrics.Contains("Total Gross Interests - Country = C2 (EUR)  = 300"));
+    }
 }
