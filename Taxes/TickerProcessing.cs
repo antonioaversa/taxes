@@ -30,6 +30,7 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
                 EventType.SellMarket or EventType.SellLimit => ProcessSell,
                 EventType.StockSplit => ProcessStockSplit,
                 EventType.Dividend => ProcessDividend,
+                EventType.Interest => ProcessInterest,
                 _ => throw new NotSupportedException($"Event type not supported: {tickerEvent}"),
             };
 
@@ -433,7 +434,7 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
         var netDividendBase = netDividendLocal / tickerEvent.FXRate;
         outWriter.WriteLine($"\tNet Dividend ({basics.BaseCurrency}) = {netDividendBase.R(basics)}");
 
-        var witholdingTaxRate = Basics.WitholdingTaxFor(basics.Positions[tickerState.Ticker]);
+        var witholdingTaxRate = Basics.DividendWitholdingTaxFor(basics.Positions[tickerState.Ticker]);
         var whtDividendBase = netDividendBase * witholdingTaxRate / (1m - witholdingTaxRate);
         outWriter.WriteLine($"\tWHT Dividend ({basics.BaseCurrency}) = {whtDividendBase.R(basics)}");
 
@@ -445,6 +446,39 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
             NetDividendsBase = tickerState.NetDividendsBase + netDividendBase,
             WhtDividendsBase = tickerState.WhtDividendsBase + whtDividendBase,
             GrossDividendsBase = tickerState.GrossDividendsBase + grossDividendBase,
+        };
+    }
+
+    internal /* for testing */ TickerState ProcessInterest(
+        Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter)
+    {
+        if (tickerEvent != tickerEvents[eventIndex])
+            throw new InvalidDataException($"Event and event index inconsistent");
+        if (tickerEvent.Type is not EventType.Interest)
+            throw new NotSupportedException($"Unsupported type: {tickerEvent.Type}");
+        if (tickerEvent.Ticker == null)
+            throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.Ticker)} null");
+        if (tickerEvent.TotalAmountLocal <= 0)
+            throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.TotalAmountLocal)} non-positive");
+
+        var netInterestLocal = tickerEvent.TotalAmountLocal;
+        outWriter.WriteLine($"\tNet Interest ({tickerEvent.Currency}) = {netInterestLocal.R(basics)}");
+
+        var netInterestBase = netInterestLocal / tickerEvent.FXRate;
+        outWriter.WriteLine($"\tNet Interest ({basics.BaseCurrency}) = {netInterestBase.R(basics)}");
+
+        var witholdingTaxRate = Basics.InterestWitholdingTaxFor(basics.Positions[tickerState.Ticker]);
+        var whtInterestBase = netInterestBase * witholdingTaxRate / (1m - witholdingTaxRate);
+        outWriter.WriteLine($"\tWHT Interest ({basics.BaseCurrency}) = {whtInterestBase.R(basics)}");
+
+        var grossInterestBase = netInterestBase + whtInterestBase;
+        outWriter.WriteLine($"\tGross Interest ({basics.BaseCurrency}) = {grossInterestBase.R(basics)}");
+
+        return tickerState with
+        {
+            NetInterestsBase = tickerState.NetInterestsBase + netInterestBase,
+            WhtInterestsBase = tickerState.WhtInterestsBase + whtInterestBase,
+            GrossInterestsBase = tickerState.GrossInterestsBase + grossInterestBase,
         };
     }
 }

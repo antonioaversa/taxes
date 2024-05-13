@@ -1601,6 +1601,164 @@ public class TickerProcessingTest
         }
     }
 
+    [TestMethod]
+    public void ProcessInterest_WhenTickerEventAndIndexAreInconsistent_RaisesException()
+    {
+        var tickerProcessing = Instance;
+        var localCurrency = USD;
+        var fxRate = 2m; // FX rate between USD and EUR stays stable at 2 USD for 1 EUR across events
+        var initialState = new TickerState(Ticker, Isin, TotalQuantity: 15, TotalAmountBase: 225m);
+        var events = new List<Event>
+        {
+            new(T0, BuyLimit, Ticker, 10, 100m, 1020m, 20m, localCurrency, fxRate),
+            new(T0 + 1 * D, Interest, Ticker, null, null, 10m, null, localCurrency, fxRate),
+        };
+
+        ThrowsAny<Exception>(() => tickerProcessing.ProcessInterest(events[1], events, 0, initialState, NoOut));
+    }
+
+    [TestMethod]
+    public void ProcessInterest_WhenTypeIsInvalid_RaisesException()
+    {
+        var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 10, 100m, 1020m, 20m, USD, 2m);
+        ThrowsAny<Exception>(() => Instance.ProcessInterest(
+            buy1, [buy1], 0, new TickerState(Ticker, Isin), NoOut));
+    }
+
+    [TestMethod]
+    public void ProcessInterest_WhenTickerIsNull_RaisesException()
+    {
+        var interest1 = new Event(T0 + 0 * D, Interest, Ticker: null, Quantity: null, PricePerShareLocal: null, TotalAmountLocal: 10m, FeesLocal: null, Currency: USD, FXRate: 2m);
+        ThrowsAny<Exception>(() => Instance.ProcessInterest(
+            interest1, [interest1], 0, new TickerState(Ticker, Isin), NoOut));
+    }
+
+    [TestMethod]
+    public void ProcessInterest_WhenTotalAmountIsNotPositive_RaisesException()
+    {
+        var interest1 = new Event(T0 + 0 * D, Interest, Ticker, null, null, TotalAmountLocal: 0m, FeesLocal: 0, Currency: USD, FXRate: 2m);
+        ThrowsAny<Exception>(() => Instance.ProcessInterest(
+            interest1, [interest1], 0, new TickerState(Ticker, Isin), NoOut));
+
+        var interest2 = new Event(T0 + 0 * D, Interest, Ticker, null, null, TotalAmountLocal: -10m, FeesLocal: 0, Currency: USD, FXRate: 2m);
+        ThrowsAny<Exception>(() => Instance.ProcessInterest(
+            interest2, [interest1, interest2], 1, new TickerState(Ticker, Isin), NoOut));
+    }
+
+    [TestMethod]
+    public void ProcessInterest_CalculatesAndPrintsSteps()
+    {
+        var tickerProcessing = new TickerProcessing(new Basics() { Rounding = x => decimal.Round(x, 2) });
+        var localCurrency = USD;
+        var fxRate = 2m; // FX rate between USD and EUR stays stable at 2 USD for 1 EUR across events
+        var initialState = new TickerState(Ticker, Isin);
+
+        // First buy 10 shares at 100 USD, with fees of 20 USD => Total Amount Local of 1000 USD + 20 USD = 1020 USD
+        var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 10, 100m, 1020m, 20m, localCurrency, fxRate);
+        var stateAfterBuy1 = tickerProcessing.ProcessBuy(buy1, [buy1], 0, initialState, NoOut);
+
+        // Then interest of 10 USD with withholding tax of 15% from US =>
+        // Total Amount Local of 10 USD - (15% * 10 USD) = 8.5 USD
+        var interest1 = new Event(T0 + 1 * D, Interest, Ticker, null, null, 8.5m, null, localCurrency, fxRate);
+        var writer = new StringWriter();
+        tickerProcessing.ProcessInterest(interest1, [buy1, interest1], 1, stateAfterBuy1, writer);
+
+        var output = writer.ToString();
+
+        Assert.IsTrue(output.Contains($"Net Interest ({localCurrency}) = 8.5"));
+        Assert.IsTrue(output.Contains($"Net Interest ({Instance.Basics.BaseCurrency}) = 4.25")); // 8.5 USD / (2 USD/EUR) 
+        Assert.IsTrue(output.Contains($"WHT Interest ({Instance.Basics.BaseCurrency}) = 0.75")); // 15% of 10 USD / (2 USD/EUR)
+        Assert.IsTrue(output.Contains($"Gross Interest ({Instance.Basics.BaseCurrency}) = 5")); // 10 USD / (2 USD/EUR)
+    }
+
+    [TestMethod]
+    public void ProcessInterest_UpdatesTickerStateCorrectly()
+    {
+        var tickerProcessing = Instance;
+        var localCurrency = USD;
+        var fxRate = 2m; // FX rate between USD and EUR stays stable at 2 USD for 1 EUR across events
+        var initialState = new TickerState(Ticker, Isin);
+
+        // First buy 10 shares at 100 USD, with fees of 20 USD => Total Amount Local of 1000 USD + 20 USD = 1020 USD
+        var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 10, 100m, 1020m, 20m, localCurrency, fxRate);
+        var stateAfterBuy1 = tickerProcessing.ProcessBuy(
+            buy1, [buy1], 0, initialState, NoOut);
+
+        // Then interest of 25.5 USD with withholding tax of 15% from US =>
+        // Total Amount Local of 30 USD - (15% * 30 USD) = 25.5 USD
+        var interest1 = new Event(T0 + 1 * D, Interest, Ticker, null, null, 25.5m, null, localCurrency, fxRate);
+        var stateAfterInterest1 = tickerProcessing.ProcessInterest(
+            interest1, [buy1, interest1], 1, stateAfterBuy1, NoOut);
+
+        AssertStateAfterInterest1();
+
+        void AssertStateAfterInterest1()
+        {
+            // The total quantity and amount are the same as before the interest
+            AssertEq(stateAfterBuy1.TotalQuantity, stateAfterInterest1.TotalQuantity);
+            AssertEq(stateAfterBuy1.TotalAmountBase, stateAfterInterest1.TotalAmountBase);
+
+            // The plus and minus values CUMP, PEPS and crypto remain the same
+            AssertEq(stateAfterBuy1.PlusValueCumpBase, stateAfterInterest1.PlusValueCumpBase);
+            AssertEq(stateAfterBuy1.MinusValueCumpBase, stateAfterInterest1.MinusValueCumpBase);
+            AssertEq(stateAfterBuy1.PlusValuePepsBase, stateAfterInterest1.PlusValuePepsBase);
+            AssertEq(stateAfterBuy1.MinusValuePepsBase, stateAfterInterest1.MinusValuePepsBase);
+            AssertEq(stateAfterBuy1.PlusValueCryptoBase, stateAfterInterest1.PlusValueCryptoBase);
+            AssertEq(stateAfterBuy1.MinusValueCryptoBase, stateAfterInterest1.MinusValueCryptoBase);
+
+            // The PEPS current index and sold quantity are the same as before the interest
+            AssertEq(stateAfterBuy1.PepsCurrentIndex, stateAfterInterest1.PepsCurrentIndex);
+            AssertEq(stateAfterBuy1.PepsCurrentIndexSoldQuantity, stateAfterInterest1.PepsCurrentIndexSoldQuantity);
+
+            // Total dividends are the same as before the interest
+            AssertEq(stateAfterBuy1.NetDividendsBase, stateAfterInterest1.NetDividendsBase);
+            AssertEq(stateAfterBuy1.WhtDividendsBase, stateAfterInterest1.WhtDividendsBase);
+            AssertEq(stateAfterBuy1.GrossDividendsBase, stateAfterInterest1.GrossDividendsBase);
+
+            // Total interests are increased accordingly
+            AssertEq(25.5m / 2m, stateAfterInterest1.NetInterestsBase); // 25.5 USD / (2 USD/EUR)
+            AssertEq(4.5m / 2m, stateAfterInterest1.WhtInterestsBase); // 15% of 30 USD / (2 USD/EUR)
+            AssertEq(30m / 2m, stateAfterInterest1.GrossInterestsBase); // 30 USD / (2 USD/EUR)
+        }
+
+        // Then interest of 34 USD with withholding tax of 15% from US =>
+        // Total Amount Local of 40 USD - (15% * 40 USD) = 34 USD
+        var interest2 = new Event(T0 + 2 * D, Interest, Ticker, null, null, 34m, null, localCurrency, fxRate);
+        var stateAfterInterest2 = tickerProcessing.ProcessInterest(
+            interest2, [buy1, interest1, interest2], 2, stateAfterInterest1, NoOut);
+
+        AssertStateAfterInterest2();
+
+        void AssertStateAfterInterest2()
+        {
+            // The total quantity and amount are the same as before the interest
+            AssertEq(stateAfterInterest1.TotalQuantity, stateAfterInterest2.TotalQuantity);
+            AssertEq(stateAfterInterest1.TotalAmountBase, stateAfterInterest2.TotalAmountBase);
+
+            // The plus and minus values CUMP, PEPS and crypto remain the same
+            AssertEq(stateAfterInterest1.PlusValueCumpBase, stateAfterInterest2.PlusValueCumpBase);
+            AssertEq(stateAfterInterest1.MinusValueCumpBase, stateAfterInterest2.MinusValueCumpBase);
+            AssertEq(stateAfterInterest1.PlusValuePepsBase, stateAfterInterest2.PlusValuePepsBase);
+            AssertEq(stateAfterInterest1.MinusValuePepsBase, stateAfterInterest2.MinusValuePepsBase);
+            AssertEq(stateAfterInterest1.PlusValueCryptoBase, stateAfterInterest2.PlusValueCryptoBase);
+            AssertEq(stateAfterInterest1.MinusValueCryptoBase, stateAfterInterest2.MinusValueCryptoBase);
+
+            // The PEPS current index and sold quantity are the same as before the interest
+            AssertEq(stateAfterInterest1.PepsCurrentIndex, stateAfterInterest2.PepsCurrentIndex);
+            AssertEq(stateAfterInterest1.PepsCurrentIndexSoldQuantity, stateAfterInterest2.PepsCurrentIndexSoldQuantity);
+
+            // Total dividends are the same as before the interest
+            AssertEq(stateAfterInterest1.NetDividendsBase, stateAfterInterest2.NetDividendsBase);
+            AssertEq(stateAfterInterest1.WhtDividendsBase, stateAfterInterest2.WhtDividendsBase);
+            AssertEq(stateAfterInterest1.GrossDividendsBase, stateAfterInterest2.GrossDividendsBase);
+
+            // Total interests are increased accordingly
+            AssertEq(59.5m / 2m, stateAfterInterest2.NetInterestsBase); // (25.5 USD + 34 USD) / (2 USD/EUR)
+            AssertEq(10.5m / 2m, stateAfterInterest2.WhtInterestsBase); // (4.5 USD + 6 USD) / (2 USD/EUR)
+            AssertEq(70m / 2m, stateAfterInterest2.GrossInterestsBase); // (30 USD + 40 USD) / (2 USD/EUR
+        }
+    }
+
     [AssertionMethod]
     private void AssertEq(decimal expected, decimal actual, string message = "") => 
         Assert.AreEqual(expected, actual, Instance.Basics.Precision, message);

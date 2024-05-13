@@ -169,6 +169,10 @@ record TickerState(
     [property: Metric("Total WHT Dividends", true)] decimal WhtDividendsBase = 0m,
     [property: Metric("Total Gross Dividends", true)] decimal GrossDividendsBase = 0m,
 
+    [property: Metric("Total Net Interests", true)] decimal NetInterestsBase = 0m,
+    [property: Metric("Total WHT Interests", true)] decimal WhtInterestsBase = 0m,
+    [property: Metric("Total Gross Interests", true)] decimal GrossInterestsBase = 0m,
+
     /// <summary>
     /// The index in the list of all events, of all types, of the first buy event that hasn't been fully sold yet,
     /// according to the PEPS algorithm: either it has been partially sold, or it hasn't been sold at all.

@@ -102,12 +102,19 @@ public partial class Basics
             Math.Abs(Math.Round(value, numberOfDigits)) < resolutionAroundZero ? 0m : Math.Round(value, numberOfDigits);
     }
 
-    public static decimal WitholdingTaxFor(Position position) => 
+    public static decimal DividendWitholdingTaxFor(Position position) => 
         position.Country switch
         {
             "US" => 0.15m,
-            "IE" => 0.00m, // TODO: check this
-            var country => throw new NotSupportedException($"Unknown WHT for {country}"),
+            var country => throw new NotSupportedException($"Unknown Dividend WHT for {country}"),
+        };
+
+    public static decimal InterestWitholdingTaxFor(Position position) =>
+        position.Country switch
+        {
+            "US" => 0.15m,
+            "IE" => 0.20m, // TODO: check this
+            var country => throw new NotSupportedException($"Unknown Interest WHT for {country}"),
         };
 
     [GeneratedRegex(@"^Fixed_(?<numberOfDigits>\d+)$")]
