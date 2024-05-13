@@ -45,7 +45,8 @@ partial class StockEventsReader(Basics basics)
             if (!fxRates.Rates.TryGetValue(currency, out var currencyRates)
                 || !currencyRates.TryGetValue(date.Date, out var fxRate))
             {
-                Console.WriteLine($"WARN: No FX Rate found for currency {record.Currency} and day {date.Date} -> using {record.FXRate}");
+                if (currency != basics.BaseCurrency)
+                    Console.WriteLine($"WARN: No FX Rate found for currency {record.Currency} and day {date.Date} -> using {record.FXRate}");
 
                 if (recordFxRate < 0)
                     throw new InvalidOperationException(
