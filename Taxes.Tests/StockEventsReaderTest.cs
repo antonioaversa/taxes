@@ -201,7 +201,7 @@ public class StockEventsReaderTests
     }
 
     [TestMethod]
-    public void Parse_WithCurrency_NoFxRatesAvailableForTheCurrency()
+    public void Parse_WithCurrency_NoFxRatesAvailableForTheCurrency_AndNonNegativeEventFxRate_UsesThatFxRate()
     {
         using var textReader = new StringReader("""
             Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
@@ -213,6 +213,20 @@ public class StockEventsReaderTests
         var events = Instance.Parse(textReader, fxRates);
         Assert.AreEqual("IDR", events[0].Currency);
         Assert.AreEqual(17153.90m, events[0].FXRate);
+    }
+
+    [TestMethod]
+    public void Parse_WithCurrency_NoFxRatesAvailableForTheCurrency_AndNegativeEventFXRate_ThrowsException()
+    {
+        using var textReader = new StringReader("""
+            Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
+            2022-03-30T23:48:44.882381Z,,CASH TOP-UP,,,"3000",IDR,-1
+            """);
+        var fxRates = new FxRates(new() { ["USD"] = new() { [(2022, 03, 30).ToUtc()] = 1.1126m } });
+        // A FX Rate is provided for the date of the event. However, it's not for the right currency.
+        // Moreover, the value provided in the input file is negative, so an exception is raised, for the lack of a
+        // valid FX rate.
+        AssertExtensions.ThrowsAny<Exception>(() => Instance.Parse(textReader, fxRates));
     }
 
     [TestMethod]
