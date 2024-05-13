@@ -96,7 +96,7 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
             throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.Quantity)} null or non-positive");
         if (tickerEvent.TotalAmountLocal <= 0)
             throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.TotalAmountLocal)} non-positive");
-        if (tickerEvents.FirstOrDefault(e => e.Currency != tickerEvent.Currency) is { } previousEvent)
+        if (tickerEvents.FirstOrDefault(e => e.Currency != tickerEvent.Currency && (e.IsBuy || e.IsSell)) is { } previousEvent)
             throw new NotSupportedException($"Etherogenous currencies: {previousEvent} vs {tickerEvent}");
         if (tickerEvent.Ticker != tickerState.Ticker)
             throw new InvalidDataException($"Event and state tickers don't match");
@@ -157,7 +157,7 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
             throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.PricePerShareLocal)} null");
         if (tickerEvent.Quantity == null || tickerEvent.Quantity.Value <= 0)
             throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.Quantity)} null or non-positive");
-        if (tickerEvents.FirstOrDefault(e => e.Currency != tickerEvent.Currency) is { } previousEvent)
+        if (tickerEvents.FirstOrDefault(e => e.Currency != tickerEvent.Currency && (e.IsBuy || e.IsSell)) is { } previousEvent)
             throw new NotSupportedException($"Etherogenous currencies: {previousEvent} vs {tickerEvent}");
         if (tickerState.TotalQuantity - tickerEvent.Quantity.Value < -basics.Precision)
             throw new InvalidDataException($"Invalid event - Cannot sell more than owned");

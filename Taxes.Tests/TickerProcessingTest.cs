@@ -314,10 +314,20 @@ public class TickerProcessingTest
     [TestMethod]
     public void ProcessBuy_WhenCurrenciesDontMatch_RaisesException()
     {
+        var initialState = new TickerState(Ticker, Isin);
+        var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 3, 1.5m, 5.5m, 1.0m, EUR, 1);
+        var buy2 = new Event(T0 + 0 * D, BuyLimit, Ticker, 3, 100, 303, 3, USD, 1);
+        ThrowsAny<Exception>(() => Instance.ProcessBuy(buy2, [buy1, buy2], 1, initialState, NoOut));
+    }
+
+    [TestMethod]
+    public void ProcessBuy_WhenCurrenciesDontMatchInNonBuyNorSellEvent_ItsOK()
+    {
+        var cashTopUp1 = new Event(T0 + 0 * D, CashTopUp, Ticker, null, null, 100, null, EUR, 1);
+        var stateAfterCashTopUp1 = new TickerState(Ticker, Isin);
         var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 3, 100, 303, 3, USD, 1);
-        var state = new TickerState(Ticker, Isin);
-        var events = new[] { new Event(T0 + 0 * D, BuyLimit, Ticker, 0, 0, 0, 0, EUR, 1), buy1 };
-        ThrowsAny<Exception>(() => Instance.ProcessBuy(buy1, events, 1, state, NoOut));
+        var stateAfterBuy1 = Instance.ProcessBuy(buy1, [cashTopUp1, buy1], 1, stateAfterCashTopUp1, NoOut);
+        Assert.AreEqual(303, stateAfterBuy1.TotalAmountBase);
     }
 
     [TestMethod]
@@ -489,14 +499,28 @@ public class TickerProcessingTest
     }
 
     [TestMethod]
-    public void ProcessSell_WhenCurrenciesAreEtherogenous_RaisesException()
+    public void ProcessSell_WhenCurrenciesAreEtherogenousInSellAndBuy_RaisesException()
     {
         // While owning 3 shares for a total of 5.5 EUR
-        var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 0, 0, 0, 0, EUR, 1);
+        var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 3, 1.5m, 5.5m, 1.0m, EUR, 1);
         // Selling 1 share at 2.0 USD, with fees of 0.2 USD => Total Amount Local of 1.8 USD
-        var sell1 = new Event(T0 + 0 * D, SellLimit, Ticker, 1, 2.0m, 1.8m, 0.2m, USD, 1);
-        var state = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
-        ThrowsAny<Exception>(() => Instance.ProcessSell(sell1, [buy1, sell1], 1, state, NoOut));
+        var sell1 = new Event(T0 + 1 * D, SellLimit, Ticker, 1, 2.0m, 1.8m, 0.2m, USD, 1);
+        var stateAfterBuy1 = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
+        ThrowsAny<Exception>(() => Instance.ProcessSell(sell1, [buy1, sell1], 1, stateAfterBuy1, NoOut));
+    }
+
+    [TestMethod]
+    public void ProcessSell_WhenCurrenciesAreEtherogenousNotInSellOrBuy_IsOk()
+    {
+        // While owning 3 shares for a total of 5.5 EUR
+        var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 3, 1.5m, 5.5m, 1.0m, EUR, 1);
+        // A non buy or sell event, such as cash topup, can be in a different currency
+        var cashTopUp1 = new Event(T0 + 1 * D, CashTopUp, Ticker, 0, 0, 100, 0, USD, 1);
+        // Selling 1 share at 2.0 EUR, with fees of 0.2 EUR => Total Amount Local of 1.8 EUR
+        var sell1 = new Event(T0 + 2 * D, SellLimit, Ticker, 1, 2.0m, 1.8m, 0.2m, EUR, 1);
+        var stateAfterCashTopUp1 = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
+        var stateAfterSell1 = Instance.ProcessSell(sell1, [buy1, cashTopUp1, sell1], 2, stateAfterCashTopUp1, NoOut);
+        AssertEq(2, stateAfterSell1.TotalQuantity);
     }
 
     [TestMethod]
