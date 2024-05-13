@@ -301,7 +301,7 @@ public class StockEventsReaderTests
             2023-11-26T21:54:34.023429Z,,CASH WITHDRAWAL,,,"($3,500)",USD,1.0968
             2023-12-11T14:34:06.497Z,PFE,BUY - LIMIT,17,$28.50 ,$485.71 ,USD,1.0765
             2023-12-18T14:37:36.664Z,ORCL,BUY - MARKET,20,$104.24 ,"$2,084.90 ",USD,1.0947
-            2023-12-20,INTEREST_IBKR,INTEREST,,,"$1,234.56 ",CHF,0.98
+            2023-12-20,INTEREST_IBKR,INTEREST,,,"1,234.56 ",CHF,0.98
             """);
         var events = Instance.Parse(textReader, NoFxRates);
     
@@ -354,7 +354,7 @@ public class StockEventsReaderTests
             2022-06-23T14:30:37.660417Z,CVNA,SELL - LIMIT,15,$26.62,$398.23,USD,01.06
             2022-06-29T13:45:38.161874Z,CVNA,BUY - LIMIT,10,$23.02,$231.25,USD,01.05
             2022-06-10T04:28:02.657456Z,MSFT,DIVIDEND,,,$10.54,USD,01.07
-            2023-12-20,INTEREST_IBKR,INTEREST,,,"$1,234.56 ",CHF,0.98
+            2023-12-20,INTEREST_IBKR,INTEREST,,,"1,234.56 ",CHF,0.98
             """);
         var events = Instance.Parse(textReader, NoFxRates);
         Assert.IsNull(events[0].FeesLocal);
@@ -409,7 +409,7 @@ public class StockEventsReaderTests
     {
         using var textReader = new StringReader("""
             Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
-            2023-12-20,INTEREST_IBKR,INTEREST,,,"$1,234.56 ",CHF,0.98
+            2023-12-20,INTEREST_IBKR,INTEREST,,,"1,234.56 ",CHF,0.98
             """);
         var events = Instance.Parse(textReader, NoFxRates);
         Assert.IsNull(events[0].FeesLocal);
