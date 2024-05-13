@@ -33,4 +33,30 @@ public class TickerStateTest
         Assert.AreEqual(0m, tickerState.PortfolioAcquisitionValueBase);
         Assert.AreEqual(0m, tickerState.CryptoFractionOfInitialCapital);
     }
+
+    [TestMethod]
+    public void ToString_IncludesDividends()
+    {
+        var tickerState = new TickerState(Ticker, Isin)
+        {
+            NetDividendsBase = 1.23m,
+            WhtDividendsBase = 0.12m,
+            GrossDividendsBase = 1.35m,
+        };
+        var tickerStateString = tickerState.ToString();
+        Assert.IsTrue(tickerStateString.Contains("Dividends ="));
+    }
+
+    [TestMethod]
+    public void ToString_IncludesInterests()
+    {
+        var tickerState = new TickerState(Ticker, Isin)
+        {
+            NetInterestsBase = 1.23m,
+            WhtInterestsBase = 0.12m,
+            GrossInterestsBase = 1.35m,
+        };
+        var tickerStateString = tickerState.ToString();
+        Assert.IsTrue(tickerStateString.Contains("Interests ="));
+    }
 }

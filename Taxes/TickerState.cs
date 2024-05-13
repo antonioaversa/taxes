@@ -203,7 +203,8 @@ record TickerState(
         $"{TotalQuantity.R(basics)} shares => {TotalAmountBase.R(basics)} {basics.BaseCurrency}, " +
         $"+V = CUMP {PlusValueCumpBase.R(basics)} {basics.BaseCurrency}, PEPS {PlusValuePepsBase.R(basics)} {basics.BaseCurrency}, CRYP {PlusValueCryptoBase.R(basics)} {basics.BaseCurrency}, " +
         $"-V = CUMP {MinusValueCumpBase.R(basics)} {basics.BaseCurrency}, PEPS {MinusValuePepsBase.R(basics)} {basics.BaseCurrency}, CRYP {MinusValueCryptoBase.R(basics)} {basics.BaseCurrency}, " +
-        $"Dividends = {NetDividendsBase.R(basics)} {basics.BaseCurrency} + WHT {WhtDividendsBase.R(basics)} {basics.BaseCurrency} = {GrossDividendsBase.R(basics)} {basics.BaseCurrency}";  
+        $"Dividends = {NetDividendsBase.R(basics)} {basics.BaseCurrency} + WHT {WhtDividendsBase.R(basics)} {basics.BaseCurrency} = {GrossDividendsBase.R(basics)} {basics.BaseCurrency}, " +
+        $"Interests = {NetInterestsBase.R(basics)} {basics.BaseCurrency} + WHT {WhtInterestsBase.R(basics)} {basics.BaseCurrency} = {GrossInterestsBase.R(basics)} {basics.BaseCurrency}";
 }
 
 delegate TickerState TickerAction(
