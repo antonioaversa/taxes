@@ -193,7 +193,8 @@
   },
   "StockEventsFilePaths": [
     "2022 Revolut All Stocks Transactions.csv",
-    "2023 Revolut All Stocks Transactions.csv"
+    "2023 Revolut All Stocks Transactions.csv",
+    "2022-2023 IBKR All Stocks Transactions.csv"
   ],
   "CryptoEventsFilePaths": [
     "2022 Revolut All Crypto Transactions.csv",
