@@ -67,7 +67,7 @@ static void PrintEnvironmentAndSettings(TextWriter outWriter)
     outWriter.WriteLine("MD5 digest of files in Reports folder:");
     foreach (var filePath in Directory.GetFiles("Reports"))
     {
-        Console.WriteLine($"- {filePath}: {CalculateMD5Digest(filePath)}");
+        Console.WriteLine($"- {filePath}: {FileUtils.CalculateMD5Digest(filePath)}");
     }
 
     outWriter.WriteLine(new string('=', 100));
@@ -110,12 +110,4 @@ static string CommandOutput(string command, string? workingDirectory = null)
     {
         return $"Error in command: {command}, {objException.Message}";
     }
-}
-
-static string CalculateMD5Digest(string filePath)
-{
-    using var md5 = MD5.Create();
-    using var stream = File.OpenRead(filePath);
-    var hash = md5.ComputeHash(stream);
-    return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
 }
