@@ -62,8 +62,8 @@ static void PrintEnvironmentAndSettings(TextWriter outWriter)
     outWriter.WriteLine($"User name: {Environment.UserName}");
     outWriter.WriteLine($"Current working directory: {Environment.CurrentDirectory}");
     outWriter.WriteLine($"Command line parameters: {string.Join(' ', Environment.GetCommandLineArgs())}");
-    outWriter.WriteLine($"Commit hash: {CommandOutput("git rev-parse HEAD").Trim()}");
-    outWriter.WriteLine($"Modified files: {CommandOutput("git diff")}");
+    outWriter.WriteLine($"Commit hash: {ProcessUtils.CommandOutput("git rev-parse HEAD").Trim()}");
+    outWriter.WriteLine($"Modified files: {ProcessUtils.CommandOutput("git diff")}");
     outWriter.WriteLine("MD5 digest of files in Reports folder:");
     foreach (var filePath in Directory.GetFiles("Reports"))
     {
@@ -73,41 +73,3 @@ static void PrintEnvironmentAndSettings(TextWriter outWriter)
     outWriter.WriteLine(new string('=', 100));
 }
 
-static string CommandOutput(string command, string? workingDirectory = null)
-{
-    try
-    {
-        ProcessStartInfo procStartInfo = new("cmd", "/c " + command);
-
-        procStartInfo.RedirectStandardError = procStartInfo.RedirectStandardInput = procStartInfo.RedirectStandardOutput = true;
-        procStartInfo.UseShellExecute = false;
-        procStartInfo.CreateNoWindow = true;
-        if (null != workingDirectory)
-        {
-            procStartInfo.WorkingDirectory = workingDirectory;
-        }
-
-        Process proc = new Process();
-        proc.StartInfo = procStartInfo;
-
-        StringBuilder sb = new StringBuilder();
-        proc.OutputDataReceived += delegate (object sender, DataReceivedEventArgs e)
-        {
-            sb.AppendLine(e.Data);
-        };
-        proc.ErrorDataReceived += delegate (object sender, DataReceivedEventArgs e)
-        {
-            sb.AppendLine(e.Data);
-        };
-
-        proc.Start();
-        proc.BeginOutputReadLine();
-        proc.BeginErrorReadLine();
-        proc.WaitForExit();
-        return sb.ToString();
-    }
-    catch (Exception objException)
-    {
-        return $"Error in command: {command}, {objException.Message}";
-    }
-}
