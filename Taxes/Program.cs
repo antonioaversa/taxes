@@ -73,5 +73,3 @@ static void PrintEnvironmentAndSettings(TextWriter outWriter)
 
     outWriter.WriteLine(new string('=', 100));
 }
-
-record EventsFileAndBroker(string FilePath, string Broker);
