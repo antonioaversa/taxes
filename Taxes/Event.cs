@@ -1,4 +1,6 @@
-﻿namespace Taxes;
+﻿using System.Text;
+
+namespace Taxes;
 
 /// <summary>
 /// An event in the portfolio, that may or may not change the state of the portfolio.
@@ -178,7 +180,9 @@ record Event(
     /// 
     /// Therefore, to convert to the base currency, one needs to divide the local amount by the FXRate.
     /// </summary>
-    decimal FXRate)
+    decimal FXRate,
+    
+    string Broker = "DEFAULT")
 {
     public bool IsBuy => Type is EventType.BuyMarket or EventType.BuyLimit;
     public bool IsSell => Type is EventType.SellMarket or EventType.SellLimit;

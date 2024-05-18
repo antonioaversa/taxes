@@ -1,7 +1,4 @@
-﻿using System.Diagnostics;
-using System.Security.Cryptography;
-using System.Text;
-using Taxes;
+﻿using Taxes;
 
 PrintEnvironmentAndSettings(Console.Out);
 
@@ -13,18 +10,22 @@ var cryptoPortfolioValuesFilePath = Path.Combine(basics.ReportsDirectoryPath, ba
 var cryptoPortfolioValues = new CryptoPortfolioValues(basics, fxRates, basics.CryptoPortfolioValuesCurrency, cryptoPortfolioValuesFilePath);
 
 var stockEventsReader = new StockEventsReader(basics);
-var stockEvents = basics.StockEventsFilePaths
-    .SelectMany(pattern => Directory.GetFiles(basics.ReportsDirectoryPath, pattern))
-    .Order()
-    .SelectMany(filePath => stockEventsReader.Parse(filePath, fxRates))
+var stockEvents = basics.StockEventsFiles
+    .SelectMany(eventsFiles => Directory
+        .GetFiles(basics.ReportsDirectoryPath, eventsFiles.FilePattern)
+        .Select(path => new EventsFileAndBroker(path, eventsFiles.Broker)))
+    .OrderBy(eventsFileAndBroker => eventsFileAndBroker.FilePath)
+    .SelectMany(eventsFileAndBroker => stockEventsReader.Parse(eventsFileAndBroker.FilePath, fxRates, eventsFileAndBroker.Broker))
     .ToList();
 ProcessEvents(stockEvents, basics, cryptoPortfolioValues);
 
 var cryptoEventsReader = new CryptoEventsReader(basics);
-var cryptoEvents = basics.CryptoEventsFilePaths
-    .SelectMany(pattern => Directory.GetFiles(basics.ReportsDirectoryPath, pattern))
-    .Order()
-    .SelectMany(cryptoEventsReader.Parse)
+var cryptoEvents = basics.CryptoEventsFiles
+    .SelectMany(eventsFiles => Directory
+        .GetFiles(basics.ReportsDirectoryPath, eventsFiles.FilePattern)
+        .Select(path => new EventsFileAndBroker(path, eventsFiles.Broker)))
+    .OrderBy(eventsFileAndBroker => eventsFileAndBroker.FilePath)
+    .SelectMany(eventsFileAndBroker => cryptoEventsReader.Parse(eventsFileAndBroker.FilePath, eventsFileAndBroker.Broker))
     .ToList();
 ProcessEvents(cryptoEvents, basics, cryptoPortfolioValues);
 
@@ -73,3 +74,4 @@ static void PrintEnvironmentAndSettings(TextWriter outWriter)
     outWriter.WriteLine(new string('=', 100));
 }
 
+record EventsFileAndBroker(string FilePath, string Broker);

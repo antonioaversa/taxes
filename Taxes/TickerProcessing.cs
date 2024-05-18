@@ -1,4 +1,6 @@
-﻿namespace Taxes;
+﻿using static Taxes.FR2074Section5;
+
+namespace Taxes;
 
 class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValues = null)
 {
@@ -208,18 +210,11 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
         var (plusValueCryptoBase, cryptoFractionInitialCapital) =
             CalculatePlusValueCryptoBase(tickerEvent, tickerState, totalSellPriceBase, Math.Max(sellFees1Base, sellFees2Base));
 
-        outWriter.WriteLine(new string('*', 100));
-        outWriter.WriteLine($"{tickerEvent.Ticker} [{tickerState.Isin}]");
-        outWriter.WriteLine("REVOLUT LTD");
-        outWriter.WriteLine(tickerEvent.Date.ToString("dd'/'MM'/'yyyy"));
-        outWriter.WriteLine(Math.Round(perShareSellPriceBase, 2));
-        outWriter.WriteLine(Math.Round(tickerEvent.Quantity.Value, 0));
-        outWriter.WriteLine(Math.Round(tickerEvent.FeesLocal.Value));
-        outWriter.WriteLine(Math.Round(perShareAvgBuyPriceBase, 2));
-        outWriter.WriteLine(Math.Round(totalAvgBuyPriceBase, 0));
-        outWriter.WriteLine(0);
-        outWriter.WriteLine(Math.Round(plusValueCumpBase, 0));
-        outWriter.WriteLine(new string('*', 100));
+        Print(tickerEvent, tickerState, basics, outWriter, new(
+            PerShareSellPriceBase: perShareSellPriceBase, 
+            PerShareAvgBuyPriceBase: perShareAvgBuyPriceBase,
+            TotalAvgBuyPriceBase: totalAvgBuyPriceBase,
+            PlusValueCumpBase: plusValueCumpBase));
 
         return tickerState with
         {

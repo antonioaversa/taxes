@@ -10,13 +10,13 @@ partial class StockEventsReader(Basics basics)
 {
     public Basics Basics => basics;
 
-    public IList<Event> Parse(string path, FxRates fxRates)
+    public IList<Event> Parse(string path, FxRates fxRates, string broker = "DEFAULT")
     {
         using var reader = new StreamReader(path);
-        return Parse(reader, fxRates);
+        return Parse(reader, fxRates, broker);
     }
 
-    public IList<Event> Parse(TextReader textReader, FxRates fxRates)
+    public IList<Event> Parse(TextReader textReader, FxRates fxRates, string broker = "DEFAULT")
     {
         var csvConfiguration = new CsvConfiguration(basics.DefaultCulture)
         {
@@ -82,7 +82,8 @@ partial class StockEventsReader(Basics basics)
                 TotalAmountLocal: totalAmountLocal,
                 FeesLocal: feesLocal,
                 Currency: currency,
-                FXRate: fxRate
+                FXRate: fxRate,
+                Broker: broker
             ));
         }
 

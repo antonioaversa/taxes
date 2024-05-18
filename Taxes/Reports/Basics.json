@@ -191,15 +191,33 @@
       "ISIN": "IE_INTEREST_IBKR"
     }
   },
-  "StockEventsFilePaths": [
-    "2022 Revolut All Stocks Transactions.csv",
-    "2023 Revolut All Stocks Transactions.csv",
-    "2022-2023 IBKR All Stocks Transactions.csv"
+  "StockEventsFiles": [
+    {
+      "FilePattern": "2022 Revolut All Stocks Transactions.csv",
+      "Broker": "REVOLUT LTD"
+    },
+    {
+      "FilePattern": "2023 Revolut All Stocks Transactions.csv",
+      "Broker": "REVOLUT RSEUAB"
+    },
+    {
+      "FilePattern": "2022-2023 IBKR All Stocks Transactions.csv",
+      "Broker": "INTERACTIVE BROKERS"
+    }
   ],
-  "CryptoEventsFilePaths": [
-    "2022 Revolut All Crypto Transactions.csv",
-    "2022 Revolut NuCypher Transactions.csv",
-    "2023 Revolut All Crypto Transactions.csv"
+  "CryptoEventsFiles": [
+    {
+      "FilePattern": "2022 Revolut All Crypto Transactions.csv",
+      "Broker": "REVOLUT LTD"
+    },
+    {
+      "FilePattern": "2022 Revolut NuCypher Transactions.csv",
+      "Broker": "REVOLUT LTD"
+    },
+    {
+      "FilePattern": "2023 Revolut All Crypto Transactions.csv",
+      "Broker": "REVOLUT LTD"
+    }
   ],
   "CryptoPortfolioValuesCurrency": "USD",
   "CryptoPortfolioValuesFilePath": "Crypto Portfolio Values USD.csv",

@@ -13,7 +13,7 @@ class CryptoEventsReader(Basics basics)
 
     public Basics Basics => basics;
 
-    public IList<Event> Parse(string pattern)
+    public IList<Event> Parse(string pattern, string broker)
     {
         var events = new List<Event>();
 
@@ -73,7 +73,8 @@ class CryptoEventsReader(Basics basics)
                     TotalAmountLocal: totalAmountLocal,
                     FeesLocal: feesLocal,
                     Currency: record.BaseCurrency,
-                    FXRate: fxRate));
+                    FXRate: fxRate,
+                    Broker: broker));
             }
         }
 

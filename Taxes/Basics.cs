@@ -36,13 +36,15 @@ public partial class Basics
 
     public CultureInfo FxRatesMultiCurrenciesCulture { get; } = CultureInfo.GetCultureInfo("fr-FR");
 
+    public CultureInfo FR2074Section5Culture { get; } = CultureInfo.GetCultureInfo("fr-FR");
+
     // Read from Basics.json
     public Func<decimal, decimal> Rounding { get; init; }
     public decimal Precision { get; init; }
     public string BaseCurrency { get; init; }
     public ReadOnlyDictionary<string, Position> Positions { get; init; }
-    public ReadOnlyCollection<string> StockEventsFilePaths { get; init; }
-    public ReadOnlyCollection<string> CryptoEventsFilePaths { get; init; }
+    public ReadOnlyCollection<EventsFiles> StockEventsFiles { get; init; }
+    public ReadOnlyCollection<EventsFiles> CryptoEventsFiles { get; init; }
     public string CryptoPortfolioValuesCurrency { get; init; }
     public string CryptoPortfolioValuesFilePath { get; init; }
     public string FXRatesFilePath { get; init; }
@@ -82,11 +84,11 @@ public partial class Basics
             ?? throw new InvalidDataException($"Invalid {nameof(BaseCurrency)} in {basicsFileName}");
         Positions = new ReadOnlyDictionary<string, Position>(basicsFile.Positions
             ?? throw new InvalidDataException($"Invalid {nameof(Positions)} in {basicsFileName}"));
-        StockEventsFilePaths = (basicsFile.StockEventsFilePaths
-            ?? throw new InvalidDataException($"Invalid {nameof(StockEventsFilePaths)} in {basicsFileName}")).AsReadOnly();
+        StockEventsFiles = (basicsFile.StockEventsFiles
+            ?? throw new InvalidDataException($"Invalid {nameof(StockEventsFiles)} in {basicsFileName}")).AsReadOnly();
         
-        CryptoEventsFilePaths = (basicsFile.CryptoEventsFilePaths
-            ?? throw new InvalidDataException($"Invalid {nameof(CryptoEventsFilePaths)} in {basicsFileName}")).AsReadOnly();
+        CryptoEventsFiles = (basicsFile.CryptoEventsFiles
+            ?? throw new InvalidDataException($"Invalid {nameof(CryptoEventsFiles)} in {basicsFileName}")).AsReadOnly();
         CryptoPortfolioValuesCurrency = basicsFile.CryptoPortfolioValuesCurrency
             ?? throw new InvalidDataException($"Invalid {nameof(CryptoPortfolioValuesCurrency)} in {basicsFileName}");
         CryptoPortfolioValuesFilePath = basicsFile.CryptoPortfolioValuesFilePath
@@ -130,9 +132,9 @@ public partial class Basics
         public decimal? Precision { get; set; } = null;
         public string? BaseCurrency { get; set; } = null;
         public Dictionary<string, Position>? Positions { get; set; } = null;
-        public List<string>? StockEventsFilePaths { get; set; } = null;
+        public List<EventsFiles>? StockEventsFiles { get; set; } = null;
 
-        public List<string>? CryptoEventsFilePaths { get; set; } = null;
+        public List<EventsFiles>? CryptoEventsFiles { get; set; } = null;
         public string? CryptoPortfolioValuesCurrency { get; set; } = null;
         public string? CryptoPortfolioValuesFilePath { get; set; } = null;
 
@@ -146,4 +148,6 @@ public partial class Basics
         public string? Country { get; set; } = null;
         public string? ISIN { get; set; } = null;
     }
+
+    public sealed record EventsFiles(string FilePattern, string Broker);
 }
