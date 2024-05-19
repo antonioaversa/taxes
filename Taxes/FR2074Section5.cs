@@ -1,27 +1,32 @@
 ﻿namespace Taxes;
 
-public static class FR2074Section5
+static class FR2074Section5
 {
-    internal static void Print(
-        Event tickerEvent, TickerState tickerState, Basics basics, TextWriter outWriter, Data data)
+    private static readonly string Separator = new('*', 100);
+
+    public static void Print(Data data, TextWriter outWriter)
     {
-        outWriter.WriteLine(new string('*', 100));
-        outWriter.WriteLine($"{tickerEvent.Ticker} [{tickerState.Isin}]");
-        outWriter.WriteLine(tickerEvent.Broker);
-        outWriter.WriteLine(tickerEvent.Date.ToString("dd'/'MM'/'yyyy"));
+        outWriter.WriteLine(Separator.Insert(5, " 2074 Section 5 "));
+        outWriter.WriteLine($"{data.TickerEvent.Ticker} [{data.TickerState.Isin}]");
+        outWriter.WriteLine(data.TickerEvent.Broker);
+        outWriter.WriteLine(data.TickerEvent.Date.ToString("dd'/'MM'/'yyyy"));
         outWriter.WriteLine(Math.Round(data.PerShareSellPriceBase, 2));
-        outWriter.WriteLine(Math.Round(tickerEvent.Quantity!.Value, 0));
-        outWriter.WriteLine(Math.Round(tickerEvent.FeesLocal!.Value));
-        outWriter.WriteLine(Math.Round(data.PerShareAvgBuyPriceBase, 2).ToString(basics.FR2074Section5Culture));
+        outWriter.WriteLine(Math.Round(data.TickerEvent.Quantity!.Value, 0));
+        outWriter.WriteLine(Math.Round(data.TickerEvent.FeesLocal!.Value));
+        outWriter.WriteLine(Math.Round(data.PerShareAvgBuyPriceBase, 2).ToString(data.Basics.FR2074Section5Culture));
         outWriter.WriteLine(Math.Round(data.TotalAvgBuyPriceBase, 0));
         outWriter.WriteLine(0);
         outWriter.WriteLine(Math.Round(data.PlusValueCumpBase, 0));
-        outWriter.WriteLine(new string('*', 100));
+        outWriter.WriteLine(Separator);
     }
 
     public record Data(
-        decimal PerShareSellPriceBase, 
-        decimal PerShareAvgBuyPriceBase, 
+        Basics Basics,
+        TickerState TickerState,
+        Event TickerEvent,
+        decimal PerShareSellPriceBase,
+        decimal TotalSellFeesBase,
+        decimal PerShareAvgBuyPriceBase,
         decimal TotalAvgBuyPriceBase,
         decimal PlusValueCumpBase);
 }

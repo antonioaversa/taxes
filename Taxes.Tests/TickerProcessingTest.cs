@@ -4,7 +4,7 @@ using static EventType;
 using static AssertExtensions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-[TestClass]
+[TestClass] 
 public class TickerProcessingTest
 {
     private const string EUR = "EUR";

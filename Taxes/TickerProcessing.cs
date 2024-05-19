@@ -210,11 +210,15 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
         var (plusValueCryptoBase, cryptoFractionInitialCapital) =
             CalculatePlusValueCryptoBase(tickerEvent, tickerState, totalSellPriceBase, Math.Max(sellFees1Base, sellFees2Base));
 
-        Print(tickerEvent, tickerState, basics, outWriter, new(
-            PerShareSellPriceBase: perShareSellPriceBase, 
+        Print(new(
+            Basics: basics,
+            TickerState: tickerState,
+            TickerEvent: tickerEvent,
+            PerShareSellPriceBase: perShareSellPriceBase,
+            TotalSellFeesBase: sellFees1Base,
             PerShareAvgBuyPriceBase: perShareAvgBuyPriceBase,
             TotalAvgBuyPriceBase: totalAvgBuyPriceBase,
-            PlusValueCumpBase: plusValueCumpBase));
+            PlusValueCumpBase: plusValueCumpBase), outWriter);
 
         return tickerState with
         {
