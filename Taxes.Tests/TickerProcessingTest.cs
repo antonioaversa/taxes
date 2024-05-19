@@ -114,7 +114,7 @@ public class TickerProcessingTest
     {
         var reset1 = new Event(T0 + 0 * D, Reset, Ticker, null, null, 0m, null, EUR, 1);
         var state = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
-        var stateAfterReset = Instance.ProcessReset(reset1, [reset1], 0, state, NoOut);
+        var stateAfterReset = Instance.ProcessReset(reset1, [reset1], 0, state, NoOut, NoOut);
         Assert.AreEqual(Ticker, stateAfterReset.Ticker);
         Assert.AreEqual(Isin, stateAfterReset.Isin);
     }
@@ -125,7 +125,7 @@ public class TickerProcessingTest
         var cashWithdrawal1 = new Event(T0 + 0 * D, CashWithdrawal, Ticker, null, null, 100, null, EUR, 1);
         var reset1 = new Event(T0 + 0 * D, Reset, Ticker, null, null, 0m, null, EUR, 1);
         var state = new TickerState(Ticker, Isin);
-        ThrowsAny<Exception>(() => Instance.ProcessReset(reset1, [cashWithdrawal1, reset1], 0, state, NoOut));
+        ThrowsAny<Exception>(() => Instance.ProcessReset(reset1, [cashWithdrawal1, reset1], 0, state, NoOut, NoOut));
     }
 
     [TestMethod]
@@ -133,7 +133,7 @@ public class TickerProcessingTest
     {
         var custodyFee1 = new Event(T0 + 0 * D, CustodyFee, Ticker, 0, 0, 0, 12.0m, EUR, 1);
         var state = new TickerState(Ticker, Isin);
-        ThrowsAny<Exception>(() => Instance.ProcessReset(custodyFee1, [custodyFee1], 0, state, NoOut));
+        ThrowsAny<Exception>(() => Instance.ProcessReset(custodyFee1, [custodyFee1], 0, state, NoOut, NoOut));
     }
 
     [TestMethod]
@@ -141,7 +141,7 @@ public class TickerProcessingTest
     {
         var state = new TickerState(Ticker, Isin);
         var reset1 = new Event(T0 + 0 * D, Reset, Ticker, null, null, TotalAmountLocal: 303, FeesLocal: null, Currency: EUR, FXRate: 1);
-        ThrowsAny<Exception>(() => Instance.ProcessReset(reset1, [reset1], 0, state, NoOut));
+        ThrowsAny<Exception>(() => Instance.ProcessReset(reset1, [reset1], 0, state, NoOut, NoOut));
     }
 
     [TestMethod]
@@ -149,11 +149,11 @@ public class TickerProcessingTest
     {
         var state = new TickerState(Ticker, Isin);
         var reset1 = new Event(T0 + 0 * D, Reset, Ticker, Quantity: 4, PricePerShareLocal: null, TotalAmountLocal: 0m, FeesLocal: null, Currency: EUR, FXRate: 1);
-        ThrowsAny<Exception>(() => Instance.ProcessReset(reset1, [reset1], 0, state, NoOut));
+        ThrowsAny<Exception>(() => Instance.ProcessReset(reset1, [reset1], 0, state, NoOut, NoOut));
         reset1 = new Event(T0 + 0 * D, Reset, Ticker, null, PricePerShareLocal: 100, TotalAmountLocal: 0m, FeesLocal: null, Currency: EUR, FXRate: 1);
-        ThrowsAny<Exception>(() => Instance.ProcessReset(reset1, [reset1], 0, state, NoOut));
+        ThrowsAny<Exception>(() => Instance.ProcessReset(reset1, [reset1], 0, state, NoOut, NoOut));
         reset1 = new Event(T0 + 0 * D, Reset, Ticker, null, null, 0m, FeesLocal: 3, Currency: EUR, FXRate: 1);
-        ThrowsAny<Exception>(() => Instance.ProcessReset(reset1, [reset1], 0, state, NoOut));
+        ThrowsAny<Exception>(() => Instance.ProcessReset(reset1, [reset1], 0, state, NoOut, NoOut));
     }
 
     [TestMethod]
@@ -161,7 +161,7 @@ public class TickerProcessingTest
     {
         var reset1 = new Event(T0 + 0 * D, Reset, Ticker, null, null, 0m, null, EUR, 1);
         var state = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
-        var stateAfterReset = Instance.ProcessReset(reset1, [reset1], 0, state, NoOut);
+        var stateAfterReset = Instance.ProcessReset(reset1, [reset1], 0, state, NoOut, NoOut);
         AssertEq(3, stateAfterReset.TotalQuantity);
         AssertEq(5.5m, stateAfterReset.TotalAmountBase);
     }
@@ -171,7 +171,7 @@ public class TickerProcessingTest
     {
         var reset1 = new Event(T0 + 0 * D, Reset, Ticker, null, null, 0m, null, EUR, 1);
         var state = new TickerState(Ticker, Isin, PepsCurrentIndex: 3, PepsCurrentIndexSoldQuantity: 5.5m);
-        var stateAfterReset = Instance.ProcessReset(reset1, [reset1], 0, state, NoOut);
+        var stateAfterReset = Instance.ProcessReset(reset1, [reset1], 0, state, NoOut, NoOut);
         AssertEq(3, stateAfterReset.PepsCurrentIndex);
         AssertEq(5.5m, stateAfterReset.PepsCurrentIndexSoldQuantity);
     }
@@ -182,7 +182,7 @@ public class TickerProcessingTest
         var reset1 = new Event(T0 + 0 * D, Reset, Ticker, null, null, 0m, null, EUR, 1);
         var state = new TickerState(Ticker, Isin, 
             PortfolioAcquisitionValueBase: 5.5m, CryptoFractionOfInitialCapital: 0.75m);
-        var stateAfterReset = Instance.ProcessReset(reset1, [reset1], 0, state, NoOut);
+        var stateAfterReset = Instance.ProcessReset(reset1, [reset1], 0, state, NoOut, NoOut);
         AssertEq(5.5m, stateAfterReset.PortfolioAcquisitionValueBase);
         AssertEq(0.75m, stateAfterReset.CryptoFractionOfInitialCapital);
     }
@@ -193,7 +193,7 @@ public class TickerProcessingTest
         var reset1 = new Event(T0 + 0 * D, Reset, Ticker, null, null, 0m, null, EUR, 1);
         var state = new TickerState(Ticker, Isin, 
             PlusValueCumpBase: 5.5m, PlusValuePepsBase: 5.5m, PlusValueCryptoBase: 5.5m);
-        var stateAfterReset = Instance.ProcessReset(reset1, [reset1], 0, state, NoOut);
+        var stateAfterReset = Instance.ProcessReset(reset1, [reset1], 0, state, NoOut, NoOut);
         AssertEq(0, stateAfterReset.PlusValueCumpBase);
         AssertEq(0, stateAfterReset.PlusValuePepsBase);
         AssertEq(0, stateAfterReset.PlusValueCryptoBase);
@@ -205,7 +205,7 @@ public class TickerProcessingTest
         var reset1 = new Event(T0 + 0 * D, Reset, Ticker, null, null, 0m, null, EUR, 1);
         var state = new TickerState(Ticker, Isin, 
                        MinusValueCumpBase: 5.5m, MinusValuePepsBase: 5.5m, MinusValueCryptoBase: 5.5m);
-        var stateAfterReset = Instance.ProcessReset(reset1, [reset1], 0, state, NoOut);
+        var stateAfterReset = Instance.ProcessReset(reset1, [reset1], 0, state, NoOut, NoOut);
         AssertEq(0, stateAfterReset.MinusValueCumpBase);
         AssertEq(0, stateAfterReset.MinusValuePepsBase);
         AssertEq(0, stateAfterReset.MinusValueCryptoBase);
@@ -217,7 +217,7 @@ public class TickerProcessingTest
         var reset1 = new Event(T0 + 0 * D, Reset, Ticker, null, null, 0m, null, EUR, 1);
         var state = new TickerState(Ticker, Isin, 
                        NetDividendsBase: 5.5m, WhtDividendsBase: 5.5m, GrossDividendsBase: 5.5m);
-        var stateAfterReset = Instance.ProcessReset(reset1, [reset1], 0, state, NoOut);
+        var stateAfterReset = Instance.ProcessReset(reset1, [reset1], 0, state, NoOut, NoOut);
         AssertEq(0, stateAfterReset.NetDividendsBase);
         AssertEq(0, stateAfterReset.WhtDividendsBase);
         AssertEq(0, stateAfterReset.GrossDividendsBase);
@@ -234,7 +234,7 @@ public class TickerProcessingTest
             NetDividendsBase: 4.5m, WhtDividendsBase: 0.2m, GrossDividendsBase: 4.7m,
             PepsCurrentIndex: 3, PepsCurrentIndexSoldQuantity: 2.1m,
             PortfolioAcquisitionValueBase: 23.3m, CryptoFractionOfInitialCapital: 0.75m);
-        var stateAfterNoop = Instance.ProcessNoop(cashTopUp1, [cashTopUp1], 0, state, NoOut);
+        var stateAfterNoop = Instance.ProcessNoop(cashTopUp1, [cashTopUp1], 0, state, NoOut, NoOut);
         Assert.AreEqual(state, stateAfterNoop);
     }
 
@@ -244,7 +244,7 @@ public class TickerProcessingTest
         var cashWithdrawal1 = new Event(T0 + 0 * D, CashWithdrawal, Ticker, null, null, 100, null, EUR, 1);
         var cashTopUp1 = new Event(T0 + 0 * D, CashTopUp, Ticker, null, null, 0m, null, EUR, 1);
         var state = new TickerState(Ticker, Isin);
-        ThrowsAny<Exception>(() => Instance.ProcessNoop(cashTopUp1, [cashWithdrawal1, cashTopUp1], 0, state, NoOut));
+        ThrowsAny<Exception>(() => Instance.ProcessNoop(cashTopUp1, [cashWithdrawal1, cashTopUp1], 0, state, NoOut, NoOut));
     }
 
     [TestMethod]
@@ -253,7 +253,7 @@ public class TickerProcessingTest
         var cashWithdrawal1 = new Event(T0 + 0 * D, CashWithdrawal, Ticker, null, null, 100, null, EUR, 1);
         var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 3, 100, 303, 3, EUR, 1);
         var state = new TickerState(Ticker, Isin);
-        ThrowsAny<Exception>(() => Instance.ProcessBuy(buy1, [cashWithdrawal1, buy1], 0, state, NoOut));
+        ThrowsAny<Exception>(() => Instance.ProcessBuy(buy1, [cashWithdrawal1, buy1], 0, state, NoOut, NoOut));
     }
 
     [TestMethod]
@@ -261,7 +261,7 @@ public class TickerProcessingTest
     {
         var custodyFee1 = new Event(T0 + 0 * D, CustodyFee, Ticker, null, null, 12.0m, null, EUR, 1);
         var state = new TickerState(Ticker, Isin);
-        ThrowsAny<Exception>(() => Instance.ProcessBuy(custodyFee1, [custodyFee1], 0, state, NoOut));
+        ThrowsAny<Exception>(() => Instance.ProcessBuy(custodyFee1, [custodyFee1], 0, state, NoOut, NoOut));
     }
 
     [TestMethod]
@@ -269,7 +269,7 @@ public class TickerProcessingTest
     {
         var buy1 = new Event(T0 + 0 * D, BuyLimit, null, 3, 100, 303, 3, EUR, 1);
         var state = new TickerState(Ticker, Isin);
-        ThrowsAny<Exception>(() => Instance.ProcessBuy(buy1, [buy1], 0, state, NoOut));
+        ThrowsAny<Exception>(() => Instance.ProcessBuy(buy1, [buy1], 0, state, NoOut, NoOut));
     }
 
     [TestMethod]
@@ -277,7 +277,7 @@ public class TickerProcessingTest
     {
         var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 3, null, 303, 3, EUR, 1);
         var state = new TickerState(Ticker, Isin);
-        ThrowsAny<Exception>(() => Instance.ProcessBuy(buy1, [buy1], 0, state, NoOut));
+        ThrowsAny<Exception>(() => Instance.ProcessBuy(buy1, [buy1], 0, state, NoOut, NoOut));
     }
 
     [TestMethod]
@@ -285,9 +285,9 @@ public class TickerProcessingTest
     {
         var state = new TickerState(Ticker, Isin);
         var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, null, 100, 303, 3, EUR, 1);
-        ThrowsAny<Exception>(() => Instance.ProcessBuy(buy1, [buy1], 0, state, NoOut));
+        ThrowsAny<Exception>(() => Instance.ProcessBuy(buy1, [buy1], 0, state, NoOut, NoOut));
         buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, -3, 100, 303, 3, EUR, 1);
-        ThrowsAny<Exception>(() => Instance.ProcessBuy(buy1, [buy1], 0, state, NoOut));
+        ThrowsAny<Exception>(() => Instance.ProcessBuy(buy1, [buy1], 0, state, NoOut, NoOut));
     }
 
     [TestMethod]
@@ -296,11 +296,11 @@ public class TickerProcessingTest
         // Buying 3 shares at 100 EUR, with fees of 3 EUR => Total Amount Local of 0 EUR
         var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 3, 100, 0m, 3, EUR, 1);
         var state = new TickerState(Ticker, Isin);
-        ThrowsAny<Exception>(() => Instance.ProcessBuy(buy1, [buy1], 0, state, NoOut));
+        ThrowsAny<Exception>(() => Instance.ProcessBuy(buy1, [buy1], 0, state, NoOut, NoOut));
 
         // Buying 3 shares at 100 EUR, with fees of 3 EUR => Total Amount Local of -1 EUR
         buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 3, 100, -1m, 3, EUR, 1);
-        ThrowsAny<Exception>(() => Instance.ProcessBuy(buy1, [buy1], 0, state, NoOut));
+        ThrowsAny<Exception>(() => Instance.ProcessBuy(buy1, [buy1], 0, state, NoOut, NoOut));
     }
 
     [TestMethod]
@@ -308,7 +308,7 @@ public class TickerProcessingTest
     {
         var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 3, 100, 303, null, EUR, 1);
         var state = new TickerState(Ticker, Isin);
-        ThrowsAny<Exception>(() => Instance.ProcessBuy(buy1, [buy1], 0, state, NoOut));
+        ThrowsAny<Exception>(() => Instance.ProcessBuy(buy1, [buy1], 0, state, NoOut, NoOut));
     }
 
     [TestMethod]
@@ -317,7 +317,7 @@ public class TickerProcessingTest
         var initialState = new TickerState(Ticker, Isin);
         var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 3, 1.5m, 5.5m, 1.0m, EUR, 1);
         var buy2 = new Event(T0 + 0 * D, BuyLimit, Ticker, 3, 100, 303, 3, USD, 1);
-        ThrowsAny<Exception>(() => Instance.ProcessBuy(buy2, [buy1, buy2], 1, initialState, NoOut));
+        ThrowsAny<Exception>(() => Instance.ProcessBuy(buy2, [buy1, buy2], 1, initialState, NoOut, NoOut));
     }
 
     [TestMethod]
@@ -326,7 +326,7 @@ public class TickerProcessingTest
         var cashTopUp1 = new Event(T0 + 0 * D, CashTopUp, Ticker, null, null, 100, null, EUR, 1);
         var stateAfterCashTopUp1 = new TickerState(Ticker, Isin);
         var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 3, 100, 303, 3, USD, 1);
-        var stateAfterBuy1 = Instance.ProcessBuy(buy1, [cashTopUp1, buy1], 1, stateAfterCashTopUp1, NoOut);
+        var stateAfterBuy1 = Instance.ProcessBuy(buy1, [cashTopUp1, buy1], 1, stateAfterCashTopUp1, NoOut, NoOut);
         Assert.AreEqual(303, stateAfterBuy1.TotalAmountBase);
     }
 
@@ -335,7 +335,7 @@ public class TickerProcessingTest
     {
         var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 3, 100, 303, 3, EUR, 1);
         var state = new TickerState(AnotherTicker, AnotherIsin);
-        ThrowsAny<Exception>(() => Instance.ProcessBuy(buy1, [buy1], 0, state, NoOut));
+        ThrowsAny<Exception>(() => Instance.ProcessBuy(buy1, [buy1], 0, state, NoOut, NoOut));
     }
 
     [TestMethod]
@@ -343,7 +343,7 @@ public class TickerProcessingTest
     {
         var state = new TickerState(Ticker, Isin);
         var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 3, 100, 303, 2, EUR, 1); // Fees should be 3
-        ThrowsAny<Exception>(() => Instance.ProcessBuy(buy1, [buy1], 0, state, NoOut));
+        ThrowsAny<Exception>(() => Instance.ProcessBuy(buy1, [buy1], 0, state, NoOut, NoOut));
     }
 
     [TestMethod]
@@ -352,15 +352,15 @@ public class TickerProcessingTest
         var state = new TickerState(Ticker, Isin);
         // First buy of 3 shares
         var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 3, 100, 303, 3, EUR, 1);
-        var stateAfterBuy = Instance.ProcessBuy(buy1, [buy1], 0, state, NoOut);
+        var stateAfterBuy = Instance.ProcessBuy(buy1, [buy1], 0, state, NoOut, NoOut);
         AssertEq(3, stateAfterBuy.TotalQuantity);
         // Second buy of 2 shares
         var buy2 = new Event(T0 + 1 * D, BuyLimit, Ticker, 2, 110, 222, 2, EUR, 1);
-        stateAfterBuy = Instance.ProcessBuy(buy2, [buy1, buy2], 1, stateAfterBuy, NoOut);
+        stateAfterBuy = Instance.ProcessBuy(buy2, [buy1, buy2], 1, stateAfterBuy, NoOut, NoOut);
         AssertEq(5, stateAfterBuy.TotalQuantity);
         // Third buy of 2.5 shares
         var buy3 = new Event(T0 + 2 * D, BuyLimit, Ticker, 2.5m, 90, 227.5m, 2.5m, EUR, 1);
-        stateAfterBuy = Instance.ProcessBuy(buy3, [buy1, buy2, buy3], 2, stateAfterBuy, NoOut);
+        stateAfterBuy = Instance.ProcessBuy(buy3, [buy1, buy2, buy3], 2, stateAfterBuy, NoOut, NoOut);
         AssertEq(7.5m, stateAfterBuy.TotalQuantity);
     }
 
@@ -370,15 +370,15 @@ public class TickerProcessingTest
         var state = new TickerState(Ticker, Isin);
         // First buy of 3 shares at 100 EUR, with fees of 3 EUR => Total Amount Local of 303 EUR
         var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 3, 100, 303, 3, EUR, 1);
-        var stateAfterBuy = Instance.ProcessBuy(buy1, [buy1], 0, state, NoOut);
+        var stateAfterBuy = Instance.ProcessBuy(buy1, [buy1], 0, state, NoOut, NoOut);
         AssertEq(303, stateAfterBuy.TotalAmountBase);
         // Second buy of 2 shares at 110 EUR, with fees of 2 EUR => Total Amount Local of 222 EUR
         var buy2 = new Event(T0 + 1 * D, BuyLimit, Ticker, 2, 110, 222, 2, EUR, 1);
-        stateAfterBuy = Instance.ProcessBuy(buy2, [buy1, buy2], 1, stateAfterBuy, NoOut);
+        stateAfterBuy = Instance.ProcessBuy(buy2, [buy1, buy2], 1, stateAfterBuy, NoOut, NoOut);
         AssertEq(525, stateAfterBuy.TotalAmountBase);
         // Third buy of 2.5 shares at 90 EUR, with fees of 2.5 EUR => Total Amount Local of 227.5 EUR
         var buy3 = new Event(T0 + 2 * D, BuyLimit, Ticker, 2.5m, 90, 227.5m, 2.5m, EUR, 1);
-        stateAfterBuy = Instance.ProcessBuy(buy3, [buy1, buy2, buy3], 2, stateAfterBuy, NoOut);
+        stateAfterBuy = Instance.ProcessBuy(buy3, [buy1, buy2, buy3], 2, stateAfterBuy, NoOut, NoOut);
         AssertEq(752.5m, stateAfterBuy.TotalAmountBase);
     }
 
@@ -392,7 +392,7 @@ public class TickerProcessingTest
 
         // First buy 3 shares at 100.10002 USD, with fees of 3.20003 USD => Total Amount Local of 300.30006 USD + 3.20003 USD = 303.50009 USD
         var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 3, 100.10002m, 303.50009m, 3.20003m, localCurrency, 2m);
-        tickerProcessing.ProcessBuy(buy1, [buy1], 0, initialState, writer);
+        tickerProcessing.ProcessBuy(buy1, [buy1], 0, initialState, writer, NoOut);
         var output = writer.ToString();
 
         // Prints Total Buy Price in local currency as rounded value
@@ -419,7 +419,7 @@ public class TickerProcessingTest
         var cashWithdrawal1 = new Event(T0 + 0 * D, CashWithdrawal, Ticker, null, null, 100, null, EUR, 1);
         var sellLimit1 = new Event(T0 + 0 * D, SellLimit, Ticker, 3, 100, 303, 3, EUR, 1);
         var state = new TickerState(Ticker, Isin);
-        ThrowsAny<Exception>(() => Instance.ProcessSell(sellLimit1, [cashWithdrawal1, sellLimit1], 0, state, NoOut));
+        ThrowsAny<Exception>(() => Instance.ProcessSell(sellLimit1, [cashWithdrawal1, sellLimit1], 0, state, NoOut, NoOut));
     }
 
     [TestMethod]
@@ -429,7 +429,7 @@ public class TickerProcessingTest
         var custodyFee1 = new Event(T0 + 0 * D, CustodyFee, Ticker, 0, 0, 0, 12.0m, EUR, 1);
         // While owning no shares
         var state = new TickerState(Ticker, Isin);
-        ThrowsAny<Exception>(() => Instance.ProcessSell(custodyFee1, [custodyFee1], 0, state, NoOut));
+        ThrowsAny<Exception>(() => Instance.ProcessSell(custodyFee1, [custodyFee1], 0, state, NoOut, NoOut));
     }
 
     [TestMethod]
@@ -439,7 +439,7 @@ public class TickerProcessingTest
         var sell1 = new Event(T0 + 0 * D, SellLimit, null, 1, 2.0m, 1.8m, 0.2m, EUR, 1);
         // While owning 3 shares for a total of 5.5 EUR
         var state = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
-        ThrowsAny<Exception>(() => Instance.ProcessSell(sell1, [sell1], 0, state, NoOut));
+        ThrowsAny<Exception>(() => Instance.ProcessSell(sell1, [sell1], 0, state, NoOut, NoOut));
     }
 
     [TestMethod]
@@ -449,10 +449,10 @@ public class TickerProcessingTest
         var sell1 = new Event(T0 + 0 * D, SellLimit, Ticker, 1, 2.0m, 0m, 0.2m, EUR, 1);
         // While owning 3 shares for a total of 5.5 EUR
         var state = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
-        ThrowsAny<Exception>(() => Instance.ProcessSell(sell1, [sell1], 0, state, NoOut));
+        ThrowsAny<Exception>(() => Instance.ProcessSell(sell1, [sell1], 0, state, NoOut, NoOut));
         // Selling 1 share at 2.0 EUR, with fees of 0.2 EUR => Total Amount Local of -1 EUR
         sell1 = new Event(T0 + 0 * D, SellLimit, Ticker, 1, 2.0m, -1m, 0.2m, EUR, 1);
-        ThrowsAny<Exception>(() => Instance.ProcessSell(sell1, [sell1], 0, state, NoOut));
+        ThrowsAny<Exception>(() => Instance.ProcessSell(sell1, [sell1], 0, state, NoOut, NoOut));
     }
 
     [TestMethod]
@@ -462,7 +462,7 @@ public class TickerProcessingTest
         var sell1 = new Event(T0 + 0 * D, SellLimit, Ticker, 1, 2.0m, 1.8m, null, EUR, 1);
         // While owning 3 shares for a total of 5.5 EUR
         var state = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
-        ThrowsAny<Exception>(() => Instance.ProcessSell(sell1, [sell1], 0, state, NoOut));
+        ThrowsAny<Exception>(() => Instance.ProcessSell(sell1, [sell1], 0, state, NoOut, NoOut));
     }
 
     [TestMethod]
@@ -472,7 +472,7 @@ public class TickerProcessingTest
         var sell1 = new Event(T0 + 0 * D, SellLimit, Ticker, 1, 2.0m, 1.8m, 0.2m, EUR, 1);
         // While owning 3 shares of B for a total of 5.5 EUR
         var state = new TickerState(AnotherTicker, AnotherIsin, TotalQuantity: 3, TotalAmountBase: 5.5m);
-        ThrowsAny<Exception>(() => Instance.ProcessSell(sell1, [sell1], 0, state, NoOut));
+        ThrowsAny<Exception>(() => Instance.ProcessSell(sell1, [sell1], 0, state, NoOut, NoOut));
     }
 
     [TestMethod]
@@ -482,7 +482,7 @@ public class TickerProcessingTest
         var sell1 = new Event(T0 + 0 * D, SellLimit, Ticker, 1, null, 1.8m, 0.2m, EUR, 1);
         // While owning 3 shares for a total of 5.5 EUR
         var state = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
-        ThrowsAny<Exception>(() => Instance.ProcessSell(sell1, [sell1], 0, state, NoOut));
+        ThrowsAny<Exception>(() => Instance.ProcessSell(sell1, [sell1], 0, state, NoOut, NoOut));
     }
 
     [TestMethod]
@@ -492,10 +492,10 @@ public class TickerProcessingTest
         var state = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
         // Selling NULL shares at 2.0 EUR, with fees of 0.2 EUR => Total Amount Local of 1.8 EUR
         var sell1 = new Event(T0 + 0 * D, SellLimit, Ticker, null, 2.0m, 1.8m, 0.2m, EUR, 1);
-        ThrowsAny<Exception>(() => Instance.ProcessSell(sell1, [sell1], 0, state, NoOut));
+        ThrowsAny<Exception>(() => Instance.ProcessSell(sell1, [sell1], 0, state, NoOut, NoOut));
         // Selling -1 shares at 2.0 EUR, with fees of 0.2 EUR => Total Amount Local of 1.8 EUR
         sell1 = new Event(T0 + 0 * D, SellLimit, Ticker, -1, 2.0m, 1.8m, 0.2m, EUR, 1);
-        ThrowsAny<Exception>(() => Instance.ProcessSell(sell1, [sell1], 0, state, NoOut));
+        ThrowsAny<Exception>(() => Instance.ProcessSell(sell1, [sell1], 0, state, NoOut, NoOut));
     }
 
     [TestMethod]
@@ -506,7 +506,7 @@ public class TickerProcessingTest
         // Selling 1 share at 2.0 USD, with fees of 0.2 USD => Total Amount Local of 1.8 USD
         var sell1 = new Event(T0 + 1 * D, SellLimit, Ticker, 1, 2.0m, 1.8m, 0.2m, USD, 1);
         var stateAfterBuy1 = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
-        ThrowsAny<Exception>(() => Instance.ProcessSell(sell1, [buy1, sell1], 1, stateAfterBuy1, NoOut));
+        ThrowsAny<Exception>(() => Instance.ProcessSell(sell1, [buy1, sell1], 1, stateAfterBuy1, NoOut, NoOut));
     }
 
     [TestMethod]
@@ -519,7 +519,7 @@ public class TickerProcessingTest
         // Selling 1 share at 2.0 EUR, with fees of 0.2 EUR => Total Amount Local of 1.8 EUR
         var sell1 = new Event(T0 + 2 * D, SellLimit, Ticker, 1, 2.0m, 1.8m, 0.2m, EUR, 1);
         var stateAfterCashTopUp1 = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
-        var stateAfterSell1 = Instance.ProcessSell(sell1, [buy1, cashTopUp1, sell1], 2, stateAfterCashTopUp1, NoOut);
+        var stateAfterSell1 = Instance.ProcessSell(sell1, [buy1, cashTopUp1, sell1], 2, stateAfterCashTopUp1, NoOut, NoOut);
         AssertEq(2, stateAfterSell1.TotalQuantity);
     }
 
@@ -531,7 +531,7 @@ public class TickerProcessingTest
         // Selling 4 shares at 2.0 EUR, with fees of 0.8 EUR => Total Amount Local of 7.2 EUR
         var sell1 = new Event(T0 + 0 * D, SellLimit, Ticker, 4, 8.0m, 7.2m, 0.8m, EUR, 1);
         var state = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
-        ThrowsAny<Exception>(() => Instance.ProcessSell(sell1, [buy1, sell1], 1, state, NoOut));
+        ThrowsAny<Exception>(() => Instance.ProcessSell(sell1, [buy1, sell1], 1, state, NoOut, NoOut));
     }
 
     [TestMethod]
@@ -542,7 +542,7 @@ public class TickerProcessingTest
         // Selling 1 share at 2.0 EUR, with fees of 0.4 EUR => Total Amount Local of 1.7 EUR (fees should be 0.3 EUR)
         var sell1 = new Event(T0 + 0 * D, SellLimit, Ticker, 1, 2.0m, 1.7m, 0.4m, EUR, 1);
         var state = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
-        ThrowsAny<Exception>(() => Instance.ProcessSell(sell1, [buy1, sell1], 1, state, NoOut));
+        ThrowsAny<Exception>(() => Instance.ProcessSell(sell1, [buy1, sell1], 1, state, NoOut, NoOut));
     }
 
     [TestMethod]
@@ -553,7 +553,7 @@ public class TickerProcessingTest
         // Selling 1 share at 2.0 EUR, with fees of 0.2 EUR => Total Amount Local of 1.8 EUR
         var sell1 = new Event(T0 + 0 * D, SellLimit, Ticker, 1, 2.0m, 1.8m, 0.2m, EUR, 1);
         var state = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
-        ThrowsAny<Exception>(() => Instance.ProcessSell(sell1, [buy1, sell1], 1, state, NoOut));
+        ThrowsAny<Exception>(() => Instance.ProcessSell(sell1, [buy1, sell1], 1, state, NoOut, NoOut));
     }
 
     [TestMethod]
@@ -565,11 +565,11 @@ public class TickerProcessingTest
         
         // First buy 3 shares at 100.10002 USD, with fees of 3.20003 USD => Total Amount Local of 303.50009 USD
         var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 3, 100.10002m, 303.50009m, 3.20003m, localCurrency, 4m);
-        var stateAfterBuy = tickerProcessing.ProcessBuy(buy1, [buy1], 0, initialState, NoOut);
+        var stateAfterBuy = tickerProcessing.ProcessBuy(buy1, [buy1], 0, initialState, NoOut, NoOut);
         // Then sell 2 shares at 150.15003 USD, with fees of 2.50005 USD => Total Amount Local of 300.30006 USD - 2.50005 USD = 297.80001 USD
         var sell1 = new Event(T0 + 1 * D, SellLimit, Ticker, 2, 150.15003m, 297.80001m, 2.50005m, localCurrency, 4m);
         var writer = new StringWriter();
-        tickerProcessing.ProcessSell(sell1, [buy1, sell1], 1, stateAfterBuy, writer);
+        tickerProcessing.ProcessSell(sell1, [buy1, sell1], 1, stateAfterBuy, writer, NoOut);
         var output = writer.ToString();
 
         // Prints Total Sell Price in local currency as rounded value
@@ -605,7 +605,7 @@ public class TickerProcessingTest
         // First buy 3 shares at 100 USD, with fees of 3.20 USD => Total Amount Local of 300 USD + 3.20 USD = 303.20 USD
         var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 3, 100m, 303.20m, 3.20m, localCurrency, 4m);
         var stateAfterBuy1 = tickerProcessing.ProcessBuy(
-            buy1, [buy1], 0, initialState, NoOut);
+            buy1, [buy1], 0, initialState, NoOut, NoOut);
         
         AssertStateAfterBuy1();
 
@@ -621,7 +621,7 @@ public class TickerProcessingTest
         // Then sell 2 shares at 150 USD, with fees of 2.50 USD => Total Amount Local of 300 USD - 2.50 USD = 297.50 USD
         var sell1 = new Event(T0 + 1 * D, SellLimit, Ticker, 2, 150m, 297.50m, 2.50m, localCurrency, 4m);
         var stateAfterSell1 = tickerProcessing.ProcessSell(
-            sell1, [buy1, sell1], 1, stateAfterBuy1, NoOut);
+            sell1, [buy1, sell1], 1, stateAfterBuy1, NoOut, NoOut);
 
         AssertStateAfterSell1();
 
@@ -659,7 +659,7 @@ public class TickerProcessingTest
         // Buy 3 shares at 110 USD, with fees of 4 USD => Total Amount Local of 330 USD + 4 USD = 334 USD
         var buy2 = new Event(T0 + 2 * D, BuyLimit, Ticker, 3, 110m, 334m, 4m, localCurrency, 4m);
         var stateAfterBuy2 = tickerProcessing.ProcessBuy(
-            buy2, [buy1, sell1, buy2], 2, stateAfterSell1, NoOut);
+            buy2, [buy1, sell1, buy2], 2, stateAfterSell1, NoOut, NoOut);
 
         AssertStateAfterBuy2();
 
@@ -676,7 +676,7 @@ public class TickerProcessingTest
         // Buy 2 shares at 120 USD, with fees of 3 USD => Total Amount Local of 240 USD + 3 USD = 243 USD
         var buy3 = new Event(T0 + 3 * D, BuyLimit, Ticker, 2, 120m, 243m, 3m, localCurrency, 4m);
         var stateAfterBuy3 = tickerProcessing.ProcessBuy(
-            buy3, [buy1, sell1, buy2, buy3], 3, stateAfterBuy2, NoOut);
+            buy3, [buy1, sell1, buy2, buy3], 3, stateAfterBuy2, NoOut, NoOut);
 
         AssertStateAfterBuy3();
 
@@ -693,7 +693,7 @@ public class TickerProcessingTest
         // Sell 3 shares at 130 USD, with fees of 3 USD => Total Amount Local of 390 USD - 3 USD = 387 USD
         var sell2 = new Event(T0 + 4 * D, SellLimit, Ticker, 3, 130m, 387m, 3m, localCurrency, 4m);
         var stateAfterSell2 = tickerProcessing.ProcessSell(
-            sell2, [buy1, sell1, buy2, buy3, sell2], 4, stateAfterBuy3, NoOut);
+            sell2, [buy1, sell1, buy2, buy3, sell2], 4, stateAfterBuy3, NoOut, NoOut);
 
         AssertStateAfterSell2();
 
@@ -738,7 +738,7 @@ public class TickerProcessingTest
         // Sell 1 shares at 10 USD, with fees of 1 USD => Total Amount Local of 10 USD - 1 USD = 9 USD
         var sell3 = new Event(T0 + 5 * D, SellLimit, Ticker, 1, 10m, 9m, 1m, localCurrency, 4m);
         var stateAfterSell3 = tickerProcessing.ProcessSell(
-            sell3, [buy1, sell1, buy2, buy3, sell2, sell3], 5, stateAfterSell2, NoOut);
+            sell3, [buy1, sell1, buy2, buy3, sell2, sell3], 5, stateAfterSell2, NoOut, NoOut);
 
         AssertStateAfterSell3();
 
@@ -782,7 +782,7 @@ public class TickerProcessingTest
         // Sell 2 shares at 10 USD, with fees of 1 USD => Total Amount Local of 20 USD - 1 USD = 19 USD
         var sell4 = new Event(T0 + 6 * D, SellLimit, Ticker, 2, 10m, 19m, 1m, localCurrency, 4m);
         var stateAfterSell4 = tickerProcessing.ProcessSell(
-            sell4, [buy1, sell1, buy2, buy3, sell2, sell3, sell4], 6, stateAfterSell3, NoOut);
+            sell4, [buy1, sell1, buy2, buy3, sell2, sell3, sell4], 6, stateAfterSell3, NoOut, NoOut);
 
         AssertStateAfterSell4();
 
@@ -832,13 +832,13 @@ public class TickerProcessingTest
         // First buy 10 shares at 100 USD, with fees of 20 USD => Total Amount Local of 1000 USD + 20 USD = 1020 USD
         var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 10, 100m, 1020m, 20m, localCurrency, 2m);
         var stateAfterBuy1 = tickerProcessing.ProcessBuy(
-            buy1, [buy1], 0, initialState, NoOut);
+            buy1, [buy1], 0, initialState, NoOut, NoOut);
 
         // --------
         // Sell 5 shares at 150 USD, with fees of 10 USD => Total Amount Local of 750 USD - 10 USD = 740 USD
         var sell1 = new Event(T0 + 1 * D, SellLimit, Ticker, 5, 150m, 740m, 10m, localCurrency, 2m);
         var stateAfterSell1 = tickerProcessing.ProcessSell(
-            sell1, [buy1, sell1], 1, stateAfterBuy1, NoOut);
+            sell1, [buy1, sell1], 1, stateAfterBuy1, NoOut, NoOut);
 
         AssertStateAfterSell1();
 
@@ -875,7 +875,7 @@ public class TickerProcessingTest
         // Reset the ticker state
         var reset1 = new Event(T0 + 2 * D, Reset, Ticker, null, null, 0, null, localCurrency, 2m);
         var stateAfterReset1 = tickerProcessing.ProcessReset(
-            reset1, [buy1, sell1, reset1], 2, stateAfterSell1, NoOut);
+            reset1, [buy1, sell1, reset1], 2, stateAfterSell1, NoOut, NoOut);
 
         AssertStateAfterReset1();
 
@@ -901,7 +901,7 @@ public class TickerProcessingTest
         // Sell 2 shares at 80 USD, with fees of 6 USD => Total Amount Local of 160 USD - 6 USD = 154 USD
         var sell2 = new Event(T0 + 3 * D, SellLimit, Ticker, 2, 80m, 154m, 6m, localCurrency, 2m);
         var stateAfterSell2 = tickerProcessing.ProcessSell(
-            sell2, [buy1, sell1, reset1, sell2], 3, stateAfterReset1, NoOut);
+            sell2, [buy1, sell1, reset1, sell2], 3, stateAfterReset1, NoOut, NoOut);
 
         AssertStateAfterSell2();
 
@@ -942,23 +942,23 @@ public class TickerProcessingTest
         // Buy 1 share at 100 USD, with fees of 2 USD => Total Amount Local of 100 USD + 2 USD = 102 USD
         var buy2 = new Event(T0 + 4 * D, BuyLimit, Ticker, 1, 100m, 102m, 2m, localCurrency, 2m);
         var stateAfterBuy2 = tickerProcessing.ProcessBuy(
-            buy2, [buy1, sell1, reset1, sell2, buy2], 4, stateAfterSell2, NoOut);
+            buy2, [buy1, sell1, reset1, sell2, buy2], 4, stateAfterSell2, NoOut, NoOut);
 
         // Buy 2 shares at 110 USD, with fees of 4 USD => Total Amount Local of 220 USD + 4 USD = 224 USD
         var buy3 = new Event(T0 + 5 * D, BuyLimit, Ticker, 2, 110m, 224m, 4m, localCurrency, 2m);
         var stateAfterBuy3 = tickerProcessing.ProcessBuy(
             buy3, [buy1, sell1, reset1, sell2, buy2, buy3], 5, 
-            stateAfterBuy2, NoOut);
+            stateAfterBuy2, NoOut, NoOut);
 
         // Cash withdrawal of 50 USD, with fees of 1 USD => Total Amount Local of 49 USD
         var cashWithdrawal1 = new Event(T0 + 6 * D, CashWithdrawal, Ticker, null, null, 49m, 1m, localCurrency, 2m);
         var stateAfterCashWithdrawal1 = tickerProcessing.ProcessNoop(
-            cashWithdrawal1, [buy1, sell1, reset1, sell2, buy2, buy3, cashWithdrawal1], 6, stateAfterBuy3, NoOut);
+            cashWithdrawal1, [buy1, sell1, reset1, sell2, buy2, buy3, cashWithdrawal1], 6, stateAfterBuy3, NoOut, NoOut);
 
         // Sell 4 shares at 120 USD, with fees of 8 USD => Total Amount Local of 480 USD - 8 USD = 472 USD
         var sell3 = new Event(T0 + 7 * D, SellLimit, Ticker, 4, 120m, 472m, 8m, localCurrency, 2m);
         var stateAfterSell3 = tickerProcessing.ProcessSell(
-            sell3, [buy1, sell1, reset1, sell2, buy2, buy3, cashWithdrawal1, sell3], 7, stateAfterCashWithdrawal1, NoOut);
+            sell3, [buy1, sell1, reset1, sell2, buy2, buy3, cashWithdrawal1, sell3], 7, stateAfterCashWithdrawal1, NoOut, NoOut);
 
         AssertStateAfterSell3();
 
@@ -1000,7 +1000,7 @@ public class TickerProcessingTest
         // Reset the ticker state
         var resetEvent2 = new Event(T0 + 8 * D, Reset, Ticker, null, null, 0, null, localCurrency, 2m);
         var stateAfterReset2 = tickerProcessing.ProcessReset(
-            resetEvent2, [buy1, sell1, reset1, sell2, buy2, buy3, cashWithdrawal1, sell3, resetEvent2], 8, stateAfterSell3, NoOut);
+            resetEvent2, [buy1, sell1, reset1, sell2, buy2, buy3, cashWithdrawal1, sell3, resetEvent2], 8, stateAfterSell3, NoOut, NoOut);
 
         AssertStateAfterReset2();
 
@@ -1035,19 +1035,19 @@ public class TickerProcessingTest
         // First cash top-up of 1000 USD
         var cashTopUp1 = new Event(T0 + 0 * D, CashTopUp, Ticker, null, null, 1000m, 0, localCurrency, 2m);
         var stateAfterCashTopUp1 = tickerProcessing.ProcessNoop(
-            cashTopUp1, [cashTopUp1], 0, initialState, NoOut);
+            cashTopUp1, [cashTopUp1], 0, initialState, NoOut, NoOut);
 
         // -------
         // Buy 10 shares at 100 USD, with fees of 20 USD => Total Amount Local of 1000 USD + 20 USD = 1020 USD
         var buy1 = new Event(T0 + 1 * D, BuyLimit, Ticker, 10, 100m, 1020m, 20m, localCurrency, 2m);
         var stateAfterBuy1 = tickerProcessing.ProcessBuy(
-            buy1, [cashTopUp1, buy1], 1, stateAfterCashTopUp1, NoOut);
+            buy1, [cashTopUp1, buy1], 1, stateAfterCashTopUp1, NoOut, NoOut);
 
         // -------
         // Sell 5 shares at 150 USD, with fees of 10 USD => Total Amount Local of 750 USD - 10 USD = 740 USD
         var sell1 = new Event(T0 + 2 * D, SellLimit, Ticker, 5, 150m, 740m, 10m, localCurrency, 2m);
         var stateAfterSell1 = tickerProcessing.ProcessSell(
-            sell1, [cashTopUp1, buy1, sell1], 2, stateAfterBuy1, NoOut);
+            sell1, [cashTopUp1, buy1, sell1], 2, stateAfterBuy1, NoOut, NoOut);
 
         AssertStateAfterSell1();
 
@@ -1083,7 +1083,7 @@ public class TickerProcessingTest
         // Sell 5 shares at 130 USD, with fees of 3 USD => Total Amount Local of 650 USD - 3 USD = 647 USD
         var sell2 = new Event(T0 + 3 * D, SellLimit, Ticker, 5, 130m, 647m, 3m, localCurrency, 2m);
         var stateAfterSell2 = tickerProcessing.ProcessSell(
-            sell2, [cashTopUp1, buy1, sell1, sell2], 3, stateAfterSell1, NoOut);
+            sell2, [cashTopUp1, buy1, sell1, sell2], 3, stateAfterSell1, NoOut, NoOut);
 
         AssertStateAfterSell2();
 
@@ -1130,14 +1130,14 @@ public class TickerProcessingTest
         var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 10, 100m, 1020m, 20m, localCurrency, 2m);
         events.Add(buy1);
         var stateAfterBuy1 = tickerProcessing.ProcessBuy(
-            buy1, events, 0, initialState, NoOut);
+            buy1, events, 0, initialState, NoOut, NoOut);
 
         // --------
         // Sell 5 shares at 150 USD, with fees of 10 USD => Total Amount Local of 750 USD - 10 USD = 740 USD
         var sell1 = new Event(T0 + 1 * D, SellLimit, Ticker, 5, 150m, 740m, 10m, localCurrency, 2m);
         events.Add(sell1);
         var stateAfterSell1 = tickerProcessing.ProcessSell(
-            sell1, events, 1, stateAfterBuy1, NoOut);
+            sell1, events, 1, stateAfterBuy1, NoOut, NoOut);
 
         AssertStateAfterSell1();
 
@@ -1174,7 +1174,7 @@ public class TickerProcessingTest
         var stockSplit1 = new Event(T0 + 2 * D, StockSplit, Ticker, 10m, null, 0, null, localCurrency, 2m);
         events.Add(stockSplit1);
         var stateAfterStockSplit1 = tickerProcessing.ProcessStockSplit(
-            stockSplit1, events, 2, stateAfterSell1, NoOut);
+            stockSplit1, events, 2, stateAfterSell1, NoOut, NoOut);
 
         AssertStateAfterStockSplit1();
 
@@ -1224,7 +1224,7 @@ public class TickerProcessingTest
         var stockSplit2 = new Event(T0 + 3 * D, StockSplit, Ticker, 45m, null, 0, null, localCurrency, 2m);
         events.Add(stockSplit2);
         var stateAfterStockSplit2 = tickerProcessing.ProcessStockSplit(
-            stockSplit2, events, 3, stateAfterStockSplit1, NoOut);
+            stockSplit2, events, 3, stateAfterStockSplit1, NoOut, NoOut);
 
         AssertStateAfterStockSplit2();
 
@@ -1283,7 +1283,7 @@ public class TickerProcessingTest
         var custodyFee1 = new Event(T0 + 4 * D, CustodyFee, Ticker, null, null, 10m, 0, localCurrency, 2m);
         events.Add(custodyFee1);
         var stateAfterCustodyFees1 = tickerProcessing.ProcessNoop(
-            custodyFee1, events, 4, stateAfterStockSplit2, NoOut);
+            custodyFee1, events, 4, stateAfterStockSplit2, NoOut, NoOut);
 
         AssertStateAfterCustodyFee1();
 
@@ -1311,7 +1311,7 @@ public class TickerProcessingTest
         var stockSplit3 = new Event(T0 + 5 * D, StockSplit, Ticker, -30m, null, 0, null, localCurrency, 2m);
         events.Add(stockSplit3);
         var stateAfterStockSplit3 = tickerProcessing.ProcessStockSplit(
-            stockSplit3, events, 5, stateAfterCustodyFees1, NoOut);
+            stockSplit3, events, 5, stateAfterCustodyFees1, NoOut, NoOut);
 
         AssertStateAfterStockSplit3();
 
@@ -1395,7 +1395,7 @@ public class TickerProcessingTest
             new(T0 + 1 * D, StockSplit, Ticker, 45m, null, 0, null, localCurrency, fxRate),
         };
 
-        ThrowsAny<Exception>(() => tickerProcessing.ProcessStockSplit(events[1], events, 0, initialState, NoOut));
+        ThrowsAny<Exception>(() => tickerProcessing.ProcessStockSplit(events[1], events, 0, initialState, NoOut, NoOut));
     }
 
     [TestMethod]
@@ -1403,7 +1403,7 @@ public class TickerProcessingTest
     {
         var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 10, 100m, 1020m, 20m, USD, 2m);
         ThrowsAny<Exception>(() => Instance.ProcessStockSplit(
-            buy1, [buy1], 0, new TickerState(Ticker, Isin), NoOut));
+            buy1, [buy1], 0, new TickerState(Ticker, Isin), NoOut, NoOut));
     }
 
     [TestMethod]
@@ -1411,7 +1411,7 @@ public class TickerProcessingTest
     {
         var stockSplit1 = new Event(T0 + 0 * D, StockSplit, Ticker: null, Quantity: 10, PricePerShareLocal: null, TotalAmountLocal: 0, FeesLocal: null, Currency: USD, FXRate: 2m);
         ThrowsAny<Exception>(() => Instance.ProcessStockSplit(
-            stockSplit1, [stockSplit1], 0, new TickerState(Ticker, Isin), NoOut));
+            stockSplit1, [stockSplit1], 0, new TickerState(Ticker, Isin), NoOut, NoOut));
     }
 
     [TestMethod]
@@ -1419,7 +1419,7 @@ public class TickerProcessingTest
     {
         var stockSplit1 = new Event(T0 + 0 * D, StockSplit, Ticker, Quantity: null, PricePerShareLocal: null, TotalAmountLocal: 0, FeesLocal: null, Currency: USD, FXRate: 2m);
         ThrowsAny<Exception>(() => Instance.ProcessStockSplit(
-            stockSplit1, [stockSplit1], 0, new TickerState(Ticker, Isin), NoOut));
+            stockSplit1, [stockSplit1], 0, new TickerState(Ticker, Isin), NoOut, NoOut));
     }
 
     [TestMethod]
@@ -1427,7 +1427,7 @@ public class TickerProcessingTest
     {
         var stockSplit1 = new Event(T0 + 0 * D, StockSplit, Ticker, 10, PricePerShareLocal: 100m, TotalAmountLocal: 0, FeesLocal: null, Currency: USD, FXRate: 2m);
         ThrowsAny<Exception>(() => Instance.ProcessStockSplit(
-            stockSplit1, [stockSplit1], 0, new TickerState(Ticker, Isin), NoOut));
+            stockSplit1, [stockSplit1], 0, new TickerState(Ticker, Isin), NoOut, NoOut));
     }
 
     [TestMethod]
@@ -1435,7 +1435,7 @@ public class TickerProcessingTest
     {
         var stockSplit1 = new Event(T0 + 0 * D, StockSplit, Ticker, 10, null, TotalAmountLocal: 100m, FeesLocal: 0, Currency: USD, FXRate: 2m);
         ThrowsAny<Exception>(() => Instance.ProcessStockSplit(
-            stockSplit1, [stockSplit1], 0, new TickerState(Ticker, Isin), NoOut));
+            stockSplit1, [stockSplit1], 0, new TickerState(Ticker, Isin), NoOut, NoOut));
     }
 
     [TestMethod]
@@ -1443,7 +1443,7 @@ public class TickerProcessingTest
     {
         var stockSplit1 = new Event(T0 + 0 * D, StockSplit, Ticker, 10, null, 0, FeesLocal: 20m, Currency: USD, FXRate: 2m);
         ThrowsAny<Exception>(() => Instance.ProcessStockSplit(
-            stockSplit1, [stockSplit1], 0, new TickerState(Ticker, Isin), NoOut));
+            stockSplit1, [stockSplit1], 0, new TickerState(Ticker, Isin), NoOut, NoOut));
     }
 
     [TestMethod]
@@ -1451,7 +1451,7 @@ public class TickerProcessingTest
     {
         var stockSplit1 = new Event(T0 + 0 * D, StockSplit, Ticker, 10, null, 0, null, USD, 2m);
         ThrowsAny<Exception>(() => Instance.ProcessStockSplit(
-            stockSplit1, [stockSplit1], 0, new TickerState(AnotherTicker, AnotherIsin), NoOut));
+            stockSplit1, [stockSplit1], 0, new TickerState(AnotherTicker, AnotherIsin), NoOut, NoOut));
     }
 
     [TestMethod]
@@ -1464,12 +1464,12 @@ public class TickerProcessingTest
 
         // First buy 10 shares at 100 USD, with fees of 20 USD => Total Amount Local of 1000 USD + 20 USD = 1020 USD
         var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 10, 100m, 1020m, 20m, localCurrency, fxRate);
-        var stateAfterBuy1 = tickerProcessing.ProcessBuy(buy1, [buy1], 0, initialState, NoOut);
+        var stateAfterBuy1 = tickerProcessing.ProcessBuy(buy1, [buy1], 0, initialState, NoOut, NoOut);
 
         // Then stock split of 1:3, starting from 10 shares => 20 additional shares
         var stockSplit1 = new Event(T0 + 1 * D, StockSplit, Ticker, 20m, null, 0, null, localCurrency, fxRate);
         var writer = new StringWriter();
-        tickerProcessing.ProcessStockSplit(stockSplit1, [buy1, stockSplit1], 1, stateAfterBuy1, writer);
+        tickerProcessing.ProcessStockSplit(stockSplit1, [buy1, stockSplit1], 1, stateAfterBuy1, writer, NoOut);
 
         var output = writer.ToString();
 
@@ -1490,7 +1490,7 @@ public class TickerProcessingTest
             new(T0 + 1 * D, Dividend, Ticker, null, null, 10m, null, localCurrency, fxRate),
         };
 
-        ThrowsAny<Exception>(() => tickerProcessing.ProcessDividend(events[1], events, 0, initialState, NoOut));
+        ThrowsAny<Exception>(() => tickerProcessing.ProcessDividend(events[1], events, 0, initialState, NoOut, NoOut));
     }
 
     [TestMethod]
@@ -1498,7 +1498,7 @@ public class TickerProcessingTest
     {
         var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 10, 100m, 1020m, 20m, USD, 2m);
         ThrowsAny<Exception>(() => Instance.ProcessDividend(
-            buy1, [buy1], 0, new TickerState(Ticker, Isin), NoOut));
+            buy1, [buy1], 0, new TickerState(Ticker, Isin), NoOut, NoOut));
     }
 
     [TestMethod]
@@ -1506,7 +1506,7 @@ public class TickerProcessingTest
     {
         var dividend1 = new Event(T0 + 0 * D, Dividend, Ticker: null, Quantity: null, PricePerShareLocal: null, TotalAmountLocal: 10m, FeesLocal: null, Currency: USD, FXRate: 2m);
         ThrowsAny<Exception>(() => Instance.ProcessDividend(
-            dividend1, [dividend1], 0, new TickerState(Ticker, Isin), NoOut));
+            dividend1, [dividend1], 0, new TickerState(Ticker, Isin), NoOut, NoOut));
     }
 
     [TestMethod]
@@ -1514,11 +1514,11 @@ public class TickerProcessingTest
     {
         var dividend1 = new Event(T0 + 0 * D, Dividend, Ticker, null, null, TotalAmountLocal: 0m, FeesLocal: 0, Currency: USD, FXRate: 2m);
         ThrowsAny<Exception>(() => Instance.ProcessDividend(
-            dividend1, [dividend1], 0, new TickerState(Ticker, Isin), NoOut));
+            dividend1, [dividend1], 0, new TickerState(Ticker, Isin), NoOut, NoOut));
 
         var dividend2 = new Event(T0 + 0 * D, Dividend, Ticker, null, null, TotalAmountLocal: -10m, FeesLocal: 0, Currency: USD, FXRate: 2m);
         ThrowsAny<Exception>(() => Instance.ProcessDividend(
-            dividend2, [dividend1, dividend2], 1, new TickerState(Ticker, Isin), NoOut));
+            dividend2, [dividend1, dividend2], 1, new TickerState(Ticker, Isin), NoOut, NoOut));
     }
 
     [TestMethod]
@@ -1531,13 +1531,13 @@ public class TickerProcessingTest
 
         // First buy 10 shares at 100 USD, with fees of 20 USD => Total Amount Local of 1000 USD + 20 USD = 1020 USD
         var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 10, 100m, 1020m, 20m, localCurrency, fxRate);
-        var stateAfterBuy1 = tickerProcessing.ProcessBuy(buy1, [buy1], 0, initialState, NoOut);
+        var stateAfterBuy1 = tickerProcessing.ProcessBuy(buy1, [buy1], 0, initialState, NoOut, NoOut);
 
         // Then dividend of 8.5 USD: 1 USD per share for 10 shares, with withholding tax of 15% from US =>
         // Total Amount Local of 10 USD - (15% * 10 USD) = 8.5 USD
         var dividend1 = new Event(T0 + 1 * D, Dividend, Ticker, null, null, 8.5m, null, localCurrency, fxRate);
         var writer = new StringWriter();
-        tickerProcessing.ProcessDividend(dividend1, [buy1, dividend1], 1, stateAfterBuy1, writer);
+        tickerProcessing.ProcessDividend(dividend1, [buy1, dividend1], 1, stateAfterBuy1, writer, NoOut);
 
         var output = writer.ToString();
 
@@ -1558,13 +1558,13 @@ public class TickerProcessingTest
         // First buy 10 shares at 100 USD, with fees of 20 USD => Total Amount Local of 1000 USD + 20 USD = 1020 USD
         var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 10, 100m, 1020m, 20m, localCurrency, fxRate);
         var stateAfterBuy1 = tickerProcessing.ProcessBuy(
-            buy1, [buy1], 0, initialState, NoOut);
+            buy1, [buy1], 0, initialState, NoOut, NoOut);
 
         // Then dividend of 25.5 USD: 3 USD per share for 10 shares, with withholding tax of 15% from US =>
         // Total Amount Local of 30 USD - (15% * 30 USD) = 25.5 USD
         var dividend1 = new Event(T0 + 1 * D, Dividend, Ticker, null, null, 25.5m, null, localCurrency, fxRate);
         var stateAfterDividend1 = tickerProcessing.ProcessDividend(
-            dividend1, [buy1, dividend1], 1, stateAfterBuy1, NoOut);
+            dividend1, [buy1, dividend1], 1, stateAfterBuy1, NoOut, NoOut);
 
         AssertStateAfterDividend1();
 
@@ -1596,7 +1596,7 @@ public class TickerProcessingTest
         // Total Amount Local of 40 USD - (15% * 40 USD) = 34 USD
         var dividend2 = new Event(T0 + 2 * D, Dividend, Ticker, null, null, 34m, null, localCurrency, fxRate);
         var stateAfterDividend2 = tickerProcessing.ProcessDividend(
-            dividend2, [buy1, dividend1, dividend2], 2, stateAfterDividend1, NoOut);
+            dividend2, [buy1, dividend1, dividend2], 2, stateAfterDividend1, NoOut, NoOut);
 
         AssertStateAfterDividend2();
 
@@ -1638,7 +1638,7 @@ public class TickerProcessingTest
             new(T0 + 1 * D, Interest, Ticker, null, null, 10m, null, localCurrency, fxRate),
         };
 
-        ThrowsAny<Exception>(() => tickerProcessing.ProcessInterest(events[1], events, 0, initialState, NoOut));
+        ThrowsAny<Exception>(() => tickerProcessing.ProcessInterest(events[1], events, 0, initialState, NoOut, NoOut));
     }
 
     [TestMethod]
@@ -1646,7 +1646,7 @@ public class TickerProcessingTest
     {
         var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 10, 100m, 1020m, 20m, USD, 2m);
         ThrowsAny<Exception>(() => Instance.ProcessInterest(
-            buy1, [buy1], 0, new TickerState(Ticker, Isin), NoOut));
+            buy1, [buy1], 0, new TickerState(Ticker, Isin), NoOut, NoOut));
     }
 
     [TestMethod]
@@ -1654,7 +1654,7 @@ public class TickerProcessingTest
     {
         var interest1 = new Event(T0 + 0 * D, Interest, Ticker: null, Quantity: null, PricePerShareLocal: null, TotalAmountLocal: 10m, FeesLocal: null, Currency: USD, FXRate: 2m);
         ThrowsAny<Exception>(() => Instance.ProcessInterest(
-            interest1, [interest1], 0, new TickerState(Ticker, Isin), NoOut));
+            interest1, [interest1], 0, new TickerState(Ticker, Isin), NoOut, NoOut));
     }
 
     [TestMethod]
@@ -1662,11 +1662,11 @@ public class TickerProcessingTest
     {
         var interest1 = new Event(T0 + 0 * D, Interest, Ticker, null, null, TotalAmountLocal: 0m, FeesLocal: 0, Currency: USD, FXRate: 2m);
         ThrowsAny<Exception>(() => Instance.ProcessInterest(
-            interest1, [interest1], 0, new TickerState(Ticker, Isin), NoOut));
+            interest1, [interest1], 0, new TickerState(Ticker, Isin), NoOut, NoOut));
 
         var interest2 = new Event(T0 + 0 * D, Interest, Ticker, null, null, TotalAmountLocal: -10m, FeesLocal: 0, Currency: USD, FXRate: 2m);
         ThrowsAny<Exception>(() => Instance.ProcessInterest(
-            interest2, [interest1, interest2], 1, new TickerState(Ticker, Isin), NoOut));
+            interest2, [interest1, interest2], 1, new TickerState(Ticker, Isin), NoOut, NoOut));
     }
 
     [TestMethod]
@@ -1679,13 +1679,13 @@ public class TickerProcessingTest
 
         // First buy 10 shares at 100 USD, with fees of 20 USD => Total Amount Local of 1000 USD + 20 USD = 1020 USD
         var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 10, 100m, 1020m, 20m, localCurrency, fxRate);
-        var stateAfterBuy1 = tickerProcessing.ProcessBuy(buy1, [buy1], 0, initialState, NoOut);
+        var stateAfterBuy1 = tickerProcessing.ProcessBuy(buy1, [buy1], 0, initialState, NoOut, NoOut);
 
         // Then interest of 10 USD with withholding tax of 15% from US =>
         // Total Amount Local of 10 USD - (15% * 10 USD) = 8.5 USD
         var interest1 = new Event(T0 + 1 * D, Interest, Ticker, null, null, 8.5m, null, localCurrency, fxRate);
         var writer = new StringWriter();
-        tickerProcessing.ProcessInterest(interest1, [buy1, interest1], 1, stateAfterBuy1, writer);
+        tickerProcessing.ProcessInterest(interest1, [buy1, interest1], 1, stateAfterBuy1, writer, NoOut);
 
         var output = writer.ToString();
 
@@ -1706,13 +1706,13 @@ public class TickerProcessingTest
         // First buy 10 shares at 100 USD, with fees of 20 USD => Total Amount Local of 1000 USD + 20 USD = 1020 USD
         var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 10, 100m, 1020m, 20m, localCurrency, fxRate);
         var stateAfterBuy1 = tickerProcessing.ProcessBuy(
-            buy1, [buy1], 0, initialState, NoOut);
+            buy1, [buy1], 0, initialState, NoOut, NoOut);
 
         // Then interest of 25.5 USD with withholding tax of 15% from US =>
         // Total Amount Local of 30 USD - (15% * 30 USD) = 25.5 USD
         var interest1 = new Event(T0 + 1 * D, Interest, Ticker, null, null, 25.5m, null, localCurrency, fxRate);
         var stateAfterInterest1 = tickerProcessing.ProcessInterest(
-            interest1, [buy1, interest1], 1, stateAfterBuy1, NoOut);
+            interest1, [buy1, interest1], 1, stateAfterBuy1, NoOut, NoOut);
 
         AssertStateAfterInterest1();
 
@@ -1749,7 +1749,7 @@ public class TickerProcessingTest
         // Total Amount Local of 40 USD - (15% * 40 USD) = 34 USD
         var interest2 = new Event(T0 + 2 * D, Interest, Ticker, null, null, 34m, null, localCurrency, fxRate);
         var stateAfterInterest2 = tickerProcessing.ProcessInterest(
-            interest2, [buy1, interest1, interest2], 2, stateAfterInterest1, NoOut);
+            interest2, [buy1, interest1, interest2], 2, stateAfterInterest1, NoOut, NoOut);
 
         AssertStateAfterInterest2();
 
@@ -1782,6 +1782,8 @@ public class TickerProcessingTest
             AssertEq(70m / 2m, stateAfterInterest2.GrossInterestsBase); // (30 USD + 40 USD) / (2 USD/EUR
         }
     }
+
+    // TODO: add test on multi-country dividends and interests
 
     [AssertionMethod]
     private void AssertEq(decimal expected, decimal actual, string message = "") => 

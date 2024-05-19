@@ -208,7 +208,7 @@ record TickerState(
 }
 
 delegate TickerState TickerAction(
-    Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter);
+    Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter, TextWriter fr2047Section5Writer);
 
 [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
 class MetricAttribute(string description, bool aggregateByCountry = false) : Attribute
