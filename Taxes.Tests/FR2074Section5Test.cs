@@ -63,6 +63,6 @@ public class FR2074Section5Test
         Assert.IsTrue(Array.Exists(lines,
             l => decimal.TryParse(l, out var n) && n - data.PerShareAvgBuyPriceBase <= 0.005m));
         Assert.IsTrue(Array.Exists(lines,
-            l => decimal.TryParse(l, out var n) && n - data.TotalAvgBuyPriceBase <= data.TickerEvent.Quantity * 0.5m));
+            l => decimal.TryParse(l, out var n) && n - data.TotalAvgBuyPriceBase <= data.TickerEvent.Quantity!.Value * 0.5m));
     }
 }
