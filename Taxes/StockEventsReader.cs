@@ -10,13 +10,13 @@ partial class StockEventsReader(Basics basics)
 {
     public Basics Basics => basics;
 
-    public IList<Event> Parse(string path, FxRates fxRates, string broker = "DEFAULT")
+    public IList<Event> Parse(string path, FxRates fxRates, string broker)
     {
         using var reader = new StreamReader(path);
         return Parse(reader, fxRates, broker);
     }
 
-    public IList<Event> Parse(TextReader textReader, FxRates fxRates, string broker = "DEFAULT")
+    public IList<Event> Parse(TextReader textReader, FxRates fxRates, string broker)
     {
         var csvConfiguration = new CsvConfiguration(basics.DefaultCulture)
         {
