@@ -13,6 +13,7 @@ var stockEventsReader = new StockEventsReader(basics);
 var stockEvents = basics.StockEventsFiles
     .SelectMany(eventsFiles => Directory
         .GetFiles(basics.ReportsDirectoryPath, eventsFiles.FilePattern)
+        .EnsureNonEmpty()
         .Select(path => new EventsFileAndBroker(path, eventsFiles.Broker)))
     .OrderBy(eventsFileAndBroker => eventsFileAndBroker.FilePath)
     .SelectMany(eventsFileAndBroker => stockEventsReader.Parse(eventsFileAndBroker.FilePath, fxRates, eventsFileAndBroker.Broker))
@@ -23,6 +24,7 @@ var cryptoEventsReader = new CryptoEventsReader(basics);
 var cryptoEvents = basics.CryptoEventsFiles
     .SelectMany(eventsFiles => Directory
         .GetFiles(basics.ReportsDirectoryPath, eventsFiles.FilePattern)
+        .EnsureNonEmpty()
         .Select(path => new EventsFileAndBroker(path, eventsFiles.Broker)))
     .OrderBy(eventsFileAndBroker => eventsFileAndBroker.FilePath)
     .SelectMany(eventsFileAndBroker => cryptoEventsReader.Parse(eventsFileAndBroker.FilePath, eventsFileAndBroker.Broker))

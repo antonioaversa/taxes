@@ -197,7 +197,11 @@
       "Broker": "REVOLUT LTD"
     },
     {
-      "FilePattern": "2023 Revolut All Stocks Transactions.csv",
+      "FilePattern": "2023-1 Revolut All Stocks Transactions.csv",
+      "Broker": "REVOLUT LTD"
+    },
+    {
+      "FilePattern": "2023-2 Revolut All Stocks Transactions.csv",
       "Broker": "REVOLUT RSEUAB"
     },
     {
