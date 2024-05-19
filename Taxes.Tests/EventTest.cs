@@ -6,6 +6,7 @@ public class EventTest
     private static readonly DateTime Date = (2021, 1, 1).ToUtc();
     private const string Ticker = "AAPL";
     private const string Currency = "USD";
+    private const string Broker = "REVOLUT RSEUAB";
 
     [DataTestMethod]
     [DataRow(EventType.Reset, false)]
@@ -16,7 +17,7 @@ public class EventTest
     [DataRow(EventType.SellLimit, false)]
     public void IsBuy(EventType eventType, bool expected)
     {
-        var tickerEvent = new Event(Date, eventType, Ticker, 0, 0, 0, 0, Currency, 0);
+        var tickerEvent = new Event(Date, eventType, Ticker, 0, 0, 0, 0, Currency, 0, Broker);
         Assert.AreEqual(expected, tickerEvent.IsBuy);
     }
 
@@ -29,7 +30,7 @@ public class EventTest
     [DataRow(EventType.SellLimit, true)]
     public void IsSell(EventType eventType, bool expected)
     {
-        var tickerEvent = new Event(Date, eventType, Ticker, 0, 0, 0, 0, Currency, 0);
+        var tickerEvent = new Event(Date, eventType, Ticker, 0, 0, 0, 0, Currency, 0, Broker);
         Assert.AreEqual(expected, tickerEvent.IsSell);
     }
 }

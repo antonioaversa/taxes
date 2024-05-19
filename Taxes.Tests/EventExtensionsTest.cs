@@ -6,11 +6,12 @@ public class EventExtensionsTest
     private const string Ticker = "AAPL";
     private const string Currency = "USD";
     private static readonly DateTime Date = (2021, 1, 1).ToUtc();
+    private const string Broker = "REVOLUT RSEUAB";
 
     [TestMethod]
     public void AssertEvent_ThrowsWhenExpectedAndActualAreDifferent()
     {
-        var tickerEvent = new Event(Date, EventType.BuyMarket, Ticker, 2, 20m, 22m, 2m, Currency, 1.2m);
+        var tickerEvent = new Event(Date, EventType.BuyMarket, Ticker, 2, 20m, 22m, 2m, Currency, 1.2m, Broker);
         Assert.ThrowsException<AssertFailedException>(() => tickerEvent.AssertEvent(date: DateTime.Now.AddDays(1)));
         Assert.ThrowsException<AssertFailedException>(() => tickerEvent.AssertEvent(type: EventType.BuyLimit));
         Assert.ThrowsException<AssertFailedException>(() => tickerEvent.AssertEvent(ticker: "GOOGL"));
@@ -25,7 +26,7 @@ public class EventExtensionsTest
     [TestMethod]
     public void AssertEvent_DoesNotThrowWhenExpectedAndActualAreEqual()
     {
-        var tickerEvent = new Event(Date, EventType.BuyMarket, Ticker, 2, 20m, 22m, 2m, Currency, 1.2m);
+        var tickerEvent = new Event(Date, EventType.BuyMarket, Ticker, 2, 20m, 22m, 2m, Currency, 1.2m, Broker);
         tickerEvent.AssertEvent(date: Date);
         tickerEvent.AssertEvent(type: EventType.BuyMarket);
         tickerEvent.AssertEvent(ticker: Ticker);
@@ -40,7 +41,7 @@ public class EventExtensionsTest
     [TestMethod]
     public void AssertEvent_DoesNotThrowWhenNoPropertyIsAsserted()
     {
-        var tickerEvent = new Event(Date, EventType.BuyMarket, Ticker, 2, 20m, 22m, 2m, Currency, 1.2m);
+        var tickerEvent = new Event(Date, EventType.BuyMarket, Ticker, 2, 20m, 22m, 2m, Currency, 1.2m, Broker);
         tickerEvent.AssertEvent();
     }
 }
