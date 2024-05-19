@@ -188,6 +188,7 @@ record Event(
     /// It is not present in the original input file, and it's added during the parsing.
     /// The mapping between an input file of events and a broker is done in the Basics.json file.
     /// It is used for reporting in the French Tax Declaration, Form 2047, Section 5.
+    /// For this reason, its value should be kept short (<= 19 chars) but meaningful.
     /// </summary>
     string Broker)
 {

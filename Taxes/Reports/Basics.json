@@ -194,11 +194,11 @@
   "StockEventsFiles": [
     {
       "FilePattern": "2022 Revolut All Stocks Transactions.csv",
-      "Broker": "REVOLUT LTD"
+      "Broker": "REVOLUT TRADING LTD"
     },
     {
       "FilePattern": "2023-1 Revolut All Stocks Transactions.csv",
-      "Broker": "REVOLUT LTD"
+      "Broker": "REVOLUT TRADING LTD"
     },
     {
       "FilePattern": "2023-2 Revolut All Stocks Transactions.csv",
