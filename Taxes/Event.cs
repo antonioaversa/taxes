@@ -181,8 +181,15 @@ record Event(
     /// Therefore, to convert to the base currency, one needs to divide the local amount by the FXRate.
     /// </summary>
     decimal FXRate,
-    
-    string Broker = "DEFAULT")
+
+    /// <summary>
+    /// The identifier of the broker where the events originate from. Mandatory. 
+    /// Examples: "REVOLUT LTD", "REVOLUT RSEUAB" or "INTERACTIVE BROKERS".
+    /// It is not present in the original input file, and it's added during the parsing.
+    /// The mapping between an input file of events and a broker is done in the Basics.json file.
+    /// It is used for reporting in the French Tax Declaration, Form 2047, Section 5.
+    /// </summary>
+    string Broker)
 {
     public bool IsBuy => Type is EventType.BuyMarket or EventType.BuyLimit;
     public bool IsSell => Type is EventType.SellMarket or EventType.SellLimit;
