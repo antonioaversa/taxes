@@ -17,7 +17,6 @@ static class FR2074Section5
         outWriter.WriteLine(Math.Round(data.TotalAvgBuyPriceBase, 0));
         outWriter.WriteLine(0);
         outWriter.WriteLine(Math.Round(data.PlusValueCumpBase, 0));
-        outWriter.WriteLine(Separator);
     }
 
     public record Data(
