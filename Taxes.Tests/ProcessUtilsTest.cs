@@ -1,8 +1,26 @@
-﻿namespace Taxes.Tests;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+namespace Taxes.Tests;
 
 [TestClass]
 public class ProcessUtilsTest
 {
+    [TestMethod]
+    public void PrintEnvironmentAndSettings()
+    {
+        using var writer = new StringWriter();
+        ProcessUtils.PrintEnvironmentAndSettings(writer);
+        var output = writer.ToString();
+        Assert.IsTrue(output.Contains("Date and time: "));
+        Assert.IsTrue(output.Contains("Machine name: "));
+        Assert.IsTrue(output.Contains("User name: "));
+        Assert.IsTrue(output.Contains("Current working directory: "));
+        Assert.IsTrue(output.Contains("Command line parameters: "));
+        Assert.IsTrue(output.Contains("Commit hash: "));
+        Assert.IsTrue(output.Contains("Modified files: "));
+        Assert.IsTrue(output.Contains("MD5 digest of files in Reports folder:"));
+    }
+
     [TestMethod]
     public void CommandOutput_WithValidCommandAndDefaultWorkDirectory()
     {

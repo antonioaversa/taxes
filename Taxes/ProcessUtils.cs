@@ -1,13 +1,32 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Security.AccessControl;
 using System.Text;
 
 namespace Taxes;
 
 public static class ProcessUtils
 {
-    public static string CommandOutput(string command, string? workingDirectory = null)
+    public static void PrintEnvironmentAndSettings(TextWriter outWriter)
+    {
+        outWriter.WriteLine("ENVIRONMENT AND SETTINGS");
+        outWriter.WriteLine();
+        outWriter.WriteLine($"Date and time: {DateTime.Now}");
+        outWriter.WriteLine($"Machine name: {Environment.MachineName}");
+        outWriter.WriteLine($"User name: {Environment.UserName}");
+        outWriter.WriteLine($"Current working directory: {Environment.CurrentDirectory}");
+        outWriter.WriteLine($"Command line parameters: {string.Join(' ', Environment.GetCommandLineArgs())}");
+        outWriter.WriteLine($"Commit hash: {CommandOutput("git rev-parse HEAD").Trim()}");
+        outWriter.WriteLine($"Modified files: {CommandOutput("git diff")}");
+        outWriter.WriteLine("MD5 digest of files in Reports folder:");
+        foreach (var filePath in Directory.GetFiles("Reports"))
+        {
+            Console.WriteLine($"- {filePath}: {FileUtils.CalculateMD5Digest(filePath)}");
+        }
+
+        outWriter.WriteLine(new string('=', 100));
+    }
+
+    internal /* for testing */ static string CommandOutput(string command, string? workingDirectory = null)
     {
         try
         {
