@@ -28,7 +28,30 @@ public class StockEventsReaderTests
     private readonly StockEventsReader Instance = new(new());
 
     [TestMethod]
-    public void Parse_WithEmptyFile_ReturnEmptyList()
+    public void Parse_WithTemporaryFile()
+    {
+        var path = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllText(path, """
+                Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
+                2022-03-30T23:48:44.882381Z,,CASH TOP-UP,,,"$3,000",USD,1.12
+                """);
+
+            var events = Instance.Parse(path, NoFxRates, Broker);
+            Assert.AreEqual(1, events.Count);
+            events[0].AssertEvent(
+                type: EventType.CashTopUp, totalAmountLocal: 3000, currency: "USD", fxRate: 1.12m);
+        }
+        finally
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+    }
+
+    [TestMethod]
+    public void Parse_WithEmptyContent_ReturnEmptyList()
     {
         using var textReader = new StringReader(string.Empty);
         var events = Instance.Parse(textReader, NoFxRates, Broker);
@@ -474,29 +497,6 @@ public class StockEventsReaderTests
         var events = Instance.Parse(textReader, NoFxRates, Broker);
         Assert.AreEqual(1, events.Count);
         events[0].AssertEvent(type: EventType.CustodyFee, totalAmountLocal: 1.35m, currency: "USD", fxRate: 1.07m);
-    }
-
-    [TestMethod]
-    public void Parse_WithTemporaryFile()
-    {
-        var path = Path.GetTempFileName();
-        try
-        {
-            File.WriteAllText(path, """
-                Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
-                2022-03-30T23:48:44.882381Z,,CASH TOP-UP,,,"$3,000",USD,1.12
-                """);
-
-            var events = Instance.Parse(path, NoFxRates, Broker);
-            Assert.AreEqual(1, events.Count);
-            events[0].AssertEvent(
-                type: EventType.CashTopUp, totalAmountLocal: 3000, currency: "USD", fxRate: 1.12m);
-        }
-        finally
-        {
-            if (File.Exists(path))
-                File.Delete(path);
-        }
     }
 
     [TestMethod]
