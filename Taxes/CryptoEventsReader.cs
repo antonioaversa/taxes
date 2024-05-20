@@ -5,6 +5,7 @@ namespace Taxes;
 
 class CryptoEventsReader(Basics basics)
 {
+    const string Type_Reset = "RESET";
     const string Type_Transfer = "TRANSFER";
     const string Type_Exchange = "EXCHANGE";
     const string Type_Reward = "REWARD";
@@ -26,6 +27,18 @@ class CryptoEventsReader(Basics basics)
         var events = new List<Event>();
         foreach (var record in eventsCsv.GetRecords<EventStr>())
         {
+            var date = DateTime.ParseExact(record.StartedDate, "yyyy-MM-dd HH:mm:ss", basics.DefaultCulture);
+            if (record.StartedDate != record.CompletedDate)
+                throw new NotSupportedException($"Started date != completed date: {record}");
+            if (record.BaseCurrency != Basics.BaseCurrency)
+                throw new NotSupportedException($"Record base currency {record.BaseCurrency}: {record}");
+
+            if (record.Type == Type_Reset)
+            {
+                events.Add(new(date, EventType.Reset, null, null, null, 0, null, record.BaseCurrency, 1.0m, broker));
+                continue;
+            }
+
             if (record.Type == Type_Transfer)
             {
                 Console.WriteLine($"Ignore record type {Type_Transfer}: {record}");
@@ -39,29 +52,36 @@ class CryptoEventsReader(Basics basics)
                 continue;
             }
 
-            if (record.Type != Type_Exchange)
-                throw new NotSupportedException($"Record type {record.Type}: {record}");
-
             if (record.Product != Product_Current)
                 throw new NotSupportedException($"Record product {record.Product}: {record}");
 
-            if (record.StartedDate != record.CompletedDate)
-                throw new NotSupportedException($"Started date != completed date: {record}");
+            if (record.Type != Type_Exchange)
+                throw new NotSupportedException($"Record type {record.Type}: {record}");
 
             if (record.State != State_Completed)
                 throw new NotSupportedException($"Record state {record.State}: {record}");
 
-            if (record.BaseCurrency != Basics.BaseCurrency)
-                throw new NotSupportedException($"Record base currency {record.BaseCurrency}: {record}");
-
-            var date = DateTime.ParseExact(record.StartedDate, "yyyy-MM-dd HH:mm:ss", basics.DefaultCulture);
             var amount = decimal.Parse(record.Amount);
+            if (amount == 0)
+                throw new InvalidOperationException("Amount is 0");
+
             var quantity = Math.Abs(amount);
             var type = amount >= 0 ? EventType.BuyMarket : EventType.SellMarket;
-            var totalAmountLocal = Math.Abs(decimal.Parse(record.FiatAmountIncFees));
+
+            var fiatAmount = decimal.Parse(record.FiatAmount);
+            if (Math.Sign(amount) != Math.Sign(fiatAmount))
+                throw new InvalidOperationException("Amount and fiat amount have different signs");
+            var pricePerShareLocal = Math.Abs(fiatAmount) / quantity;
+
+            var fiatAmountIncFees = decimal.Parse(record.FiatAmountIncFees);
+            if (Math.Sign(fiatAmount) != Math.Sign(fiatAmountIncFees))
+                throw new InvalidOperationException("Fiat amount and fiat amount inc. fees have different signs");
+            var totalAmountLocal = Math.Abs(fiatAmountIncFees);
 
             // Unlike stocks, the record contains a dedicated field for fees
             var feesLocal = decimal.Parse(record.Fee);
+            if (feesLocal < 0)
+                throw new InvalidOperationException("Fees are negative");
 
             // Unlike stocks, which are exchanged against Local FIAT, crypto are exchanged against Base FIAT
             var fxRate = 1m;
@@ -71,7 +91,7 @@ class CryptoEventsReader(Basics basics)
                 Type: type,
                 Ticker: "CRYPTO",
                 Quantity: quantity,
-                PricePerShareLocal: totalAmountLocal / quantity,
+                PricePerShareLocal: pricePerShareLocal,
                 TotalAmountLocal: totalAmountLocal,
                 FeesLocal: feesLocal,
                 Currency: record.BaseCurrency,
