@@ -1,16 +1,14 @@
-﻿using static Taxes.FR2074Section5;
-
-namespace Taxes;
+﻿namespace Taxes;
 
 class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValues = null)
 {
     private static readonly string Separator = new string('=', 100);
     public Basics Basics => basics;
 
-    public TickerState ProcessTicker(string ticker, IList<Event> tickerEvents, TextWriter? outWriter = null, TextWriter? fr2047Section5Writer = null)
+    public TickerState ProcessTicker(string ticker, IList<Event> tickerEvents, TextWriter? outWriter = null, TextWriter? form2047Writer = null)
     {
         outWriter ??= TextWriter.Null;
-        fr2047Section5Writer ??= TextWriter.Null;
+        form2047Writer ??= TextWriter.Null;
 
         var isin = (string.IsNullOrWhiteSpace(ticker) ? "" : basics.Positions[ticker].ISIN);
         if (string.IsNullOrWhiteSpace(ticker))
@@ -38,7 +36,7 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
                 _ => throw new NotSupportedException($"Event type not supported: {tickerEvent}"),
             };
 
-            tickerState = tickerAction(tickerEvent, tickerEvents, eventIndex++, tickerState, outWriter, fr2047Section5Writer);
+            tickerState = tickerAction(tickerEvent, tickerEvents, eventIndex++, tickerState, outWriter, form2047Writer);
 
             outWriter.WriteLine($"\tTicker State: {tickerState}");
             outWriter.WriteLine();
@@ -49,7 +47,7 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
     }
 
     internal /* for testing */ TickerState ProcessReset(
-        Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter, TextWriter fr2047Section5Writer)
+        Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter, TextWriter form2047Writer)
     {
         if (tickerEvent != tickerEvents[eventIndex])
             throw new InvalidDataException($"Event and event index inconsistent");
@@ -76,7 +74,7 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
     }
 
     internal /* for testing */ TickerState ProcessNoop(
-        Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter, TextWriter fr2047Section5Writer)
+        Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter, TextWriter form2047Writer)
     {
         if (tickerEvent != tickerEvents[eventIndex])
             throw new InvalidDataException($"Event and event index inconsistent");
@@ -85,7 +83,7 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
     }
 
     internal /* for testing */ TickerState ProcessBuy(
-        Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter, TextWriter fr2047Section5Writer)
+        Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter, TextWriter form2047Writer)
     {
         if (tickerEvent != tickerEvents[eventIndex])
             throw new InvalidDataException($"Event and event index inconsistent");
@@ -148,7 +146,7 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
     }
 
     internal /* for testing */ TickerState ProcessSell(
-        Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter, TextWriter fr2047Section5Writer)
+        Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter, TextWriter form2047Writer)
     {
         if (tickerEvent != tickerEvents[eventIndex])
             throw new InvalidDataException($"Event and event index inconsistent");
@@ -211,7 +209,7 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
         var (plusValueCryptoBase, cryptoFractionInitialCapitalBase) =
             CalculatePlusValueCryptoBase(tickerEvent, tickerState, totalSellPriceBase, Math.Max(sellFees1Base, sellFees2Base));
 
-        Print(new(
+        Form2074.PrintDataForSection5(new(
             Basics: basics,
             TickerState: tickerState,
             TickerEvent: tickerEvent,
@@ -219,7 +217,7 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
             TotalSellFeesBase: sellFees1Base,
             PerShareAvgBuyPriceBase: perShareAvgBuyPriceBase,
             TotalAvgBuyPriceBase: totalAvgBuyPriceBase,
-            PlusValueCumpBase: plusValueCumpBase), fr2047Section5Writer);
+            PlusValueCumpBase: plusValueCumpBase), form2047Writer);
 
         return tickerState with
         {
@@ -378,13 +376,20 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
                 outWriter.WriteLine($"\tPlus Value CRYPTO ({basics.BaseCurrency}) = {plusValueCryptoBase.R(basics)}");
             else
                 outWriter.WriteLine($"\tMinus Value CRYPTO ({basics.BaseCurrency}) = {-plusValueCryptoBase.R(basics)}");
-            
+
+            Form2086.PrintDataForSection3(new(
+                TickerState: tickerState,
+                TickerEvent: tickerEvent,
+                PortfolioCurrentValueBase: portfolioCurrentValueBase,
+                SellFeesBase: sellFees1Base,
+                PlusValueCryptoBase: plusValueCryptoBase), form2047Writer); // TODO: currently using writer for 2047
+
             return (plusValueCryptoBase, nextCryptoFractionInitialCapital);
         }
     }
 
     internal /* for testing */ TickerState ProcessStockSplit(
-        Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter, TextWriter fr2047Section5Writer)
+        Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter, TextWriter form2047Writer)
     {
         if (tickerEvent != tickerEvents[eventIndex])
             throw new InvalidDataException($"Event and event index inconsistent");
@@ -433,7 +438,7 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
     }
 
     internal /* for testing */ TickerState ProcessDividend(
-        Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter, TextWriter fr2047Section5Writer)
+        Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter, TextWriter form2047Writer)
     {
         if (tickerEvent != tickerEvents[eventIndex])
             throw new InvalidDataException($"Event and event index inconsistent");
@@ -466,7 +471,7 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
     }
 
     internal /* for testing */ TickerState ProcessInterest(
-        Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter, TextWriter fr2047Section5Writer)
+        Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter, TextWriter form2047Writer)
     {
         if (tickerEvent != tickerEvents[eventIndex])
             throw new InvalidDataException($"Event and event index inconsistent");

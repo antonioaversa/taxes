@@ -34,7 +34,7 @@ ProcessEvents(cryptoEvents, basics, cryptoPortfolioValues);
 static void ProcessEvents(IList<Event> events, Basics basics, CryptoPortfolioValues cryptoPortfolioValues)
 {
     var tickerProcessing = new TickerProcessing(basics, cryptoPortfolioValues);
-    var fr2047Section5Writer = new StringWriter();
+    var form2047Writer = new StringWriter();
 
     // Taken into account in each ticker
     var nonTickerRelatedEvents = (
@@ -51,10 +51,10 @@ static void ProcessEvents(IList<Event> events, Basics basics, CryptoPortfolioVal
 
     var tickerStates = (
         from e in eventsByTicker
-        select tickerProcessing.ProcessTicker(e.ticker, e.tickerEvents, Console.Out, fr2047Section5Writer))
+        select tickerProcessing.ProcessTicker(e.ticker, e.tickerEvents, Console.Out, form2047Writer))
         .ToList();
 
     tickerStates.PrintAggregatedMetrics(Console.Out, basics);
-    Console.Out.Write(fr2047Section5Writer.ToString());
+    Console.Out.Write(form2047Writer.ToString());
 }
 

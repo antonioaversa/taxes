@@ -5,7 +5,7 @@ namespace Taxes.Tests;
 using static EventType;
 
 [TestClass]
-public class FR2074Section5Test
+public class Form2074Test
 {
     private const string Ticker = "AAPL";
     private const string Isin = "US0378331005";
@@ -14,7 +14,7 @@ public class FR2074Section5Test
     private static readonly Basics Basics = new();
 
     [TestMethod]
-    public void Print_IncludesAllRelevantInformation()
+    public void PrintDataForSection5_IncludesAllRelevantInformation()
     {
         var initialState = new TickerState(Ticker, Isin, 
             PlusValueCumpBase: 101m,
@@ -33,7 +33,7 @@ public class FR2074Section5Test
             GrossInterestsBase: 551);
         var sell = new Event(T0, SellLimit, Ticker, 2, 150m, 297.50m, 2.50m, USD, 4m, "THE BROKER");
         var writer = new StringWriter();
-        var data = new FR2074Section5.Data
+        var data = new Form2074.Data
         (
             Basics: Basics,
             TickerState: initialState,
@@ -45,7 +45,7 @@ public class FR2074Section5Test
             PlusValueCumpBase: 1.01m
 
         );
-        FR2074Section5.Print(data, writer);
+        Form2074.PrintDataForSection5(data, writer);
 
         var text = writer.ToString();
         Assert.IsTrue(text.Contains(Ticker));

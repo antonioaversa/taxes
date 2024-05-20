@@ -22,6 +22,7 @@ class CryptoEventsReader(Basics basics)
 
     public IList<Event> Parse(TextReader eventsReader, string broker)
     {
+        // TODO: fix culture in decimal.Parse
         using var eventsCsv = new CsvReader(eventsReader, basics.DefaultCulture);
 
         var events = new List<Event>();
