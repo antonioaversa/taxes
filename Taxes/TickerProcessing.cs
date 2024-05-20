@@ -363,14 +363,14 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
             var totalNetSellPriceBase = totalSellPriceBase - sellFeesBase; // TODO: Check it should be equal to sharesSellPriceBase
 
 
-            var deltaCryptoFractionInitialCapital = portfolioNetAcquisitionValueBase * totalSellPriceBase / portfolioCurrentValueBase;
-            outWriter.WriteLine($"\tSell Fraction of Initial Capital CRYPTO ({basics.BaseCurrency}) = {deltaCryptoFractionInitialCapital}");
+            var sellFractionOfInitialCapital = portfolioNetAcquisitionValueBase * totalSellPriceBase / portfolioCurrentValueBase;
+            outWriter.WriteLine($"\tSell Fraction of Initial Capital CRYPTO ({basics.BaseCurrency}) = {sellFractionOfInitialCapital}");
 
-            var nextCryptoFractionInitialCapital = portfolioFractionOfInitialCapitalBase + deltaCryptoFractionInitialCapital;
-            outWriter.WriteLine($"\tNext Portfolio Fraction of Initial Capital CRYPTO ({basics.BaseCurrency}) = {nextCryptoFractionInitialCapital}");
+            var nextPortfolioFractionOfInitialCapital = portfolioFractionOfInitialCapitalBase + sellFractionOfInitialCapital;
+            outWriter.WriteLine($"\tNext Portfolio Fraction of Initial Capital CRYPTO ({basics.BaseCurrency}) = {nextPortfolioFractionOfInitialCapital}");
 
 
-            var plusValueCryptoBase = totalNetSellPriceBase - deltaCryptoFractionInitialCapital;
+            var plusValueCryptoBase = totalNetSellPriceBase - sellFractionOfInitialCapital;
 
             if (plusValueCryptoBase >= 0)
                 outWriter.WriteLine($"\tPlus Value CRYPTO ({basics.BaseCurrency}) = {plusValueCryptoBase.R(basics)}");
@@ -384,7 +384,7 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
                 SellFeesBase: sellFees1Base,
                 PlusValueCryptoBase: plusValueCryptoBase), form2047Writer); // TODO: currently using writer for 2047
 
-            return (plusValueCryptoBase, nextCryptoFractionInitialCapital);
+            return (plusValueCryptoBase, nextPortfolioFractionOfInitialCapital);
         }
     }
 

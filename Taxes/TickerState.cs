@@ -212,7 +212,8 @@ record TickerState(
     /// For example:
     /// - R = 1.1 if the total value of the crypto portfolio is 10% bigger than the portfolio acquisition.
     /// - R = 0.9 if the total value of the crypto portfolio is 10% smaller than the portfolio acquisition.
-    /// If the total amount of the sell event is S, the capital gain G is calculated as G = S - S / R = S * (1 - 1 / R).
+    /// If the total gross amount of the sell event is S and the fees are F, the capital gain G is calculated as 
+    /// G = (S - F) - S / R = S * (1 - 1 / R) - F.
     /// 1 - 1 / R represents the fraction of the total amount of the sell event that is considered capital gain.
     /// So:
     /// - if R = 2 (portfolio doubled its value), the capital gain is 50% of the total amount of the sell event
@@ -226,8 +227,9 @@ record TickerState(
 
     /// <summary>
     /// As explained in the documentation of PortfolioAcquisitionValueBase, the capital gain for crypto is calculated
-    /// as G = S - S / R, where R is PortfolioValue[time of the sell] / CryptoPortfolioAcquisitionValueBase.
-    /// The quantity FIC = S / R is the part of S that comes from the initial capital, and is not considered capital gain.
+    /// as G = S - S / R - F, where R is PortfolioValue[time of the sell] / CryptoPortfolioAcquisitionValueBase.
+    /// The quantity FIC = S / R is the Fraction of the Initial Capital in S and it corresponds to the the part of S 
+    /// that comes from the initial capital, and is not considered capital gain.
     /// 
     /// This formula for R is, however, only correct at the first sell event. At the next sell event, the formula for R
     /// is slightly more complex, as it needs to deduct the previous FIC from S: 
