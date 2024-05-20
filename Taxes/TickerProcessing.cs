@@ -350,26 +350,26 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
                 return (0m, 0m);
             }
 
-            outWriter.WriteLine($"\tPortfolio Current Value ({basics.BaseCurrency}) = {portfolioCurrentValueBase.R(basics)}");
+            outWriter.WriteLine($"\tPortfolio Current Value CRYPTO ({basics.BaseCurrency}) = {portfolioCurrentValueBase.R(basics)}");
 
             var portfolioAcquisitionValueBase = tickerState.CryptoPortfolioAcquisitionValueBase;
-            outWriter.WriteLine($"\tPortfolio Acquisition Value ({basics.BaseCurrency}) = {portfolioAcquisitionValueBase.R(basics)}");
+            outWriter.WriteLine($"\tPortfolio Acquisition Value CRYPTO ({basics.BaseCurrency}) = {portfolioAcquisitionValueBase.R(basics)}");
 
-            var currentCryptoFractionInitialCapital = tickerState.CryptoFractionOfInitialCapitalBase;
-            outWriter.WriteLine($"\tCurrent Fraction of Initial Capital CRYPTO ({basics.BaseCurrency}) = {currentCryptoFractionInitialCapital}");
+            var portfolioFractionOfInitialCapitalBase = tickerState.CryptoFractionOfInitialCapitalBase;
+            outWriter.WriteLine($"\tPortfolio Fraction of Initial Capital CRYPTO ({basics.BaseCurrency}) = {portfolioFractionOfInitialCapitalBase}");
 
 
             var portfolioNetAcquisitionValueBase = portfolioAcquisitionValueBase - tickerState.CryptoFractionOfInitialCapitalBase;
-            outWriter.WriteLine($"\tPortfolio Net Acquisition Value ({basics.BaseCurrency}) = {portfolioNetAcquisitionValueBase.R(basics)}");
+            outWriter.WriteLine($"\tPortfolio Net Acquisition Value CRYPTO ({basics.BaseCurrency}) = {portfolioNetAcquisitionValueBase.R(basics)}");
 
             var totalNetSellPriceBase = totalSellPriceBase - sellFeesBase; // TODO: Check it should be equal to sharesSellPriceBase
 
 
             var deltaCryptoFractionInitialCapital = portfolioNetAcquisitionValueBase * totalSellPriceBase / portfolioCurrentValueBase;
-            outWriter.WriteLine($"\tDelta Fraction of Initial Capital CRYPTO ({basics.BaseCurrency}) = {deltaCryptoFractionInitialCapital}");
+            outWriter.WriteLine($"\tSell Fraction of Initial Capital CRYPTO ({basics.BaseCurrency}) = {deltaCryptoFractionInitialCapital}");
 
-            var nextCryptoFractionInitialCapital = currentCryptoFractionInitialCapital + deltaCryptoFractionInitialCapital;
-            outWriter.WriteLine($"\tNext Fraction of Initial Capital CRYPTO ({basics.BaseCurrency}) = {nextCryptoFractionInitialCapital}");
+            var nextCryptoFractionInitialCapital = portfolioFractionOfInitialCapitalBase + deltaCryptoFractionInitialCapital;
+            outWriter.WriteLine($"\tNext Portfolio Fraction of Initial Capital CRYPTO ({basics.BaseCurrency}) = {nextCryptoFractionInitialCapital}");
 
 
             var plusValueCryptoBase = totalNetSellPriceBase - deltaCryptoFractionInitialCapital;
