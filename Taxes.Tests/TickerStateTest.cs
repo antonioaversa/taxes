@@ -30,8 +30,8 @@ public class TickerStateTest
 
         Assert.AreEqual(-1, tickerState.PepsCurrentIndex);
         Assert.AreEqual(0m, tickerState.PepsCurrentIndexSoldQuantity);
-        Assert.AreEqual(0m, tickerState.PortfolioAcquisitionValueBase);
-        Assert.AreEqual(0m, tickerState.CryptoFractionOfInitialCapital);
+        Assert.AreEqual(0m, tickerState.CryptoPortfolioAcquisitionValueBase);
+        Assert.AreEqual(0m, tickerState.CryptoFractionOfInitialCapitalBase);
     }
 
     [TestMethod]

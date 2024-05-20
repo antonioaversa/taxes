@@ -194,8 +194,51 @@ record TickerState(
     /// </summary>
     decimal PepsCurrentIndexSoldQuantity = 0m,
 
-    decimal PortfolioAcquisitionValueBase = 0m, 
-    decimal CryptoFractionOfInitialCapital = 0m)
+    /// <summary>
+    /// Relevant for tax calculation of crypto only. It is used in conjunction with the CryptoFractionOfInitialCapital.
+    /// Represents the total amount of FIAT currency used to acquire all the crypto currencies in the portfolio.
+    /// It's always increasing at every buy event, and never decreased by any event, including reset events.
+    /// 
+    /// If multiple portfolios are owned, all portfolios in all supports (cold wallet, physical, online) and exchanges
+    /// need to be summed up, to calculate the portfolio acquisition value. Moreover, when crypto currencies are 
+    /// acquired in exchange for services or goods, the total amount in FIAT currency for the crypto currencies 
+    /// received at the moment when the service has been executed, or the good delivered, needs to be included in the
+    /// portfolio acquisition value.
+    /// 
+    /// USE OF PORTFOLIO ACQUISITION VALUE IN CRYPTO TAX CALCULATION
+    /// When a crypto currency is sold, the ratio R = PortfolioValue[time of the sell] / CryptoPortfolioAcquisitionValueBase
+    /// is calculated.
+    /// R will be bigger than 1 if the portfolio increased its value, and smaller than 1 otherwise.
+    /// For example:
+    /// - R = 1.1 if the total value of the crypto portfolio is 10% bigger than the portfolio acquisition.
+    /// - R = 0.9 if the total value of the crypto portfolio is 10% smaller than the portfolio acquisition.
+    /// If the total amount of the sell event is S, the capital gain G is calculated as G = S - S / R = S * (1 - 1 / R).
+    /// 1 - 1 / R represents the fraction of the total amount of the sell event that is considered capital gain.
+    /// So:
+    /// - if R = 2 (portfolio doubled its value), the capital gain is 50% of the total amount of the sell event
+    /// - if R = 3 (portfolio tripled its value), the capital gain is 66.67% of the total amount of the sell event
+    /// - if R = 1/2 (portfolio halved its value), the capital gain is -100% of the total amount of the sell event
+    /// 
+    /// At the next iteration, the quantity S / R is deducted from the portfolio acquisition value, to keep track of the
+    /// fraction of initial capital that has been sold. This quantity is stored in CryptoFractionOfInitialCapitalBase.
+    /// </summary> 
+    decimal CryptoPortfolioAcquisitionValueBase = 0m,
+
+    /// <summary>
+    /// As explained in the documentation of PortfolioAcquisitionValueBase, the capital gain for crypto is calculated
+    /// as G = S - S / R, where R is PortfolioValue[time of the sell] / CryptoPortfolioAcquisitionValueBase.
+    /// The quantity FIC = S / R is the part of S that comes from the initial capital, and is not considered capital gain.
+    /// 
+    /// This formula for R is, however, only correct at the first sell event. At the next sell event, the formula for R
+    /// is slightly more complex, as it needs to deduct the previous FIC from S: 
+    /// R = PortfolioValue[time of the sell] / (CryptoPortfolioAcquisitionValueBase - CryptoFractionOfInitialCapitalBase)
+    /// 
+    /// This is because, after the first sell event, the value of the portfolio has decreased by the sell amount.
+    /// 
+    /// This is repeated at every sell event of a crypto, and the CryptoFractionOfInitialCapitalBase keeps incrementing,
+    /// and it's deducted from the PortfolioAcquisitionValueBase for the calculation of R at every sell event.
+    /// </summary>
+    decimal CryptoFractionOfInitialCapitalBase = 0m)
 {
     private static readonly Basics basics = new(); // TODO: remove it after checking where ToString is used
 

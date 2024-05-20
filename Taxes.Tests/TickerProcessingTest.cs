@@ -185,10 +185,10 @@ public class TickerProcessingTest
     {
         var reset1 = new Event(T0 + 0 * D, Reset, Ticker, null, null, 0m, null, EUR, 1, Broker);
         var state = new TickerState(Ticker, Isin, 
-            PortfolioAcquisitionValueBase: 5.5m, CryptoFractionOfInitialCapital: 0.75m);
+            CryptoPortfolioAcquisitionValueBase: 5.5m, CryptoFractionOfInitialCapitalBase: 0.75m);
         var stateAfterReset = Instance.ProcessReset(reset1, [reset1], 0, state, NoOut, NoOut);
-        AssertEq(5.5m, stateAfterReset.PortfolioAcquisitionValueBase);
-        AssertEq(0.75m, stateAfterReset.CryptoFractionOfInitialCapital);
+        AssertEq(5.5m, stateAfterReset.CryptoPortfolioAcquisitionValueBase);
+        AssertEq(0.75m, stateAfterReset.CryptoFractionOfInitialCapitalBase);
     }
 
     [TestMethod]
@@ -237,7 +237,7 @@ public class TickerProcessingTest
             TotalQuantity: 3, TotalAmountBase: 25.46m,
             NetDividendsBase: 4.5m, WhtDividendsBase: 0.2m, GrossDividendsBase: 4.7m,
             PepsCurrentIndex: 3, PepsCurrentIndexSoldQuantity: 2.1m,
-            PortfolioAcquisitionValueBase: 23.3m, CryptoFractionOfInitialCapital: 0.75m);
+            CryptoPortfolioAcquisitionValueBase: 23.3m, CryptoFractionOfInitialCapitalBase: 0.75m);
         var stateAfterNoop = Instance.ProcessNoop(cashTopUp1, [cashTopUp1], 0, state, NoOut, NoOut);
         Assert.AreEqual(state, stateAfterNoop);
     }

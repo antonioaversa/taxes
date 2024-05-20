@@ -17,8 +17,8 @@ static class TickerStateExtensions
         decimal? grossDividendsBase = null,
         int? pepsCurrentIndex = null,
         decimal? pepsCurrentIndexSoldQuantity = null,
-        decimal? portfolioAcquisitionValueBase = null,
-        decimal? cryptoFractionOfInitialCapital = null)
+        decimal? cryptoPortfolioAcquisitionValueBase = null,
+        decimal? cryptoFractionOfInitialCapitalBase = null)
     {
         if (plusValueCumpBase is not null) 
             Assert.AreEqual(plusValueCumpBase, tickerState.PlusValueCumpBase);
@@ -49,10 +49,10 @@ static class TickerStateExtensions
             Assert.AreEqual(pepsCurrentIndex, tickerState.PepsCurrentIndex);
         if (pepsCurrentIndexSoldQuantity is not null) 
             Assert.AreEqual(pepsCurrentIndexSoldQuantity, tickerState.PepsCurrentIndexSoldQuantity);
-        if (portfolioAcquisitionValueBase is not null) 
-            Assert.AreEqual(portfolioAcquisitionValueBase, tickerState.PortfolioAcquisitionValueBase);
-        if (cryptoFractionOfInitialCapital is not null) 
-            Assert.AreEqual(cryptoFractionOfInitialCapital, tickerState.CryptoFractionOfInitialCapital);
+        if (cryptoPortfolioAcquisitionValueBase is not null) 
+            Assert.AreEqual(cryptoPortfolioAcquisitionValueBase, tickerState.CryptoPortfolioAcquisitionValueBase);
+        if (cryptoFractionOfInitialCapitalBase is not null) 
+            Assert.AreEqual(cryptoFractionOfInitialCapitalBase, tickerState.CryptoFractionOfInitialCapitalBase);
     }
 
     // This is like the previous method, but asserts the default value (0 or -1) when the value is null
@@ -90,7 +90,7 @@ static class TickerStateExtensions
                 
             pepsCurrentIndex: pepsCurrentIndex ?? -1,
             pepsCurrentIndexSoldQuantity: pepsCurrentIndexSoldQuantity ?? 0,
-            portfolioAcquisitionValueBase: portfolioAcquisitionValueBase ?? 0,
-            cryptoFractionOfInitialCapital: cryptoFractionOfInitialCapital ?? 0);
+            cryptoPortfolioAcquisitionValueBase: portfolioAcquisitionValueBase ?? 0,
+            cryptoFractionOfInitialCapitalBase: cryptoFractionOfInitialCapital ?? 0);
 }
 
