@@ -36,7 +36,7 @@ public partial class Basics
 
     public CultureInfo FxRatesMultiCurrenciesCulture { get; } = CultureInfo.GetCultureInfo("fr-FR");
 
-    public CultureInfo FR2074Section5Culture { get; } = CultureInfo.GetCultureInfo("fr-FR");
+    public CultureInfo Form2074Culture { get; } = CultureInfo.GetCultureInfo("fr-FR");
 
     // Read from Basics.json
     public Func<decimal, decimal> Rounding { get; init; }
