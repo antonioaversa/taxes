@@ -1,6 +1,8 @@
 ﻿using Taxes;
 
-ProcessUtils.PrintEnvironmentAndSettings(Console.Out);
+var outWriters = new OutWriters(Console.Out, new StringWriter(), new StringWriter());
+
+ProcessUtils.PrintEnvironmentAndSettings(outWriters.Default);
 
 var basics = new Basics();
 var fxRatesFilePath = Path.Combine(basics.ReportsDirectoryPath, basics.FXRatesFilePath);
@@ -16,7 +18,7 @@ var stockEvents = basics.StockEventsFiles
         .EnsureNonEmpty()
         .Select(path => new EventsFileAndBroker(path, eventsFiles.Broker)))
     .OrderBy(eventsFileAndBroker => eventsFileAndBroker.FilePath)
-    .SelectMany(eventsFileAndBroker => stockEventsReader.Parse(eventsFileAndBroker.FilePath, fxRates, eventsFileAndBroker.Broker))
+    .SelectMany(eventsFileAndBroker => stockEventsReader.Parse(eventsFileAndBroker.FilePath, fxRates, eventsFileAndBroker.Broker, outWriters.Default))
     .ToList();
 ProcessEvents(stockEvents, basics, cryptoPortfolioValues);
 
@@ -27,14 +29,13 @@ var cryptoEvents = basics.CryptoEventsFiles
         .EnsureNonEmpty()
         .Select(path => new EventsFileAndBroker(path, eventsFiles.Broker)))
     .OrderBy(eventsFileAndBroker => eventsFileAndBroker.FilePath)
-    .SelectMany(eventsFileAndBroker => cryptoEventsReader.Parse(eventsFileAndBroker.FilePath, eventsFileAndBroker.Broker))
+    .SelectMany(eventsFileAndBroker => cryptoEventsReader.Parse(eventsFileAndBroker.FilePath, eventsFileAndBroker.Broker, outWriters.Default))
     .ToList();
-ProcessEvents(cryptoEvents, basics, cryptoPortfolioValues);
+ProcessEvents(cryptoEvents, basics, cryptoPortfolioValues, outWriters);
 
-static void ProcessEvents(IList<Event> events, Basics basics, CryptoPortfolioValues cryptoPortfolioValues)
+static void ProcessEvents(IList<Event> events, Basics basics, CryptoPortfolioValues cryptoPortfolioValues, OutWriters outWriters)
 {
     var tickerProcessing = new TickerProcessing(basics, cryptoPortfolioValues);
-    var form2047Writer = new StringWriter();
 
     // Taken into account in each ticker
     var nonTickerRelatedEvents = (
@@ -51,10 +52,11 @@ static void ProcessEvents(IList<Event> events, Basics basics, CryptoPortfolioVal
 
     var tickerStates = (
         from e in eventsByTicker
-        select tickerProcessing.ProcessTicker(e.ticker, e.tickerEvents, Console.Out, form2047Writer))
+        select tickerProcessing.ProcessTicker(e.ticker, e.tickerEvents, outWriters))
         .ToList();
 
-    tickerStates.PrintAggregatedMetrics(Console.Out, basics);
-    Console.Out.Write(form2047Writer.ToString());
+    tickerStates.PrintAggregatedMetrics(outWriters.Default, basics);
+    outWriters.Default.Write(outWriters.Form2047Writer.ToString());
+    outWriters.Default.Write(outWriters.Form2086Writer.ToString());
 }
 

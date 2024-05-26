@@ -14,13 +14,13 @@ class CryptoEventsReader(Basics basics)
 
     public Basics Basics => basics;
 
-    public IList<Event> Parse(string path, string broker)
+    public IList<Event> Parse(string path, string broker, TextWriter outWriter)
     {
         using var reader = new StreamReader(path);
-        return Parse(reader, broker);
+        return Parse(reader, broker, outWriter);
     }
 
-    public IList<Event> Parse(TextReader eventsReader, string broker)
+    public IList<Event> Parse(TextReader eventsReader, string broker, TextWriter outWriter)
     {
         // TODO: fix culture in decimal.Parse
         using var eventsCsv = new CsvReader(eventsReader, basics.DefaultCulture);
@@ -42,14 +42,14 @@ class CryptoEventsReader(Basics basics)
 
             if (record.Type == Type_Transfer)
             {
-                Console.WriteLine($"Ignore record type {Type_Transfer}: {record}");
+                outWriter.WriteLine($"Ignore record type {Type_Transfer}: {record}");
                 continue;
             }
 
             // TODO: fix
             if (record.Type == Type_Reward)
             {
-                Console.WriteLine($"Ignore record type {Type_Reward}: {record}");
+                outWriter.WriteLine($"Ignore record type {Type_Reward}: {record}");
                 continue;
             }
 

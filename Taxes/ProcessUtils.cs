@@ -20,7 +20,7 @@ public static class ProcessUtils
         outWriter.WriteLine("MD5 digest of files in Reports folder:");
         foreach (var filePath in Directory.GetFiles("Reports"))
         {
-            Console.WriteLine($"- {filePath}: {FileUtils.CalculateMD5Digest(filePath)}");
+            outWriter.WriteLine($"- {filePath}: {FileUtils.CalculateMD5Digest(filePath)}");
         }
 
         outWriter.WriteLine(new string('=', 100));

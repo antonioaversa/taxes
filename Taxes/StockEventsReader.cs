@@ -10,13 +10,13 @@ partial class StockEventsReader(Basics basics)
 {
     public Basics Basics => basics;
 
-    public IList<Event> Parse(string path, FxRates fxRates, string broker)
+    public IList<Event> Parse(string path, FxRates fxRates, string broker, TextWriter outWriter)
     {
         using var reader = new StreamReader(path);
-        return Parse(reader, fxRates, broker);
+        return Parse(reader, fxRates, broker, outWriter);
     }
 
-    public IList<Event> Parse(TextReader textReader, FxRates fxRates, string broker)
+    public IList<Event> Parse(TextReader textReader, FxRates fxRates, string broker, TextWriter outWriter)
     {
         var csvConfiguration = new CsvConfiguration(basics.DefaultCulture)
         {
@@ -46,7 +46,7 @@ partial class StockEventsReader(Basics basics)
                 || !currencyRates.TryGetValue(date.Date, out var fxRate))
             {
                 if (currency != basics.BaseCurrency)
-                    Console.WriteLine($"WARN: No FX Rate found for currency {record.Currency} and day {date.Date} -> using {record.FXRate}");
+                    outWriter.WriteLine($"WARN: No FX Rate found for currency {record.Currency} and day {date.Date} -> using {record.FXRate}");
 
                 if (recordFxRate < 0)
                     throw new InvalidOperationException(

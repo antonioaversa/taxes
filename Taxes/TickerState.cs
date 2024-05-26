@@ -252,8 +252,13 @@ record TickerState(
         $"Interests = {NetInterestsBase.R(basics)} {basics.BaseCurrency} + WHT {WhtInterestsBase.R(basics)} {basics.BaseCurrency} = {GrossInterestsBase.R(basics)} {basics.BaseCurrency}";
 }
 
+public record OutWriters(TextWriter Default, TextWriter Form2047Writer, TextWriter Form2086Writer)
+{
+    public OutWriters() : this(TextWriter.Null, TextWriter.Null, TextWriter.Null) { }
+}
+
 delegate TickerState TickerAction(
-    Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, TextWriter outWriter, TextWriter form2047Writer);
+    Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, OutWriters outWriters);
 
 [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
 class MetricAttribute(string description, bool aggregateByCountry = false) : Attribute
