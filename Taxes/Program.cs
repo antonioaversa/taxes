@@ -20,7 +20,7 @@ var stockEvents = basics.StockEventsFiles
     .OrderBy(eventsFileAndBroker => eventsFileAndBroker.FilePath)
     .SelectMany(eventsFileAndBroker => stockEventsReader.Parse(eventsFileAndBroker.FilePath, fxRates, eventsFileAndBroker.Broker, outWriters.Default))
     .ToList();
-ProcessEvents(stockEvents, basics, cryptoPortfolioValues);
+ProcessEvents(stockEvents, basics, cryptoPortfolioValues, outWriters);
 
 var cryptoEventsReader = new CryptoEventsReader(basics);
 var cryptoEvents = basics.CryptoEventsFiles
