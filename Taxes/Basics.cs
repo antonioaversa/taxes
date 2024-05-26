@@ -117,33 +117,45 @@ public partial class Basics
     // This class is used to deserialize the Basics.json file
     private sealed class BasicsFile
     {
+        [JsonRequired]
         public string? Rounding { get; set; } = null;
+        [JsonRequired]
         public decimal? Precision { get; set; } = null;
+        [JsonRequired]
         public string? BaseCurrency { get; set; } = null;
+        [JsonRequired]
         public Dictionary<string, Position>? Positions { get; set; } = null;
+        [JsonRequired]
         public List<EventsFiles>? StockEventsFiles { get; set; } = null;
 
+        [JsonRequired]
         public List<EventsFiles>? CryptoEventsFiles { get; set; } = null;
+        [JsonRequired]
         public string? CryptoPortfolioValuesCurrency { get; set; } = null;
+        [JsonRequired]
         public string? CryptoPortfolioValuesFilePath { get; set; } = null;
 
-        public string? FXRatesInputType { get; set; } = null;
-        public string? FXRatesSingleCurrency { get; set; } = null;
+        [JsonRequired]
         public string? FXRatesFilePath { get; set; } = null;
 
+        [JsonRequired]
         public Dictionary<string, CountryWithholdingTaxes>? WithholdingTaxes { get; set; } = null;
     }
 
     public sealed class Position
     {
+        [JsonRequired]
         public string Country { get; set; } = string.Empty;
+        [JsonRequired]
         public string ISIN { get; set; } = string.Empty;
     }
 
     public sealed class CountryWithholdingTaxes
     {
-        public decimal Dividend { get; set; } = 0m;
-        public decimal Interest { get; set; } = 0m;
+        [JsonRequired]
+        public decimal Dividends { get; set; } = 0m;
+        [JsonRequired]
+        public decimal Interests { get; set; } = 0m;
     }
 
     public sealed record EventsFiles(string FilePattern, string Broker);

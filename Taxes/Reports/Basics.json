@@ -229,11 +229,11 @@
   "WithholdingTaxes": {
     "US": {
       "Dividends": 0.15,
-      "Interest": 0.15
+      "Interests": 0.15
     },
     "IE": {
       "Dividends": 0.15,
-      "Interest": 0.20
+      "Interests": 0.20
     }
   }
 }
