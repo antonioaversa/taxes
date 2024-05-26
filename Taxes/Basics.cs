@@ -48,6 +48,7 @@ public partial class Basics
     public string CryptoPortfolioValuesCurrency { get; init; }
     public string CryptoPortfolioValuesFilePath { get; init; }
     public string FXRatesFilePath { get; init; }
+    public ReadOnlyDictionary<string, CountryWithholdingTaxes> WithholdingTaxes { get; init; }
 
     public Basics(string reportsDirectoryPath = "Reports", string basicsFileName = "Basics.json")
     {
@@ -97,27 +98,15 @@ public partial class Basics
         FXRatesFilePath = basicsFile.FXRatesFilePath
             ?? throw new InvalidDataException($"Invalid {nameof(FXRatesFilePath)} in {basicsFileName}");
 
+        WithholdingTaxes = new ReadOnlyDictionary<string, CountryWithholdingTaxes>(basicsFile.WithholdingTaxes
+            ?? throw new InvalidDataException($"Invalid {nameof(WithholdingTaxes)} in {basicsFileName}"));
+
         static decimal RoundingWithNumberOfDigits(decimal value, int numberOfDigits) =>
             Math.Round(value, numberOfDigits);
 
         static decimal RoundingWithResolutionAroundZero(decimal value, int numberOfDigits, decimal resolutionAroundZero) =>
             Math.Abs(Math.Round(value, numberOfDigits)) < resolutionAroundZero ? 0m : Math.Round(value, numberOfDigits);
     }
-
-    public static decimal DividendWitholdingTaxFor(Position position) => 
-        position.Country switch
-        {
-            "US" => 0.15m,
-            var country => throw new NotSupportedException($"Unknown Dividend WHT for {country}"),
-        };
-
-    public static decimal InterestWitholdingTaxFor(Position position) =>
-        position.Country switch
-        {
-            "US" => 0.15m,
-            "IE" => 0.20m, // TODO: check this
-            var country => throw new NotSupportedException($"Unknown Interest WHT for {country}"),
-        };
 
     [GeneratedRegex(@"^Fixed_(?<numberOfDigits>\d+)$")]
     private static partial Regex Regex_RoundingWithNumberOfDigits();
@@ -141,12 +130,20 @@ public partial class Basics
         public string? FXRatesInputType { get; set; } = null;
         public string? FXRatesSingleCurrency { get; set; } = null;
         public string? FXRatesFilePath { get; set; } = null;
+
+        public Dictionary<string, CountryWithholdingTaxes>? WithholdingTaxes { get; set; } = null;
     }
 
     public sealed class Position
     {
-        public string? Country { get; set; } = null;
-        public string? ISIN { get; set; } = null;
+        public string Country { get; set; } = string.Empty;
+        public string ISIN { get; set; } = string.Empty;
+    }
+
+    public sealed class CountryWithholdingTaxes
+    {
+        public decimal Dividend { get; set; } = 0m;
+        public decimal Interest { get; set; } = 0m;
     }
 
     public sealed record EventsFiles(string FilePattern, string Broker);

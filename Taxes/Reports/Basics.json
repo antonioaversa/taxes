@@ -225,5 +225,15 @@
   ],
   "CryptoPortfolioValuesCurrency": "USD",
   "CryptoPortfolioValuesFilePath": "Crypto Portfolio Values USD.csv",
-  "FXRatesFilePath": "FX Rates ECB 2024-04-14.csv"
+  "FXRatesFilePath": "FX Rates ECB 2024-04-14.csv",
+  "WithholdingTaxes": {
+    "US": {
+      "Dividends": 0.15,
+      "Interest": 0.15
+    },
+    "IE": {
+      "Dividends": 0.15,
+      "Interest": 0.20
+    }
+  }
 }
