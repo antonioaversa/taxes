@@ -29,10 +29,10 @@ Then check the [Setup section](#Setup) for more details on how to configure the 
 
 ## Prerequirements
 
-The software is written in C# and requires the .NET 8.0 runtime to be installed on the machine where it is executed.
+The software is written in C# and requires the .NET 9.0 runtime to be installed on the machine where it is executed.
 
-The latest version of .NET 8.0 for all major Operating Systems (Linux, MacOS, Windows) can be downloaded from the 
-[official site](https://dotnet.microsoft.com/download/dotnet/8.0).
+The latest version of .NET 9.0 for all major Operating Systems (Linux, MacOS, Windows) can be downloaded from the 
+[official site](https://dotnet.microsoft.com/download/dotnet/9.0).
 
 ## Build
 
@@ -270,7 +270,7 @@ other reports, or the closest FX Rate available, when the ECB didn't provide an 
 Updated data can be retrieved at [this link](https://www.banque-france.fr/statistiques/taux-et-cours/les-taux-de-change-salle-des-marches/parites-quotidiennes) 
 on the web-site of the Banque de France.
 
-Under the `Taux de change (parités quotidiennes) dd MMM yyyy` page, there is the possibility to download the data in
+Under the `Taux de change (paritï¿½s quotidiennes) dd MMM yyyy` page, there is the possibility to download the data in
 CSV format, for all conversions. The downloaded CSV file has a complete history of FX Rates for every day in the past, 
 and for all currencies.
 
