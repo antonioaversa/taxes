@@ -75,7 +75,7 @@ public static class ProcessUtils
     private static (string filename, string arguments) BuildShellCommand(string command) => 
         (Environment.OSVersion.Platform) switch
         {
-            PlatformID.Unix or PlatformID.MacOSX => ("bash", "-c " + command),
+            PlatformID.Unix or PlatformID.MacOSX => ("bash", $"""-c "{command}" """),
             PlatformID.Win32NT => ("cmd", "/c " + command),
             _ => throw new PlatformNotSupportedException(),
         };
