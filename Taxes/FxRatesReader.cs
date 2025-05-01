@@ -96,7 +96,11 @@ public partial class FxRatesReader(Basics basics)
             if (lineFields.Length != currencies.Count + 1)
                 throw new InvalidDataException($"Invalid data line: '{lines[lineIndex]}'");
 
-            var day = DateTime.ParseExact(lineFields[0], "dd/MM/yyyy", basics.DefaultCulture);
+            // In 2025, the date format has changed from "dd/MM/yyyy" to "yyyy-MM-dd", so test both formats one after the other.
+            if (!DateTime.TryParseExact(lineFields[0], "dd/MM/yyyy", basics.DefaultCulture, DateTimeStyles.AssumeLocal, out var day)
+                && !DateTime.TryParseExact(lineFields[0], "yyyy-MM-dd", basics.DefaultCulture, DateTimeStyles.AssumeLocal, out day))
+                throw new InvalidDataException($"Invalid line: '{lines[lineIndex]}'");
+            
             for (int fieldIndex = 1; fieldIndex < lineFields.Length; fieldIndex++)
             {
                 // The difference between dash and empty string is that the dash means no data for that day, but 

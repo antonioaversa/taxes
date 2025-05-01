@@ -242,11 +242,11 @@ public class FxRatesReaderTest
     [TestMethod]
     public void ParseMultiCurrenciesFromContent_WithInvalidDayFormat_RaisesException()
     {
-        AssertExtensions.ThrowsAny<FormatException>(() => Instance.ParseMultiCurrenciesFromContent(
+        AssertExtensions.ThrowsAny<InvalidDataException>(() => Instance.ParseMultiCurrenciesFromContent(
             [.. BuildHeaderLines(CurrencyUSDHeader, CurrencyCHFHeader), "1/1/2021;1,23;1,24"]));
-        AssertExtensions.ThrowsAny<FormatException>(() => Instance.ParseMultiCurrenciesFromContent(
+        AssertExtensions.ThrowsAny<InvalidDataException>(() => Instance.ParseMultiCurrenciesFromContent(
             [.. BuildHeaderLines(CurrencyUSDHeader, CurrencyCHFHeader), "01/1/2021;1,23;1,24"]));
-        AssertExtensions.ThrowsAny<FormatException>(() => Instance.ParseMultiCurrenciesFromContent(
+        AssertExtensions.ThrowsAny<InvalidDataException>(() => Instance.ParseMultiCurrenciesFromContent(
             [.. BuildHeaderLines(CurrencyUSDHeader, CurrencyCHFHeader), "01/01/21;1,23;1,24"]));
     }
 
@@ -317,5 +317,18 @@ public class FxRatesReaderTest
         Assert.AreEqual(1.23m, fxRates[CurrencyUSD, (2021, 01, 01).ToUtc()]);
         Assert.AreEqual(1.24m, fxRates[CurrencyCHF, (2021, 01, 01).ToUtc()]);
         Assert.AreEqual(1.25m, fxRates[CurrencyGBP, (2021, 01, 02).ToUtc()]);
+    }
+
+    [TestMethod]
+    public void ParseMultiCurrenciesFromContent_Support2025DateFormat()
+    {
+        var fxRates = Instance.ParseMultiCurrenciesFromContent(
+            [.. BuildHeaderLines(CurrencyUSDHeader, CurrencyCHFHeader), "2025-01-01;1,23;1,24", "2025-01-02;1,25;1,26"]);
+        Assert.AreEqual(2, fxRates[CurrencyUSD].Count);
+        Assert.AreEqual(2, fxRates[CurrencyCHF].Count);
+        Assert.AreEqual(1.23m, fxRates[CurrencyUSD, (2025, 01, 01).ToUtc()]);
+        Assert.AreEqual(1.24m, fxRates[CurrencyCHF, (2025, 01, 01).ToUtc()]);
+        Assert.AreEqual(1.25m, fxRates[CurrencyUSD, (2025, 01, 02).ToUtc()]);
+        Assert.AreEqual(1.26m, fxRates[CurrencyCHF, (2025, 01, 02).ToUtc()]);
     }
 }
