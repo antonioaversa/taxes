@@ -1,4 +1,5 @@
-﻿using static Taxes.Test.AssertExtensions;
+﻿using System.Globalization;
+using static Taxes.Test.AssertExtensions;
 
 namespace Taxes.Tests;
 
@@ -11,6 +12,14 @@ public class CryptoEventsReaderTest
     private readonly CryptoEventsReader Instance = new(new());
     private readonly TextWriter NoOut = TextWriter.Null;
 
+    [TestInitialize]
+    public void TestInitialize()
+    {
+        // Set the culture to InvariantCulture since some assertions are on logged text, and
+        // those logs are done via a simple interpolated string, so they are culture-specific.
+        Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture; 
+    }
+    
     [TestMethod]
     public void Parse_WithTemporaryFile()
     {

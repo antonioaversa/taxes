@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace Taxes.Test;
 
 using static EventType;
@@ -20,6 +22,14 @@ public class TickerProcessingTest
 
     // Instance without Crypto Portfolio Values => +/- values for crypto are not calculated
     private readonly TickerProcessing Instance = new(new());
+    
+    [TestInitialize]
+    public void TestInitialize()
+    {
+        // Set the culture to InvariantCulture since some assertions are on logged text, and
+        // those logs are done via a simple interpolated string, so they are culture-specific.
+        Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture; 
+    }
 
     [TestMethod]
     public void ProcessTicker_NoEvents()
