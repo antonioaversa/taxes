@@ -155,7 +155,7 @@ public class CryptoEventsReaderTest
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine}
             EXCHANGE,Current,{startedDate},2022-06-25 13:29:03,Exchanged to ZRX,1000.0000000000,ZRX,293.9067439000,298.3167439000,4.4100000000,EUR,COMPLETED,1000.0000000000
-            """, Broker, NoOut).ToList());
+            """, Broker, NoOut));
     }
 
     [TestMethod]
@@ -164,7 +164,7 @@ public class CryptoEventsReaderTest
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine}
             EXCHANGE,Current,2022-06-25 13:29:03,2022-06-24 13:29:03,Exchanged to ZRX,1000.0000000000,ZRX,293.9067439000,298.3167439000,4.4100000000,EUR,COMPLETED,1000.0000000000
-            """, Broker, NoOut).ToList());
+            """, Broker, NoOut));
     }
 
     [TestMethod]
@@ -173,7 +173,7 @@ public class CryptoEventsReaderTest
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine}
             EXCHANGE,Current,2022-06-25 13:29:03,2022-06-25 13:29:03,Exchanged to ZRX,1000.0000000000,ZRX,293.9067439000,298.3167439000,4.4100000000,EUR,INVALID,1000.0000000000
-            """, Broker, NoOut).ToList());
+            """, Broker, NoOut));
     }
 
     [TestMethod]
@@ -182,7 +182,7 @@ public class CryptoEventsReaderTest
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine}
             EXCHANGE,Current,2022-06-25 13:29:03,2022-06-25 13:29:03,Exchanged to ZRX,1000.0000000000,ZRX,293.9067439000,298.3167439000,4.4100000000,USD,COMPLETED,1000.0000000000
-            """, Broker, NoOut).ToList());
+            """, Broker, NoOut));
     }
 
     [TestMethod]
@@ -257,7 +257,7 @@ public class CryptoEventsReaderTest
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine}
             EXCHANGE,Current,2022-06-25 13:29:03,2022-06-25 13:29:03,Exchanged to ZRX,0.0000000000,ZRX,293.9067439000,298.3167439000,4.4100000000,EUR,COMPLETED,0.0000000000
-            """, Broker, NoOut).ToList());
+            """, Broker, NoOut));
     }
 
     [TestMethod]
@@ -266,7 +266,7 @@ public class CryptoEventsReaderTest
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine}
             EXCHANGE,Current,2022-06-25 13:29:03,2022-06-25 13:29:03,Exchanged to ZRX,-1000.0000000000,ZRX,293.9067439000,-298.3167439000,4.4100000000,EUR,COMPLETED,1000.0000000000
-            """, Broker, NoOut).ToList());
+            """, Broker, NoOut));
     }
     
     [TestMethod]
@@ -275,7 +275,7 @@ public class CryptoEventsReaderTest
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine}
             EXCHANGE,Current,2022-06-25 13:29:03,2022-06-25 13:29:03,Exchanged to ZRX,1000.0000000000,ZRX,293.9067439000,-298.3167439000,4.4100000000,EUR,COMPLETED,1000.0000000000
-            """, Broker, NoOut).ToList());
+            """, Broker, NoOut));
     }
 
     [TestMethod]
@@ -284,7 +284,7 @@ public class CryptoEventsReaderTest
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine}
             EXCHANGE,Current,2022-06-25 13:29:03,2022-06-25 13:29:03,Exchanged to ZRX,1000.0000000000,ZRX,293.9067439000,298.3167439000,-4.4100000000,EUR,COMPLETED,1000.0000000000
-            """, Broker, NoOut).ToList());
+            """, Broker, NoOut));
     }
 
     [TestMethod]
