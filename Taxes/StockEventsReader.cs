@@ -31,7 +31,7 @@ partial class StockEventsReader(Basics basics)
         foreach (var record in csv.GetRecords<EventStr>())
         {
             var currency = record.Currency;
-            var recordFxRate = decimal.Parse(record.FXRate);
+            var recordFxRate = decimal.Parse(record.FXRate, basics.DefaultCulture);
 
             if (string.IsNullOrWhiteSpace(record.TotalAmount))
                 throw new InvalidOperationException("Invalid Total Amount");
@@ -55,17 +55,21 @@ partial class StockEventsReader(Basics basics)
                 fxRate = recordFxRate;
             }
 
-            decimal? quantity = string.IsNullOrWhiteSpace(record.Quantity) ? null : decimal.Parse(record.Quantity);
-            decimal? pricePerShareLocal = string.IsNullOrWhiteSpace(record.PricePerShare) ? null : decimal.Parse(Sanitize(record.PricePerShare));
-            decimal? sharesPriceLocal = pricePerShareLocal * quantity;
-            decimal totalAmountLocal =  decimal.Parse(Sanitize(record.TotalAmount));
+            var quantity = string.IsNullOrWhiteSpace(record.Quantity)
+                ? null as decimal?
+                : decimal.Parse(record.Quantity, basics.DefaultCulture);
+            var pricePerShareLocal = string.IsNullOrWhiteSpace(record.PricePerShare) 
+                ? null as decimal?
+                : decimal.Parse(Sanitize(record.PricePerShare), basics.DefaultCulture);
+            var sharesPriceLocal = pricePerShareLocal * quantity;
+            var totalAmountLocal =  decimal.Parse(Sanitize(record.TotalAmount), basics.DefaultCulture);
 
             // The difference between total amount and shares price is GENERALLY positive for BUY and negative for SELL.
             // However, due to rounding, it can be negative for BUY and positive for SELL.
             // In those cases, fees are set to zero.
-            decimal? feesLocal = (sharesPriceLocal, type) switch
+            var feesLocal = (sharesPriceLocal, type) switch
             {
-                (null, _) => null,
+                (null, _) => null as decimal?,
                 (not null, EventType.BuyLimit or EventType.BuyMarket) => 
                     Math.Max(0, totalAmountLocal - sharesPriceLocal.Value),
                 (not null, EventType.SellLimit or EventType.SellMarket) =>
