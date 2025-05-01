@@ -193,39 +193,51 @@
   },
   "StockEventsFiles": [
     {
-      "FilePattern": "2022 Revolut All Stocks Transactions.csv",
+      "FilePattern": "2022 Revolut All Stocks Transactions TRADING LTD.csv",
       "Broker": "REVOLUT TRADING LTD"
     },
     {
-      "FilePattern": "2023-1 Revolut All Stocks Transactions.csv",
+      "FilePattern": "2023-1 Revolut All Stocks Transactions TRADING LTD.csv",
       "Broker": "REVOLUT TRADING LTD"
     },
     {
-      "FilePattern": "2023-2 Revolut All Stocks Transactions.csv",
+      "FilePattern": "2023-2 Revolut All Stocks Transactions RSEUAB.csv",
       "Broker": "REVOLUT RSEUAB"
     },
     {
       "FilePattern": "2022-2023 IBKR All Stocks Transactions.csv",
       "Broker": "INTERACTIVE BROKERS"
+    },
+    {
+      "FilePattern": "2024 Revolut All Stocks Transactions RSEUAB.csv",
+      "Broker": "REVOLUT RSEUAB"
     }
   ],
   "CryptoEventsFiles": [
     {
-      "FilePattern": "2022 Revolut All Crypto Transactions.csv",
+      "FilePattern": "2022 Revolut All Crypto Transactions LTD.csv",
       "Broker": "REVOLUT LTD"
     },
     {
-      "FilePattern": "2022 Revolut NuCypher Transactions.csv",
+      "FilePattern": "2022 Revolut NuCypher Transactions LTD.csv",
       "Broker": "REVOLUT LTD"
     },
     {
-      "FilePattern": "2023 Revolut All Crypto Transactions.csv",
+      "FilePattern": "2023 Revolut All Crypto Transactions LTD.csv",
       "Broker": "REVOLUT LTD"
+    },
+    {
+      "FilePattern": "2024-1 Revolut All Crypto Transactions LTD.csv",
+      "Broker": "REVOLUT LTD"
+    },
+    {
+      "FilePattern": "2024-2 Revolut All Crypto Transactions RTDSCL.csv",
+      "Broker": "REVOLUT RTDSCL"
     }
   ],
   "CryptoPortfolioValuesCurrency": "USD",
   "CryptoPortfolioValuesFilePath": "Crypto Portfolio Values USD.csv",
-  "FXRatesFilePath": "FX Rates ECB 2024-04-14.csv",
+  "FXRatesFilePath": "FX Rates ECB 2025-04-30.csv",
   "WithholdingTaxes": {
     "US": {
       "Dividends": 0.15,
