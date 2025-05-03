@@ -6,6 +6,14 @@ namespace Taxes;
 
 class CryptoEventsReader(Basics basics)
 {
+    // Unlike stocks, which are considered distinct assets, all cryptos, from a tax perspective, are considered a single asset.
+    // When a stock is bought or sold, the tax office looks into what specific stock has been affected by the financial event, and tax
+    // calculation is done stock by stock.
+    // In the case of crypto, however, all cryptocurrencies are consider a single financial asset, and what is taken into account for
+    // the calculation of capital gains and losses is the total value of the portfolio at the time the taxable event (e.g. sell of a
+    // crypto) is made.
+    private const string CryptoTicker = "CRYPTO";
+    
     // Example of pre-2025 CSV format:
     // Type,Product,Started Date,Completed Date,Description,Amount,Currency,Fiat amount,Fiat amount (inc. fees),Fee,Base currency,State,Balance
     // RESET,,2023-01-01 00:00:00,2023-01-01 00:00:00,,,,,,,EUR,,
@@ -69,7 +77,6 @@ class CryptoEventsReader(Basics basics)
 
     private IList<Event> ParsePre2025(TextReader eventsReader, string broker, TextWriter outWriter)
     {
-        // TODO: fix culture in decimal.Parse
         using var eventsCsv = new CsvReader(eventsReader, basics.DefaultCulture);
 
         var events = new List<Event>();
@@ -135,12 +142,14 @@ class CryptoEventsReader(Basics basics)
                 throw new InvalidOperationException("Fees are negative");
 
             // Unlike stocks, which are exchanged against Local FIAT, crypto are exchanged against Base FIAT
+            // That has changed in 2025, where you can exchange against any FIAT of choice, whether Base FIAT
+            // (e.g. EUR) or not (e.g. CHF).
             var fxRate = 1m;
 
             events.Add(new(
                 Date: date,
                 Type: type,
-                Ticker: "CRYPTO",
+                Ticker: CryptoTicker,
                 Quantity: quantity,
                 PricePerShareLocal: pricePerShareLocal,
                 TotalAmountLocal: totalAmountLocal,
@@ -155,7 +164,6 @@ class CryptoEventsReader(Basics basics)
 
     private IList<Event> Parse2025(TextReader eventsReader, string broker, TextWriter outWriter)
     {
-        // TODO: fix culture in decimal.Parse
         using var eventsCsv = new CsvReader(eventsReader, basics.DefaultCulture);
 
         var events = new List<Event>();
@@ -221,7 +229,7 @@ class CryptoEventsReader(Basics basics)
                 events.Add(new(
                     Date: date,
                     Type: EventType.BuyMarket,
-                    Ticker: record.Symbol,
+                    Ticker: CryptoTicker,
                     Quantity: quantity,
                     PricePerShareLocal: pricePerShareLocal,
                     TotalAmountLocal: totalAmountLocal,
@@ -238,7 +246,7 @@ class CryptoEventsReader(Basics basics)
                 events.Add(new(
                     Date: date,
                     Type: EventType.SellMarket,
-                    Ticker: record.Symbol,
+                    Ticker: CryptoTicker,
                     Quantity: quantity,
                     PricePerShareLocal: pricePerShareLocal,
                     TotalAmountLocal: totalAmountLocal,

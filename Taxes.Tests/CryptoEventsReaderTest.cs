@@ -375,7 +375,7 @@ public class CryptoEventsReaderTest
         var firstEvent = events[0];
         Assert.AreEqual(new DateTime(2024, 3, 8, 21, 32, 39, DateTimeKind.Utc), firstEvent.Date);
         Assert.AreEqual(EventType.SellMarket, firstEvent.Type);
-        Assert.AreEqual("BTC", firstEvent.Ticker);
+        Assert.AreEqual("CRYPTO", firstEvent.Ticker);
         Assert.AreEqual(0.02m, firstEvent.Quantity);
         Assert.IsNotNull(firstEvent.PricePerShareLocal);
         Assert.AreEqual(62671.63m, firstEvent.PricePerShareLocal.Value);
@@ -398,7 +398,7 @@ public class CryptoEventsReaderTest
         var firstEvent = events[0];
         Assert.AreEqual(new DateTime(2024, 3, 15, 12, 5, 32, DateTimeKind.Utc), firstEvent.Date);
         Assert.AreEqual(EventType.BuyMarket, firstEvent.Type);
-        Assert.AreEqual("BTC", firstEvent.Ticker);
+        Assert.AreEqual("CRYPTO", firstEvent.Ticker);
         Assert.AreEqual(0.02m, firstEvent.Quantity);
         Assert.IsNotNull(firstEvent.PricePerShareLocal);
         Assert.AreEqual(62654.96m, firstEvent.PricePerShareLocal.Value);
@@ -421,7 +421,7 @@ public class CryptoEventsReaderTest
         var firstEvent = events[0];
         Assert.AreEqual(new DateTime(2024, 3, 8, 21, 32, 39, DateTimeKind.Utc), firstEvent.Date);
         Assert.AreEqual(EventType.SellMarket, firstEvent.Type);
-        Assert.AreEqual("BTC", firstEvent.Ticker);
+        Assert.AreEqual("CRYPTO", firstEvent.Ticker);
         Assert.AreEqual(0.02m, firstEvent.Quantity);
         Assert.IsNotNull(firstEvent.PricePerShareLocal);
         Assert.AreEqual(62671.63m, firstEvent.PricePerShareLocal.Value);
@@ -444,7 +444,7 @@ public class CryptoEventsReaderTest
         var firstEvent = events[0];
         Assert.AreEqual(new DateTime(2024, 3, 8, 21, 32, 39, DateTimeKind.Utc), firstEvent.Date);
         Assert.AreEqual(EventType.SellMarket, firstEvent.Type);
-        Assert.AreEqual("BTC", firstEvent.Ticker);
+        Assert.AreEqual("CRYPTO", firstEvent.Ticker);
         Assert.AreEqual(0.02m, firstEvent.Quantity);
         Assert.IsNotNull(firstEvent.PricePerShareLocal);
         Assert.AreEqual(62671.63m, firstEvent.PricePerShareLocal.Value);
@@ -493,7 +493,7 @@ public class CryptoEventsReaderTest
         var sellEvent = events[0];
         Assert.AreEqual(new DateTime(2024, 3, 8, 21, 32, 39, DateTimeKind.Utc), sellEvent.Date);
         Assert.AreEqual(EventType.SellMarket, sellEvent.Type);
-        Assert.AreEqual("BTC", sellEvent.Ticker);
+        Assert.AreEqual("CRYPTO", sellEvent.Ticker);
         Assert.AreEqual(0.02m, sellEvent.Quantity);
         Assert.IsNotNull(sellEvent.PricePerShareLocal);
         Assert.AreEqual(62671.63m, sellEvent.PricePerShareLocal.Value);
@@ -505,7 +505,7 @@ public class CryptoEventsReaderTest
         var buyEvent = events[1];
         Assert.AreEqual(new DateTime(2024, 3, 15, 12, 5, 32, DateTimeKind.Utc), buyEvent.Date);
         Assert.AreEqual(EventType.BuyMarket, buyEvent.Type);
-        Assert.AreEqual("BTC", buyEvent.Ticker);
+        Assert.AreEqual("CRYPTO", buyEvent.Ticker);
         Assert.AreEqual(0.02m, buyEvent.Quantity);
         Assert.IsNotNull(buyEvent.PricePerShareLocal);
         Assert.AreEqual(62654.96m, buyEvent.PricePerShareLocal.Value);
