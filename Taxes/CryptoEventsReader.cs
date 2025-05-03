@@ -205,7 +205,7 @@ class CryptoEventsReader(Basics basics)
             if (pricePerShareCurrency != priceAllSharesCurrency)
                 throw new InvalidOperationException($"Currencies are inconsistent: Price = {pricePerShareCurrency}, Value = {priceAllSharesCurrency}");
             
-            if (Math.Abs(pricePerShareLocal * quantity - priceAllSharesLocal) >= basics.Precision)
+            if (Math.Abs(pricePerShareLocal * quantity - priceAllSharesLocal) > basics.Precision)
                 throw new InvalidOperationException($"Quantity * Price != Value: {quantity} * {pricePerShareLocal} != {priceAllSharesLocal}");
 
             var (feesLocal, feesCurrency) = ParseAmountWithCurrency(record.Fees);

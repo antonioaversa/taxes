@@ -135,7 +135,7 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
         // In buy events, fees are added to the total amount, so total buy price is higher than shares buy price
         var buyFees1Base = Math.Max(0, totalBuyPriceBase - sharesBuyPriceBase);
         var buyFees2Base = tickerEvent.FeesLocal.Value / tickerEvent.FXRate;
-        if (Math.Abs(buyFees1Base - buyFees2Base) >= basics.Precision)
+        if (Math.Abs(buyFees1Base - buyFees2Base) > basics.Precision)
             throw new InvalidDataException($"Invalid event - Fees are inconsistent");
         outWriter.WriteLine($"\tBuy Fees ({basics.BaseCurrency}) = {buyFees2Base.R(basics)}");
 
@@ -201,7 +201,7 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
         // In sell events, fees are deducted from the proceeding, so shares sell price is higher than total amount
         var sellFees1Base = Math.Max(0, sharesSellPriceBase - totalSellPriceBase);
         var sellFees2Base = tickerEvent.FeesLocal.Value / tickerEvent.FXRate;
-        if (Math.Abs(sellFees1Base - sellFees2Base) >= basics.Precision)
+        if (Math.Abs(sellFees1Base - sellFees2Base) > basics.Precision)
             throw new InvalidDataException($"Invalid event - Fees are inconsistent");
         outWriter.WriteLine($"\tSell Fees ({basics.BaseCurrency}) = {sellFees2Base.R(basics)}");
 
@@ -303,7 +303,7 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
                 // The precision of the shares buy price is given by the precision of the price for a single share,
                 // multiplied by the number of sold shares: e.g. if the price per share has 2 decimal-digits precision,
                 // the max error is 0.01 for 1 share, so 0.01 * n for n shares.
-                if (Math.Abs(pepsBuyEventBuyPriceBase1 - pepsBuyEventBuyPriceBase2) >= basics.Precision * soldQuantity)
+                if (Math.Abs(pepsBuyEventBuyPriceBase1 - pepsBuyEventBuyPriceBase2) > basics.Precision * soldQuantity)
                     throw new InvalidDataException($"PEPS Buy Price Base is inconsistent");
                 totalPepsBuyPriceBase += pepsBuyEventBuyPriceBase1;
 
