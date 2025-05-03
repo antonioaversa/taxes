@@ -36,6 +36,10 @@
       "Country": "US",
       "ISIN": "US1667641005"
     },
+    "ESTC": {
+      "Country": "US",
+      "ISIN": "NL0013056914"
+    },
     "GOOG": {
       "Country": "US",
       "ISIN": "US02079K1079"
