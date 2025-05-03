@@ -45,7 +45,6 @@ public partial class Basics
     public ReadOnlyDictionary<string, Position> Positions { get; init; }
     public ReadOnlyCollection<EventsFiles> StockEventsFiles { get; init; }
     public ReadOnlyCollection<EventsFiles> CryptoEventsFiles { get; init; }
-    public string CryptoPortfolioValuesCurrency { get; init; }
     public string CryptoPortfolioValuesFilePath { get; init; }
     public string FXRatesFilePath { get; init; }
     public ReadOnlyDictionary<string, CountryWithholdingTaxes> WithholdingTaxes { get; init; }
@@ -90,8 +89,6 @@ public partial class Basics
         
         CryptoEventsFiles = (basicsFile.CryptoEventsFiles
             ?? throw new InvalidDataException($"Invalid {nameof(CryptoEventsFiles)} in {basicsFileName}")).AsReadOnly();
-        CryptoPortfolioValuesCurrency = basicsFile.CryptoPortfolioValuesCurrency
-            ?? throw new InvalidDataException($"Invalid {nameof(CryptoPortfolioValuesCurrency)} in {basicsFileName}");
         CryptoPortfolioValuesFilePath = basicsFile.CryptoPortfolioValuesFilePath
             ?? throw new InvalidDataException($"Invalid {nameof(CryptoPortfolioValuesFilePath)} in {basicsFileName}");
 
@@ -130,8 +127,6 @@ public partial class Basics
 
         [JsonRequired]
         public List<EventsFiles>? CryptoEventsFiles { get; set; } = null;
-        [JsonRequired]
-        public string? CryptoPortfolioValuesCurrency { get; set; } = null;
         [JsonRequired]
         public string? CryptoPortfolioValuesFilePath { get; set; } = null;
 

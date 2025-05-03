@@ -407,7 +407,7 @@ public class TickerProcessingTest
         // First buy 3 shares at 100.10002 USD, with fees of 3.20003 USD => Total Amount Local of 300.30006 USD + 3.20003 USD = 303.50009 USD
         var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 3, 100.10002m, 303.50009m, 3.20003m, localCurrency, 2m, Broker);
         tickerProcessing.ProcessBuy(buy1, [buy1], 0, initialState, outWriters);
-        var output = outWriters.Default.ToString();
+        var output = outWriters.Default.ToString()!;
 
         // Prints Total Buy Price in local currency as rounded value
         Assert.IsTrue(output.Contains($"Total Buy Price ({localCurrency}) = 303.50")); // Given by the event
@@ -588,7 +588,7 @@ public class TickerProcessingTest
         var sell1 = new Event(T0 + 1 * D, SellLimit, Ticker, 2, 150.15003m, 297.80001m, 2.50005m, localCurrency, 4m, Broker);
         var outWriters = new OutWriters(new StringWriter(), new StringWriter(), new StringWriter());
         tickerProcessing.ProcessSell(sell1, [buy1, sell1], 1, stateAfterBuy, outWriters);
-        var output = outWriters.Default.ToString();
+        var output = outWriters.Default.ToString()!;
 
         // Prints Total Sell Price in local currency as rounded value
         Assert.IsTrue(output.Contains($"Total Sell Price ({localCurrency}) = 297.80")); // Given by the event
@@ -1496,7 +1496,7 @@ public class TickerProcessingTest
         var stockSplit1 = new Event(T0 + 1 * D, StockSplit, Ticker, 20m, null, 0, null, localCurrency, fxRate, Broker);
         tickerProcessing.ProcessStockSplit(stockSplit1, [buy1, stockSplit1], 1, stateAfterBuy1, outWriters);
 
-        var output = outWriters.Default.ToString();
+        var output = outWriters.Default.ToString()!;
 
         Assert.IsTrue(output.Contains("Split Delta = 20"));
         Assert.IsTrue(output.Contains("Split Ratio = 3"));
@@ -1571,7 +1571,7 @@ public class TickerProcessingTest
         var dividend1 = new Event(T0 + 1 * D, Dividend, Ticker, null, null, 8.5m, null, localCurrency, fxRate, Broker);
         tickerProcessing.ProcessDividend(dividend1, [buy1, dividend1], 1, stateAfterBuy1, outWriters);
 
-        var output = outWriters.Default.ToString();
+        var output = outWriters.Default.ToString()!;
 
         Assert.IsTrue(output.Contains($"Net Dividend ({localCurrency}) = 8.5"));
         Assert.IsTrue(output.Contains($"Net Dividend ({Instance.Basics.BaseCurrency}) = 4.25")); // 8.5 USD / (2 USD/EUR) 

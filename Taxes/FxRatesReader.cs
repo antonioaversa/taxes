@@ -70,7 +70,7 @@ public partial class FxRatesReader(Basics basics)
             currencyFxRates[date] = fxRate;
         }
 
-        return new(new Dictionary<string, Dictionary<DateTime, decimal>>() { [currency] = currencyFxRates });
+        return new(basics, new Dictionary<string, Dictionary<DateTime, decimal>> { [currency] = currencyFxRates });
     }
 
     internal /* for testing */ FxRates ParseMultiCurrenciesFromContent(IList<string> lines)
@@ -88,7 +88,7 @@ public partial class FxRatesReader(Basics basics)
         if (currencies.Count == 0)
             throw new InvalidDataException("Invalid or no currencies found in header");
 
-        var currencyFxRates = currencies.ToDictionary(k => k, v => new Dictionary<DateTime, decimal>());
+        var currencyFxRates = currencies.ToDictionary(k => k, _ => new Dictionary<DateTime, decimal>());
 
         for (var lineIndex = basics.FxRatesHeaderLinesFirstWord.Length; lineIndex < lines.Count; lineIndex++)
         {
@@ -119,7 +119,7 @@ public partial class FxRatesReader(Basics basics)
                 currencyFxRates[currency][day] = fxRate;
             }
         }
-        return new(currencyFxRates);
+        return new(basics, currencyFxRates);
     }
 
     // Example: Dollar australien (AUD) => currency = AUD

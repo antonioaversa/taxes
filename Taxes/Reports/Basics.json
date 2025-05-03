@@ -235,7 +235,6 @@
       "Broker": "REVOLUT RTDSCL"
     }
   ],
-  "CryptoPortfolioValuesCurrency": "USD",
   "CryptoPortfolioValuesFilePath": "Crypto Portfolio Values USD.csv",
   "FXRatesFilePath": "FX Rates ECB 2025-04-30.csv",
   "WithholdingTaxes": {

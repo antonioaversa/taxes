@@ -9,7 +9,7 @@ var fxRatesFilePath = Path.Combine(basics.ReportsDirectoryPath, basics.FXRatesFi
 var fxRatesReader = new FxRatesReader(basics);
 var fxRates = fxRatesReader.ParseMultiCurrenciesFromFile(fxRatesFilePath);
 var cryptoPortfolioValuesFilePath = Path.Combine(basics.ReportsDirectoryPath, basics.CryptoPortfolioValuesFilePath);
-var cryptoPortfolioValues = new CryptoPortfolioValues(basics, fxRates, basics.CryptoPortfolioValuesCurrency, cryptoPortfolioValuesFilePath);
+var cryptoPortfolioValues = new CryptoPortfolioValues(basics, fxRates, cryptoPortfolioValuesFilePath);
 
 var stockEventsReader = new StockEventsReader(basics);
 var stockEvents = basics.StockEventsFiles

@@ -75,8 +75,8 @@ It requires the following input:
   between the base currency (specified in the basics) and any other currency appearing in the events
   - the exchange rate is determined by the ECB and provided by the Banque de France on their web-site
   - the file should contain all FX Rates for a contiguous period of time including all dates of ticker events
-  - the software will use the FX Rate as defined in other reports, or the closest FX Rate available, when the ECB 
-	didn't provide an FX Rate for the date of a ticker event
+  - the software will use the FX Rate as defined in other reports, or the closest FX Rate available following, when the
+    ECB didn't provide an FX Rate for the date of a ticker event
   - as an alternative for stock events, the FX Rate specified on each event can be used during calculation
 	- that is available in Revolut exported data for stock events only, not for crypto events
 	- however, BCE FX Rates should be used whenever available, so that simulation results are as close to actual taxes
@@ -182,8 +182,6 @@ Make sure that `Basics.json` is up-to-date:
 	- e.g. `["crypto_2022_*.csv", "crypto_2023_*.csv"]` 
     - data extraction from Revolut and format described in the [Setup crypto events section](#Setup-crypto-events)
 - define crypto portfolio settings:
-  - `CryptoPortfolioValuesCurrency`, as the default currency used to specify the value of the entire crypto 
-    portfolio (typically `USD` in the Revolut app) for each relevant day
   - `CryptoPortfolioValuesFilePath`, as the path of the file containing the value of the entire crypto portfolio
     for each relevant day 
   - data extraction from Revolut and format described in the [Setup crypto portfolio values section](#Setup-crypto-portfolio-values) 
@@ -252,20 +250,28 @@ As of the day of writing this, there is no option to extract this data from the 
 of the portfolio should be checked manually in the UI of the app and entered in a file respecting the following format:
 
 ```text
-Date,PortfolioValue
-2022-03-30,2261.4
-2022-03-31,2756.6
-2022-06-15,8422.8
-2022-06-21,8670.8
-2022-06-24,8942.1
-2022-06-27,9996.7
-2022-06-28,10414
+Date,PortfolioValue,Currency
+2022-03-30,2261.4,USD
+2022-03-31,2756.6,USD
+2022-06-15,8422.8,USD
+2022-06-21,8670.8,USD
+2022-06-24,8942.1,USD
+2022-06-27,9996.7,USD
+2022-06-28,10414,USD
 ```
+
+If the currency is the same as the base currency (as defined in `Basics.json`), then the FX Rate is not needed, and the
+as the software will use `1` as FX Rate for any date. 
+
+If the currency is different from the base currency, then a FX Rate is needed for each date, and the software will use 
+the FX Rate as defined in other reports, or the closest FX Rate available following, when the ECB didn't provide an FX 
+Rate for the date of a ticker event.
 
 ### Setup FX Rates
 
 The FX Rates are provided by the ECB only for working days. It's OK: the software will use the FX Rate as defined in
-other reports, or the closest FX Rate available, when the ECB didn't provide an FX Rate for the date of a ticker event.
+other reports, or the closest FX Rate available following, when the ECB didn't provide an FX Rate for the date of a 
+ticker event.
 
 Updated data can be retrieved at [this link](https://www.banque-france.fr/statistiques/taux-et-cours/les-taux-de-change-salle-des-marches/parites-quotidiennes) 
 on the web-site of the Banque de France.
