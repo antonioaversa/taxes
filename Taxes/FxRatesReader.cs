@@ -90,7 +90,7 @@ public partial class FxRatesReader(Basics basics)
 
         var currencyFxRates = currencies.ToDictionary(k => k, v => new Dictionary<DateTime, decimal>());
 
-        for (int lineIndex = basics.FxRatesHeaderLinesFirstWord.Length; lineIndex < lines.Count; lineIndex++)
+        for (var lineIndex = basics.FxRatesHeaderLinesFirstWord.Length; lineIndex < lines.Count; lineIndex++)
         {
             var lineFields = lines[lineIndex].Split(';');
             if (lineFields.Length != currencies.Count + 1)
@@ -101,17 +101,14 @@ public partial class FxRatesReader(Basics basics)
                 && !DateTime.TryParseExact(lineFields[0], "yyyy-MM-dd", basics.DefaultCulture, DateTimeStyles.AssumeLocal, out day))
                 throw new InvalidDataException($"Invalid line: '{lines[lineIndex]}'");
             
-            for (int fieldIndex = 1; fieldIndex < lineFields.Length; fieldIndex++)
+            for (var fieldIndex = 1; fieldIndex < lineFields.Length; fieldIndex++)
             {
                 // The difference between dash and empty string is that the dash means no data for that day, but 
                 // general availability of data for that currency, while the empty string means no data for the
                 // currency in general. So, when a column has dashes for some days, it also has valid data for other
                 // days, whereas when a column has empty strings, it has it for all days.
 
-                if (lineFields[fieldIndex] == "-")
-                    continue;
-
-                if (lineFields[fieldIndex] == string.Empty)
+                if (lineFields[fieldIndex] is "-" or "")
                     continue;
 
                 var currency = currencies[fieldIndex - 1];
