@@ -11,4 +11,14 @@ static class EnumerableExtensions
         while (enumerator.MoveNext())
             yield return enumerator.Current;
     }
+    
+    public static IEnumerable<T> PrintEachElement<T>(this IEnumerable<T> values, TextWriter writer, Func<T, string> selector)
+    {
+        foreach (var value in values)
+        {
+            var formattedValue = selector(value);
+            writer.WriteLine(formattedValue);
+            yield return value;
+        }
+    }
 }

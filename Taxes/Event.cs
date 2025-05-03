@@ -198,7 +198,7 @@ record Event(
     private static readonly Basics basics = new(); // TODO: remove it after checking where ToString is used
 
     public override string ToString() => 
-        $"{Date:yyyy-MM-dd HH:mm:ss} {Type} " +
+        $"{Date:yyyy-MM-dd HH:mm:ss} {(Ticker != null ? $"{Ticker} " : "")}{Type} " +
         (PricePerShareLocal != null && Quantity != null 
             ? $"{Quantity.Value.R(basics)} shares at {PricePerShareLocal.Value.R(basics)} {Currency}/share " 
             : string.Empty) + 
