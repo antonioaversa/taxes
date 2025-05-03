@@ -546,4 +546,27 @@ public class CryptoEventsReaderTest
             BTC,Invalid,0.02,"EUR 62,671.63","EUR 1,253.43",EUR 12.41,"Mar 8, 2024, 9:32:39 PM"
             """, Broker, NoOut));
     }
+    
+    [TestMethod]
+    public void Parse2025_WithDeltaAbovePrecision_RaisesException()
+    {
+        var content = $"""
+            {HeaderLine2025}
+            BTC,Sell,0.02,"EUR 62,671.63","EUR 1,254.44",EUR 12.411,"Mar 8, 2024, 9:32:39 PM"
+            """; 
+        // 62,671.63 * 0.02 = 1,253.4326, abs(1,254.44 - 1,253.4326) > 0.01
+        ThrowsAny<Exception>(() => Instance.ParseContent(content, Broker, NoOut));
+    }
+
+    [TestMethod]
+    public void Parse2025_WithDeltaExactlyEqualsToPrecision_DoesNotRaiseException()
+    {
+        var content = $"""
+            {HeaderLine2025}
+            BTC,Sell,0.02,"EUR 62,671.63","EUR 1,253.4426",EUR 12.41,"Mar 8, 2024, 9:32:39 PM"
+            """; 
+        // 62,671.63 * 0.02 = 1,253.4326, abs(1,253.4426 - 1,253.4326) == 0.01
+        var events = Instance.ParseContent(content, Broker, NoOut);
+        Assert.AreEqual(1, events.Count);
+    }
 }
