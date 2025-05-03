@@ -112,25 +112,25 @@ class CryptoEventsReader(Basics basics)
             if (record.State != State_Completed)
                 throw new NotSupportedException($"Record state {record.State}: {record}");
 
-            var amount = decimal.Parse(record.Amount);
+            var amount = decimal.Parse(record.Amount, basics.DefaultCulture);
             if (amount == 0)
                 throw new InvalidOperationException("Amount is 0");
 
             var quantity = Math.Abs(amount);
             var type = amount >= 0 ? EventType.BuyMarket : EventType.SellMarket;
 
-            var fiatAmount = decimal.Parse(record.FiatAmount);
+            var fiatAmount = decimal.Parse(record.FiatAmount, basics.DefaultCulture);
             if (Math.Sign(amount) != Math.Sign(fiatAmount))
                 throw new InvalidOperationException("Amount and fiat amount have different signs");
             var pricePerShareLocal = Math.Abs(fiatAmount) / quantity;
 
-            var fiatAmountIncFees = decimal.Parse(record.FiatAmountIncFees);
+            var fiatAmountIncFees = decimal.Parse(record.FiatAmountIncFees, basics.DefaultCulture);
             if (Math.Sign(fiatAmount) != Math.Sign(fiatAmountIncFees))
                 throw new InvalidOperationException("Fiat amount and fiat amount inc. fees have different signs");
             var totalAmountLocal = Math.Abs(fiatAmountIncFees);
 
             // Unlike stocks, the record contains a dedicated field for fees
-            var feesLocal = decimal.Parse(record.Fee);
+            var feesLocal = decimal.Parse(record.Fee, basics.DefaultCulture);
             if (feesLocal < 0)
                 throw new InvalidOperationException("Fees are negative");
 
@@ -190,7 +190,7 @@ class CryptoEventsReader(Basics basics)
             if (string.IsNullOrWhiteSpace(record.Quantity))
                 throw new InvalidOperationException("Quantity is empty");
 
-            var quantity = decimal.Parse(record.Quantity);
+            var quantity = decimal.Parse(record.Quantity, basics.DefaultCulture);
             if (quantity <= 0)
                 throw new InvalidOperationException("Quantity not positive");
 
