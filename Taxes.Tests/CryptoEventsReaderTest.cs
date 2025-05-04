@@ -6,11 +6,15 @@ namespace Taxes.Tests;
 [TestClass]
 public class CryptoEventsReaderTest
 {
+    private static readonly Basics Basics = new() { BaseCurrency = "EUR" };
+    
     private const string Broker = "THE BROKER";
     private const string HeaderLine = "Type,Product,Started Date,Completed Date,Description,Amount,Currency,Fiat amount,Fiat amount (inc. fees),Fee,Base currency,State,Balance";
     private const string HeaderLine2025 = "Symbol,Type,Quantity,Price,Value,Fees,Date";
 
-    private readonly CryptoEventsReader Instance = new(new());
+    private static readonly FxRates NoFxRates = new(Basics, []);
+    
+    private readonly CryptoEventsReader Instance = new(Basics);
     private readonly TextWriter NoOut = TextWriter.Null;
 
     [TestInitialize]
@@ -33,7 +37,7 @@ public class CryptoEventsReaderTest
                 EXCHANGE,Current,2022-06-27 10:32:23,2022-06-27 10:32:23,Exchanged to EUR,-1000.0000000000,ZRX,-324.0898000000,-319.2298000000,4.8600000000,EUR,COMPLETED,0.0000000000
                 """);
 
-            var events = Instance.Parse(path, Broker, NoOut);
+            var events = Instance.Parse(path, NoFxRates, Broker, NoOut);
             Assert.AreEqual(2, events.Count);
         }
         finally
@@ -46,14 +50,14 @@ public class CryptoEventsReaderTest
     [TestMethod]
     public void Parse_WithEmptyContent_ThrowException()
     {
-        ThrowsAny<Exception>(() => Instance.ParseContent(string.Empty, Broker, NoOut));
+        ThrowsAny<Exception>(() => Instance.ParseContent(string.Empty, NoFxRates, Broker, NoOut));
     }
 
     [TestMethod]
     public void Parse_WithOnlyHeader_ReturnEmptyList()
     {
         var content = HeaderLine;
-        var events = Instance.ParseContent(content, Broker, NoOut);
+        var events = Instance.ParseContent(content, NoFxRates, Broker, NoOut);
         Assert.AreEqual(0, events.Count);
     }
 
@@ -66,7 +70,7 @@ public class CryptoEventsReaderTest
 
             EXCHANGE,Current,2022-06-27 10:32:23,2022-06-27 10:32:23,Exchanged to EUR,-1000.0000000000,ZRX,-324.0898000000,-319.2298000000,4.8600000000,EUR,COMPLETED,0.0000000000            
             """;
-        var events = Instance.ParseContent(content, Broker, NoOut);
+        var events = Instance.ParseContent(content, NoFxRates, Broker, NoOut);
         Assert.AreEqual(2, events.Count);
     }
 
@@ -76,7 +80,7 @@ public class CryptoEventsReaderTest
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine}
             INVALID,Current,2022-06-25 13:29:03,2022-06-25 13:29:03,Exchanged to ZRX,1000.0000000000,ZRX,293.9067439000,298.3167439000,4.4100000000,EUR,COMPLETED,1000.0000000000
-            """, Broker, NoOut));
+            """, NoFxRates, Broker, NoOut));
     }
 
     [TestMethod]
@@ -86,7 +90,7 @@ public class CryptoEventsReaderTest
             {HeaderLine}
             TRANSFER,Current,2022-06-25 13:29:03,2022-06-25 13:29:03,Exchanged to ZRX,1000.0000000000,ZRX,293.9067439000,298.3167439000,4.4100000000,EUR,COMPLETED,1000.0000000000
             """;
-        var events = Instance.ParseContent(content, Broker, NoOut);
+        var events = Instance.ParseContent(content, NoFxRates, Broker, NoOut);
         Assert.AreEqual(0, events.Count);
     }
 
@@ -97,7 +101,7 @@ public class CryptoEventsReaderTest
             {HeaderLine}
             REWARD,Current,2022-06-25 13:29:03,2022-06-25 13:29:03,Exchanged to ZRX,1000.0000000000,ZRX,293.9067439000,298.3167439000,4.4100000000,EUR,COMPLETED,1000.0000000000
             """;
-        var events = Instance.ParseContent(content, Broker, NoOut);
+        var events = Instance.ParseContent(content, NoFxRates, Broker, NoOut);
         Assert.AreEqual(0, events.Count);
     }
 
@@ -107,7 +111,7 @@ public class CryptoEventsReaderTest
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine}
             EXCHANGE,NonCurrent,2022-06-25 13:29:03,2022-06-25 13:29:03,Exchanged to ZRX,1000.0000000000,ZRX,293.9067439000,298.3167439000,4.4100000000,EUR,COMPLETED,1000.0000000000
-            """, Broker, NoOut));
+            """, NoFxRates, Broker, NoOut));
     }
 
     [TestMethod]
@@ -117,32 +121,32 @@ public class CryptoEventsReaderTest
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine}
             EXCHANGE,Current,2022-06-25 13:29,2022-06-25 13:29:03,Exchanged to ZRX,1000.0000000000,ZRX,293.9067439000,298.3167439000,4.4100000000,EUR,COMPLETED,1000.0000000000
-            """, Broker, NoOut));
+            """, NoFxRates, Broker, NoOut));
         // Missing part of time in Completed Date
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine}
             EXCHANGE,Current,2022-06-25 13:29:03,2022-06-25 13:29,Exchanged to ZRX,1000.0000000000,ZRX,293.9067439000,298.3167439000,4.4100000000,EUR,COMPLETED,1000.0000000000
-            """, Broker, NoOut));
+            """, NoFxRates, Broker, NoOut));
         // dd-MM-yyyy instead of yyyy-MM-dd in Started Date
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine}
             EXCHANGE,Current,25-06-2022 13:29:03,2022-06-25 13:29:03,Exchanged to ZRX,1000.0000000000,ZRX,293.9067439000,298.3167439000,4.4100000000,EUR,COMPLETED,1000.0000000000
-            """, Broker, NoOut));
+            """, NoFxRates, Broker, NoOut));
         // dd-MM-yyyy instead of yyyy-MM-dd in Completed Date
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine}
             EXCHANGE,Current,2022-06-25 13:29:03,25-06-2022 13:29:03,Exchanged to ZRX,1000.0000000000,ZRX,293.9067439000,298.3167439000,4.4100000000,EUR,COMPLETED,1000.0000000000
-            """, Broker, NoOut));
+            """, NoFxRates, Broker, NoOut));
         // 31 of April does not exist in Started Date
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine}
             EXCHANGE,Current,2022-04-31 13:29:03,2022-06-25 13:29:03,Exchanged to ZRX,1000.0000000000,ZRX,293.9067439000,298.3167439000,4.4100000000,EUR,COMPLETED,1000.0000000000
-            """, Broker, NoOut));
+            """, NoFxRates, Broker, NoOut));
         // 31 of April does not exist in Completed Date
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine}
             EXCHANGE,Current,2022-06-25 13:29:03,2022-04-31 13:29:03,Exchanged to ZRX,1000.0000000000,ZRX,293.9067439000,298.3167439000,4.4100000000,EUR,COMPLETED,1000.0000000000
-            """, Broker, NoOut));
+            """, NoFxRates, Broker, NoOut));
     }
 
     [DataTestMethod]
@@ -155,7 +159,7 @@ public class CryptoEventsReaderTest
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine}
             EXCHANGE,Current,{startedDate},2022-06-25 13:29:03,Exchanged to ZRX,1000.0000000000,ZRX,293.9067439000,298.3167439000,4.4100000000,EUR,COMPLETED,1000.0000000000
-            """, Broker, NoOut));
+            """, NoFxRates, Broker, NoOut));
     }
 
     [TestMethod]
@@ -164,7 +168,7 @@ public class CryptoEventsReaderTest
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine}
             EXCHANGE,Current,2022-06-25 13:29:03,2022-06-24 13:29:03,Exchanged to ZRX,1000.0000000000,ZRX,293.9067439000,298.3167439000,4.4100000000,EUR,COMPLETED,1000.0000000000
-            """, Broker, NoOut));
+            """, NoFxRates, Broker, NoOut));
     }
 
     [TestMethod]
@@ -173,7 +177,7 @@ public class CryptoEventsReaderTest
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine}
             EXCHANGE,Current,2022-06-25 13:29:03,2022-06-25 13:29:03,Exchanged to ZRX,1000.0000000000,ZRX,293.9067439000,298.3167439000,4.4100000000,EUR,INVALID,1000.0000000000
-            """, Broker, NoOut));
+            """, NoFxRates, Broker, NoOut));
     }
 
     [TestMethod]
@@ -182,7 +186,7 @@ public class CryptoEventsReaderTest
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine}
             EXCHANGE,Current,2022-06-25 13:29:03,2022-06-25 13:29:03,Exchanged to ZRX,1000.0000000000,ZRX,293.9067439000,298.3167439000,4.4100000000,USD,COMPLETED,1000.0000000000
-            """, Broker, NoOut));
+            """, NoFxRates, Broker, NoOut));
     }
 
     [TestMethod]
@@ -192,7 +196,7 @@ public class CryptoEventsReaderTest
             {HeaderLine}
             RESET,,2023-01-01 00:00:00,2023-01-01 00:00:00,,,,,,,EUR,,
             """;
-        var events = Instance.ParseContent(content, Broker, NoOut);
+        var events = Instance.ParseContent(content, NoFxRates, Broker, NoOut);
         Assert.AreEqual(1, events.Count);
         var resetEvent = events[0];
         Assert.AreEqual(new DateTime(2023, 1, 1, 0, 0, 0, DateTimeKind.Utc), resetEvent.Date);
@@ -214,7 +218,7 @@ public class CryptoEventsReaderTest
             EXCHANGE,Current,2022-06-25 13:29:03,2022-06-25 13:29:03,Exchanged to ZRX,1000.0000000000,ZRX,293.9067439000,298.3167439000,4.4100000000,EUR,COMPLETED,1000.0000000000
             EXCHANGE,Current,2022-06-27 10:32:23,2022-06-27 10:32:23,Exchanged to EUR,-1000.0000000000,ZRX,-324.0898000000,-319.2298000000,4.8600000000,EUR,COMPLETED,0.0000000000
             """;
-        var events = Instance.ParseContent(content, Broker, NoOut);
+        var events = Instance.ParseContent(content, NoFxRates, Broker, NoOut);
         Assert.AreEqual(2, events.Count);
 
         var delta = 0.000001m;
@@ -257,7 +261,7 @@ public class CryptoEventsReaderTest
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine}
             EXCHANGE,Current,2022-06-25 13:29:03,2022-06-25 13:29:03,Exchanged to ZRX,0.0000000000,ZRX,293.9067439000,298.3167439000,4.4100000000,EUR,COMPLETED,0.0000000000
-            """, Broker, NoOut));
+            """, NoFxRates, Broker, NoOut));
     }
 
     [TestMethod]
@@ -266,7 +270,7 @@ public class CryptoEventsReaderTest
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine}
             EXCHANGE,Current,2022-06-25 13:29:03,2022-06-25 13:29:03,Exchanged to ZRX,-1000.0000000000,ZRX,293.9067439000,-298.3167439000,4.4100000000,EUR,COMPLETED,1000.0000000000
-            """, Broker, NoOut));
+            """, NoFxRates, Broker, NoOut));
     }
     
     [TestMethod]
@@ -275,7 +279,7 @@ public class CryptoEventsReaderTest
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine}
             EXCHANGE,Current,2022-06-25 13:29:03,2022-06-25 13:29:03,Exchanged to ZRX,1000.0000000000,ZRX,293.9067439000,-298.3167439000,4.4100000000,EUR,COMPLETED,1000.0000000000
-            """, Broker, NoOut));
+            """, NoFxRates, Broker, NoOut));
     }
 
     [TestMethod]
@@ -284,7 +288,7 @@ public class CryptoEventsReaderTest
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine}
             EXCHANGE,Current,2022-06-25 13:29:03,2022-06-25 13:29:03,Exchanged to ZRX,1000.0000000000,ZRX,293.9067439000,298.3167439000,-4.4100000000,EUR,COMPLETED,1000.0000000000
-            """, Broker, NoOut));
+            """, NoFxRates, Broker, NoOut));
     }
 
     [TestMethod]
@@ -293,7 +297,7 @@ public class CryptoEventsReaderTest
         var events = Instance.ParseContent($"""
             {HeaderLine}
             EXCHANGE,Current,2022-06-25 13:29:03,2022-06-25 13:29:03,Exchanged to ZRX,1000.0000000000,ZRX,293.9067439000,298.3167439000,0.0000000000,EUR,COMPLETED,1000.0000000000
-            """, Broker, NoOut);
+            """, NoFxRates, Broker, NoOut);
         Assert.AreEqual(1, events.Count);
     }
 
@@ -303,7 +307,7 @@ public class CryptoEventsReaderTest
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine2025}
             EXCHANGE,Current,2022-06-25 13:29:03,2022-06-25 13:29:03,Exchanged to ZRX,1000.0000000000,ZRX,293.9067439000,298.3167439000,0.0000000000,EUR,COMPLETED,1000.0000000000
-            """, Broker, NoOut));
+            """, NoFxRates, Broker, NoOut));
     }
 
     [TestMethod]
@@ -313,7 +317,7 @@ public class CryptoEventsReaderTest
             {HeaderLine2025}
             ,Reset,,,,,"Jan 1, 2024, 12:00:00 AM"
             """;
-        var events = Instance.ParseContent(content, Broker, NoOut);
+        var events = Instance.ParseContent(content, NoFxRates, Broker, NoOut);
         Assert.AreEqual(1, events.Count);
         var resetEvent = events[0];
         Assert.AreEqual(new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc), resetEvent.Date);
@@ -333,7 +337,7 @@ public class CryptoEventsReaderTest
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine2025}
             ,Reset,,,,,,
-            """, Broker, NoOut));
+            """, NoFxRates, Broker, NoOut));
     }
 
     [TestMethod]
@@ -342,7 +346,7 @@ public class CryptoEventsReaderTest
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine2025}
             BTC,Reset,,,,,"Jan 1, 2024, 12:00:00 AM"
-            """, Broker, NoOut));
+            """, NoFxRates, Broker, NoOut));
     }
 
     [TestMethod]
@@ -351,7 +355,7 @@ public class CryptoEventsReaderTest
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine2025}
             ,Reset,0.01,,,,,"Jan 1, 2024, 12:00:00 AM"
-            """, Broker, NoOut));
+            """, NoFxRates, Broker, NoOut));
     }
 
     [TestMethod]
@@ -360,7 +364,7 @@ public class CryptoEventsReaderTest
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine2025}
             ,Reset,,0.01,,,,"Jan 1, 2024, 12:00:00 AM"
-            """, Broker, NoOut));
+            """, NoFxRates, Broker, NoOut));
     }
 
     [TestMethod]
@@ -370,7 +374,7 @@ public class CryptoEventsReaderTest
             {HeaderLine2025}
             BTC,Sell,0.02,"EUR 62,671.63","EUR 1,253.43",EUR 12.41,"Mar 8, 2024, 9:32:39 PM"
             """;
-        var events = Instance.ParseContent(content, Broker, NoOut);
+        var events = Instance.ParseContent(content, NoFxRates, Broker, NoOut);
         Assert.AreEqual(1, events.Count);
         var firstEvent = events[0];
         Assert.AreEqual(new DateTime(2024, 3, 8, 21, 32, 39, DateTimeKind.Utc), firstEvent.Date);
@@ -393,7 +397,7 @@ public class CryptoEventsReaderTest
             {HeaderLine2025}
             BTC,Buy,0.02,"EUR 62,654.96","EUR 1,253.10",EUR 12.41,"Mar 15, 2024, 12:05:32 PM"
             """;
-        var events = Instance.ParseContent(content, Broker, NoOut);
+        var events = Instance.ParseContent(content, NoFxRates, Broker, NoOut);
         Assert.AreEqual(1, events.Count);
         var firstEvent = events[0];
         Assert.AreEqual(new DateTime(2024, 3, 15, 12, 5, 32, DateTimeKind.Utc), firstEvent.Date);
@@ -416,7 +420,7 @@ public class CryptoEventsReaderTest
             {HeaderLine2025}
             BTC,Sell,0.02,"EUR 62,671.63","EUR 1,253.43",EUR 12.41,"Mar 8, 2024, 9:32:39 PM"
             """;
-        var events = Instance.ParseContent(content, Broker, NoOut);
+        var events = Instance.ParseContent(content, NoFxRates, Broker, NoOut);
         Assert.AreEqual(1, events.Count);
         var firstEvent = events[0];
         Assert.AreEqual(new DateTime(2024, 3, 8, 21, 32, 39, DateTimeKind.Utc), firstEvent.Date);
@@ -439,7 +443,7 @@ public class CryptoEventsReaderTest
             {HeaderLine2025}
             BTC,Sell,0.02,"EUR 62,671.63","1,253.43 EUR",EUR 12.41,"Mar 8, 2024, 9:32:39 PM"
             """;
-        var events = Instance.ParseContent(content, Broker, NoOut);
+        var events = Instance.ParseContent(content, NoFxRates, Broker, NoOut);
         Assert.AreEqual(1, events.Count);
         var firstEvent = events[0];
         Assert.AreEqual(new DateTime(2024, 3, 8, 21, 32, 39, DateTimeKind.Utc), firstEvent.Date);
@@ -463,7 +467,7 @@ public class CryptoEventsReaderTest
             BTC,Sell,0.02,"EUR 62,671.63","1,253.43 EUR",EUR 12.41,"Mar 8, 2024, 9:32:39 PM"
             BTC,Buy,0.02,"USD 62,654.96","1,253.10 USD",USD 12.41,"Mar 15, 2024, 12:05:32 PM"
             """;
-        var events = Instance.ParseContent(content, Broker, NoOut);
+        var events = Instance.ParseContent(content, NoFxRates, Broker, NoOut);
         Assert.AreEqual(2, events.Count);
         var firstEvent = events[0];
         Assert.AreEqual("EUR", firstEvent.Currency);
@@ -477,7 +481,7 @@ public class CryptoEventsReaderTest
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine2025}
             BTC,Sell,0.02,"EUR 62,671.63","1,253.43 EUR",USD 12.41,"Mar 8, 2024, 9:32:39 PM"
-            """, Broker, NoOut));
+            """, NoFxRates, Broker, NoOut));
     }
 
     [TestMethod]
@@ -488,7 +492,7 @@ public class CryptoEventsReaderTest
             BTC,Sell,0.02,"EUR 62,671.63","EUR 1,253.43",EUR 12.41,"Mar 8, 2024, 9:32:39 PM"
             BTC,Buy,0.02,"EUR 62,654.96","EUR 1,253.10",EUR 12.41,"Mar 15, 2024, 12:05:32 PM"
             """;
-        var events = Instance.ParseContent(content, Broker, NoOut);
+        var events = Instance.ParseContent(content, NoFxRates, Broker, NoOut);
         Assert.AreEqual(2, events.Count);
         var sellEvent = events[0];
         Assert.AreEqual(new DateTime(2024, 3, 8, 21, 32, 39, DateTimeKind.Utc), sellEvent.Date);
@@ -522,7 +526,7 @@ public class CryptoEventsReaderTest
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine}
             BTC,Sell,0.02,"EUR 62,671.63","EUR 1,253.43",EUR 12.41,"Mar 8, 2024, 9:32:39 PM"
-            """, Broker, NoOut));
+            """, NoFxRates, Broker, NoOut));
     }
 
     [TestMethod]
@@ -534,7 +538,7 @@ public class CryptoEventsReaderTest
 
             BTC,Buy,0.02,"EUR 62,654.96","EUR 1,253.10",EUR 12.41,"Mar 15, 2024, 12:05:32 PM"
             """;
-        var events = Instance.ParseContent(content, Broker, NoOut);
+        var events = Instance.ParseContent(content, NoFxRates, Broker, NoOut);
         Assert.AreEqual(2, events.Count);
     }
 
@@ -544,7 +548,7 @@ public class CryptoEventsReaderTest
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine2025}
             BTC,Invalid,0.02,"EUR 62,671.63","EUR 1,253.43",EUR 12.41,"Mar 8, 2024, 9:32:39 PM"
-            """, Broker, NoOut));
+            """, NoFxRates, Broker, NoOut));
     }
     
     [TestMethod]
@@ -555,7 +559,7 @@ public class CryptoEventsReaderTest
             BTC,Sell,0.02,"EUR 62,671.63","EUR 1,254.44",EUR 12.411,"Mar 8, 2024, 9:32:39 PM"
             """; 
         // 62,671.63 * 0.02 = 1,253.4326, abs(1,254.44 - 1,253.4326) > 0.01
-        ThrowsAny<Exception>(() => Instance.ParseContent(content, Broker, NoOut));
+        ThrowsAny<Exception>(() => Instance.ParseContent(content, NoFxRates, Broker, NoOut));
     }
 
     [TestMethod]
@@ -566,7 +570,7 @@ public class CryptoEventsReaderTest
             BTC,Sell,0.02,"EUR 62,671.63","EUR 1,253.4426",EUR 12.41,"Mar 8, 2024, 9:32:39 PM"
             """; 
         // 62,671.63 * 0.02 = 1,253.4326, abs(1,253.4426 - 1,253.4326) == 0.01
-        var events = Instance.ParseContent(content, Broker, NoOut);
+        var events = Instance.ParseContent(content, NoFxRates, Broker, NoOut);
         Assert.AreEqual(1, events.Count);
     }
 }

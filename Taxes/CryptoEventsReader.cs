@@ -42,7 +42,7 @@ class CryptoEventsReader(Basics basics)
 
     public Basics Basics => basics;
 
-    public IList<Event> Parse(string path, string broker, TextWriter outWriter)
+    public IList<Event> Parse(string path, FxRates fxRates, string broker, TextWriter outWriter)
     {
         if (string.IsNullOrWhiteSpace(path))
             throw new ArgumentNullException(nameof(path));
@@ -55,10 +55,10 @@ class CryptoEventsReader(Basics basics)
             throw new FileNotFoundException(path);
 
         var content = File.ReadAllText(path);
-        return ParseContent(content, broker, outWriter);
+        return ParseContent(content, fxRates, broker, outWriter);
     }
 
-    internal IList<Event> ParseContent(string content, string broker, TextWriter outWriter)
+    internal IList<Event> ParseContent(string content, FxRates fxRates, string broker, TextWriter outWriter)
     {
         // Check first line to determine the format: pre-2025 or 2025
         var headerLine = content.Split(Environment.NewLine, 2).First();
@@ -70,7 +70,7 @@ class CryptoEventsReader(Basics basics)
         if (headerLine.StartsWith("Symbol"))
         {
             using var reader = new StringReader(content);
-            return Parse2025(reader, broker, outWriter);
+            return Parse2025(reader, fxRates, broker, outWriter);
         }
         throw new NotSupportedException($"Unknown file format - headerLine: {headerLine}");
     }
@@ -162,7 +162,7 @@ class CryptoEventsReader(Basics basics)
         return events;
     }
 
-    private IList<Event> Parse2025(TextReader eventsReader, string broker, TextWriter outWriter)
+    private IList<Event> Parse2025(TextReader eventsReader, FxRates fxRates, string broker, TextWriter outWriter)
     {
         using var eventsCsv = new CsvReader(eventsReader, basics.DefaultCulture);
 
