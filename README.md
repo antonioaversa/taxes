@@ -317,3 +317,39 @@ CSV format, for all conversions. The downloaded CSV file has a complete history 
 and for all currencies.
 
 When using the multi-currency FX Rates option, the file can be used as-is, without any modification.
+
+### Reset events
+
+The software requires a reset event at the beginning of each tax period (i.e. typically the fiscal year), to reset 
+the state of the calculation of capital gains, losses, dividends, etc. That applies to both stocks and crypto.
+
+A reset event resets to 0 all counters related to the calculation of capital gains, losses, dividends, etc.
+
+A reset event, however, is different from simply removing all the events of the previous year and start fresh, as it 
+allows to keep the history of all the events, and match, for example, sell events within the year of interest to buy
+events in previous years, according CUMP and PEPS methodologies.
+
+#### Stocks reset event
+
+A reset event for stocks looks like the following:
+
+```text
+Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
+2023-01-01T00:00:00.000000Z,,RESET,,,,USD,1.0584
+```
+
+The `Date` is mandatory since it places the reset event in time w.r.t. other events.
+Also `Currency` and `FX Rate` are mandatory, although for technical reasons only, as they are not used in the 
+processing of the reset event. 
+
+#### Crypto reset event
+
+A reset event for crypto in 2025 CSV format looks like the following:
+
+```text
+Symbol,Type,Quantity,Price,Value,Fees,Date
+,Reset,,,,,"Jan 1, 2024, 12:00:00 AM"
+```
+
+Apart from `Type`, the only other mandatory field is `Date`, since it places the reset event in time w.r.t. 
+other events.
