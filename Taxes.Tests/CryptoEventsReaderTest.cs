@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using Taxes.Test;
 using static Taxes.Test.AssertExtensions;
 
 namespace Taxes.Tests;
@@ -462,17 +463,22 @@ public class CryptoEventsReaderTest
     [TestMethod]
     public void Parse2025_WithMultipleEventsWithDifferentCurrencies_ParsesEachCurrencyCorrectly()
     {
+        var fxRates = new FxRates(Basics, new()
+        {
+            ["USD"] = new() { [(2024, 03, 15).ToUtc()] = 1.09m }
+        });
         var content = $"""
             {HeaderLine2025}
             BTC,Sell,0.02,"EUR 62,671.63","1,253.43 EUR",EUR 12.41,"Mar 8, 2024, 9:32:39 PM"
             BTC,Buy,0.02,"USD 62,654.96","1,253.10 USD",USD 12.41,"Mar 15, 2024, 12:05:32 PM"
             """;
-        var events = Instance.ParseContent(content, NoFxRates, Broker, NoOut);
+        var events = Instance.ParseContent(content, fxRates, Broker, NoOut);
         Assert.AreEqual(2, events.Count);
         var firstEvent = events[0];
         Assert.AreEqual("EUR", firstEvent.Currency);
         var secondEvent = events[1];
-        Assert.AreEqual("USD", secondEvent.Currency);
+        Assert.AreEqual("EUR", secondEvent.Currency);
+        Assert.AreEqual(1.09m, secondEvent.FXRate);
     }
 
     [TestMethod]

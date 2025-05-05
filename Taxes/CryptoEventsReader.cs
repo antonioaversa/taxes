@@ -223,41 +223,37 @@ class CryptoEventsReader(Basics basics)
             if (feesCurrency != pricePerShareCurrency)
                 throw new InvalidOperationException($"Currencies are inconsistent: Price = {pricePerShareCurrency}, Fees = {feesCurrency}");
             
-            if (record.Type == Type2025_Buy)
+            var fxRate = fxRates[pricePerShareCurrency, date.Date];
+            outWriter.WriteLine($"FX rate used for conversion to base currency ({basics.BaseCurrency}): {fxRate}");
+
+            var @event = record.Type switch
             {
-                var totalAmountLocal = priceAllSharesLocal + feesLocal;
-                events.Add(new(
+                Type2025_Buy => new Event(
                     Date: date,
                     Type: EventType.BuyMarket,
                     Ticker: CryptoTicker,
                     Quantity: quantity,
                     PricePerShareLocal: pricePerShareLocal,
-                    TotalAmountLocal: totalAmountLocal,
+                    TotalAmountLocal: priceAllSharesLocal + feesLocal,
                     FeesLocal: feesLocal,
-                    Currency: pricePerShareCurrency,
-                    FXRate: 1m, // TODO: fix this
-                    Broker: broker));
-                continue;
-            }
-
-            if (record.Type == Type2025_Sell)
-            {
-                var totalAmountLocal = priceAllSharesLocal - feesLocal;
-                events.Add(new(
+                    Currency: basics.BaseCurrency,
+                    FXRate: fxRate,
+                    Broker: broker),
+                Type2025_Sell => new Event(
                     Date: date,
                     Type: EventType.SellMarket,
                     Ticker: CryptoTicker,
                     Quantity: quantity,
                     PricePerShareLocal: pricePerShareLocal,
-                    TotalAmountLocal: totalAmountLocal,
+                    TotalAmountLocal: priceAllSharesLocal - feesLocal,
                     FeesLocal: feesLocal,
-                    Currency: pricePerShareCurrency,
-                    FXRate: 1m,
-                    Broker: broker));
-                continue;
-            }
-
-            throw new NotSupportedException($"Record type {record.Type}: {record}");
+                    Currency: basics.BaseCurrency,
+                    FXRate: fxRate,
+                    Broker: broker),
+                _ => throw new NotSupportedException($"Record type {record.Type}: {record}"),
+            };
+            
+            events.Add(@event);
         }
 
         return events;

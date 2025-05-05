@@ -22,21 +22,26 @@ public record FxRates(Basics Basics, Dictionary<string, Dictionary<DateTime, dec
             ? new DictionaryAlwaysReturning1() 
             : Rates.GetValueOrDefault(currency) ?? new Dictionary<DateTime, decimal>();
 
-    public decimal? this[string currency, DateTime date]
+    public decimal this[string currency, DateTime date] =>
+        GetForExactDate(currency, date.Date)
+        ?? (IsWeekend(date.Date) ? GetForExactDate(currency, date.Date.AddDays(1)) : null)
+        ?? (IsWeekend(date.Date) ? GetForExactDate(currency, date.Date.AddDays(2)) : null)
+        ?? throw new InvalidDataException($"Missing FX Rate for currency {currency} and day {date.Date}");
+
+    private decimal? GetForExactDate(string currency, DateTime date)
     {
-        get
-        {
-            if (currency == Basics.BaseCurrency)
-                return 1.0m;
-            if (!Rates.TryGetValue(currency, out var rates))
-                return null;
-            if (!rates.TryGetValue(date, out var result))
-                return null;
-            return result;
-        }
+        if (currency == Basics.BaseCurrency)
+            return 1.0m;
+        if (!Rates.TryGetValue(currency, out var rates))
+            return null;
+        if (!rates.TryGetValue(date, out var result))
+            return null;
+        return result;
     }
 
-    private class DictionaryAlwaysReturning1 : IDictionary<DateTime, decimal>
+    static bool IsWeekend(DateTime date) => date.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday;
+
+    private sealed class DictionaryAlwaysReturning1 : IDictionary<DateTime, decimal>
     {
         public decimal this[DateTime key]
         {

@@ -57,15 +57,10 @@ class CryptoPortfolioValues
 
             // An FX Rate is considered valid if it's found for the local currency of the portfolio and for the day or,
             // in case of weekend days, one of the next two days following the date
-            var fxRate = FxRates[entry.Currency, date.Date]
-                ?? (IsWeekend(date.Date) ? FxRates[entry.Currency, date.Date.AddDays(1)] : null)
-                ?? (IsWeekend(date.Date) ? FxRates[entry.Currency, date.Date.AddDays(2)] : null)
-                ?? throw new InvalidDataException($"Missing FX Rate for currency {entry.Currency} and day {date.Date}");
+            var fxRate = FxRates[entry.Currency, date.Date];
 
             // FX Rates are Base/Local and portfolio value is in Local, so we need to divide to get the value in Bases
             return entry.Amount / fxRate;
-
-            static bool IsWeekend(DateTime date) => date.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday;
         }
     }
 
