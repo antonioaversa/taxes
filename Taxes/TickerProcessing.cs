@@ -303,7 +303,10 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
                 // The precision of the shares buy price is given by the precision of the price for a single share,
                 // multiplied by the number of sold shares: e.g. if the price per share has 2 decimal-digits precision,
                 // the max error is 0.01 for 1 share, so 0.01 * n for n shares.
-                if (Math.Abs(pepsBuyEventBuyPriceBase1 - pepsBuyEventBuyPriceBase2) > basics.Precision * soldQuantity)
+                // However, if the quantity is inferior to 1, the precision won't get higher, since the price of a single
+                // share has a fixed amount of digits of precision. That is why minimum precision is set to 1.
+                var precisionFactor = Math.Max(1, Math.Round(soldQuantity));
+                if (Math.Abs(pepsBuyEventBuyPriceBase1 - pepsBuyEventBuyPriceBase2) > basics.Precision * precisionFactor)
                     throw new InvalidDataException($"PEPS Buy Price Base is inconsistent");
                 totalPepsBuyPriceBase += pepsBuyEventBuyPriceBase1;
 
