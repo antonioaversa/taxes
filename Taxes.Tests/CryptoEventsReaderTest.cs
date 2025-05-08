@@ -68,7 +68,7 @@ public class CryptoEventsReaderTest
     [TestMethod]
     public void ParseContent_Pre2025_WithBlankLines_IgnoresThem()
     {
-        var content = $"""
+        const string content = $"""
             {HeaderLinePre2025}
             EXCHANGE,Current,2022-06-25 13:29:03,2022-06-25 13:29:03,Exchanged to ZRX,1000.0000000000,ZRX,293.9067439000,298.3167439000,4.4100000000,EUR,COMPLETED,1000.0000000000
 
@@ -90,7 +90,7 @@ public class CryptoEventsReaderTest
     [TestMethod]
     public void ParseContent_Pre2025_WithTransferType_IgnoresTheRecord()
     {
-        var content = $"""
+        const string content = $"""
             {HeaderLinePre2025}
             TRANSFER,Current,2022-06-25 13:29:03,2022-06-25 13:29:03,Exchanged to ZRX,1000.0000000000,ZRX,293.9067439000,298.3167439000,4.4100000000,EUR,COMPLETED,1000.0000000000
             """;
@@ -101,7 +101,7 @@ public class CryptoEventsReaderTest
     [TestMethod]
     public void ParseContent_Pre2025_WithRewardType_ReadsTheRecord()
     {
-        var content = $"""
+        const string content = $"""
             {HeaderLinePre2025}
             REWARD,Crypto Staking,2022-06-25 13:29:03,2022-06-25 13:29:03,Exchanged to ZRX,1000.0000000000,ZRX,293.9067439000,298.3167439000,4.4100000000,EUR,COMPLETED,1000.0000000000
             """;
@@ -217,7 +217,7 @@ public class CryptoEventsReaderTest
     [TestMethod]
     public void ParseContent_Pre2025_WithReset_ReturnsResetEvent()
     {
-        var content = $"""
+        const string content = $"""
             {HeaderLinePre2025}
             RESET,,2023-01-01 00:00:00,2023-01-01 00:00:00,,,,,,,EUR,,
             """;
@@ -238,7 +238,7 @@ public class CryptoEventsReaderTest
     [TestMethod]
     public void ParseContent_Pre2025_WithExchange_ReturnsEventsWithCorrectProperties()
     {
-        var content = $"""
+        const string content = $"""
             {HeaderLinePre2025}
             EXCHANGE,Current,2022-06-25 13:29:03,2022-06-25 13:29:03,Exchanged to ZRX,1000.0000000000,ZRX,293.9067439000,298.3167439000,4.4100000000,EUR,COMPLETED,1000.0000000000
             EXCHANGE,Current,2022-06-27 10:32:23,2022-06-27 10:32:23,Exchanged to EUR,-1000.0000000000,ZRX,-324.0898000000,-319.2298000000,4.8600000000,EUR,COMPLETED,0.0000000000
@@ -338,7 +338,7 @@ public class CryptoEventsReaderTest
     [TestMethod]
     public void ParseContent_Pre2025_WithMergeAllCryptosFalse_KeepsOriginalCryptoCurrency()
     {
-        var content = $"""
+        const string content = $"""
             {HeaderLinePre2025}
             EXCHANGE,Current,2022-06-25 13:29:03,2022-06-25 13:29:03,Exchanged to ZRX,1000.0000000000,ZRX,293.9067439000,298.3167439000,4.4100000000,EUR,COMPLETED,1000.0000000000
             EXCHANGE,Current,2022-06-27 10:32:23,2022-06-27 10:32:23,Exchanged to EUR,-1000.0000000000,ZRX,-324.0898000000,-319.2298000000,4.8600000000,EUR,COMPLETED,0.0000000000
@@ -356,7 +356,7 @@ public class CryptoEventsReaderTest
     [TestMethod]
     public void ParseContent_2025_WithValidReset_ReturnsResetEvent()
     {
-        var content = $"""
+        const string content = $"""
             {HeaderLine2025}
             ,Reset,,,,,"Jan 1, 2024, 12:00:00 AM"
             """;
@@ -413,7 +413,7 @@ public class CryptoEventsReaderTest
     [TestMethod]
     public void ParseContent_2025_WithValidSell_ReturnsSellEvent()
     {
-        var content = $"""
+        const string content = $"""
             {HeaderLine2025}
             BTC,Sell,0.02,"EUR 62,671.63","EUR 1,253.43",EUR 12.41,"Mar 8, 2024, 9:32:39 PM"
             """;
@@ -436,7 +436,7 @@ public class CryptoEventsReaderTest
     [TestMethod]
     public void ParseContent_2025_WithValidBuy_ReturnsBuyEvent()
     {
-        var content = $"""
+        const string content = $"""
             {HeaderLine2025}
             BTC,Buy,0.02,"EUR 62,654.96","EUR 1,253.10",EUR 12.41,"Mar 15, 2024, 12:05:32 PM"
             """;
@@ -459,7 +459,7 @@ public class CryptoEventsReaderTest
     [TestMethod]
     public void ParseContent_2025_WithCurrencyBeforeAmount_ParsesCurrencyCorrectly()
     {
-        var content = $"""
+        const string content = $"""
             {HeaderLine2025}
             BTC,Sell,0.02,"EUR 62,671.63","EUR 1,253.43",EUR 12.41,"Mar 8, 2024, 9:32:39 PM"
             """;
@@ -482,7 +482,7 @@ public class CryptoEventsReaderTest
     [TestMethod]
     public void ParseContent_2025_WithCurrencyAfterAmount_ParsesCurrencyCorrectly()
     {
-        var content = $"""
+        const string content = $"""
             {HeaderLine2025}
             BTC,Sell,0.02,"EUR 62,671.63","1,253.43 EUR",EUR 12.41,"Mar 8, 2024, 9:32:39 PM"
             """;
@@ -509,7 +509,7 @@ public class CryptoEventsReaderTest
         {
             ["USD"] = new() { [(2024, 03, 15).ToUtc()] = 1.09m }
         });
-        var content = $"""
+        const string content = $"""
             {HeaderLine2025}
             BTC,Sell,0.02,"EUR 62,671.63","1,253.43 EUR",EUR 12.41,"Mar 8, 2024, 9:32:39 PM"
             BTC,Buy,0.02,"USD 62,654.96","1,253.10 USD",USD 12.41,"Mar 15, 2024, 12:05:32 PM"
@@ -526,7 +526,7 @@ public class CryptoEventsReaderTest
     [TestMethod]
     public void ParseContent_2025_WithSingleEventWithMultipleCurrencies_ThrowsException()
     {
-        var content = $"""
+        const string content = $"""
             {HeaderLine2025}
             BTC,Sell,0.02,"EUR 62,671.63","1,253.43 EUR",USD 12.41,"Mar 8, 2024, 9:32:39 PM"
             """;
@@ -536,7 +536,7 @@ public class CryptoEventsReaderTest
     [TestMethod]
     public void ParseContent_2025_WithValidBuyAndSell_ReturnsEvents()
     {
-        var content = $"""
+        const string content = $"""
             {HeaderLine2025}
             BTC,Sell,0.02,"EUR 62,671.63","EUR 1,253.43",EUR 12.41,"Mar 8, 2024, 9:32:39 PM"
             BTC,Buy,0.02,"EUR 62,654.96","EUR 1,253.10",EUR 12.41,"Mar 15, 2024, 12:05:32 PM"
@@ -572,7 +572,7 @@ public class CryptoEventsReaderTest
     [TestMethod]
     public void ParseContent_2025_WithPre2025Header_RaisesException()
     {
-        var content = $"""
+        const string content = $"""
             {HeaderLinePre2025}
             BTC,Sell,0.02,"EUR 62,671.63","EUR 1,253.43",EUR 12.41,"Mar 8, 2024, 9:32:39 PM"
             """;
@@ -582,7 +582,7 @@ public class CryptoEventsReaderTest
     [TestMethod]
     public void ParseContent_2025_WithEmptyLines_IgnoresThem()
     {
-        var content = $"""
+        const string content = $"""
             {HeaderLine2025}
             BTC,Sell,0.02,"EUR 62,671.63","EUR 1,253.43",EUR 12.41,"Mar 8, 2024, 9:32:39 PM"
 
@@ -595,7 +595,7 @@ public class CryptoEventsReaderTest
     [TestMethod]
     public void ParseContent_2025_WithInvalidType_RaisesException()
     {
-        var content = $"""
+        const string content = $"""
             {HeaderLine2025}
             BTC,Invalid,0.02,"EUR 62,671.63","EUR 1,253.43",EUR 12.41,"Mar 8, 2024, 9:32:39 PM"
             """;
@@ -605,7 +605,7 @@ public class CryptoEventsReaderTest
     [TestMethod]
     public void ParseContent_2025_WithRewardType_RaisesException()
     {
-        var content = $"""
+        const string content = $"""
             {HeaderLine2025}
             BTC,Reward,0.02,"EUR 62,671.63","EUR 1,253.43",EUR 12.41,"Mar 8, 2024, 9:32:39 PM"
             """;
@@ -615,7 +615,7 @@ public class CryptoEventsReaderTest
     [TestMethod]
     public void ParseContent_2025_WithDeltaAbovePrecision_RaisesException()
     {
-        var content = $"""
+        const string content = $"""
             {HeaderLine2025}
             BTC,Sell,0.02,"EUR 62,671.63","EUR 1,254.44",EUR 12.411,"Mar 8, 2024, 9:32:39 PM"
             """;
@@ -626,7 +626,7 @@ public class CryptoEventsReaderTest
     [TestMethod]
     public void ParseContent_2025_WithDeltaExactlyEqualsToPrecision_DoesNotRaiseException()
     {
-        var content = $"""
+        const string content = $"""
             {HeaderLine2025}
             BTC,Sell,0.02,"EUR 62,671.63","EUR 1,253.4426",EUR 12.41,"Mar 8, 2024, 9:32:39 PM"
             """;
