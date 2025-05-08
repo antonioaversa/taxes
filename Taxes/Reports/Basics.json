@@ -240,6 +240,7 @@
     }
   ],
   "CryptoPortfolioValuesFilePath": "Crypto Portfolio Values.csv",
+  "MergeAllCryptos": true,
   "FXRatesFilePath": "FX Rates ECB 2025-04-30.csv",
   "WithholdingTaxes": {
     "US": {

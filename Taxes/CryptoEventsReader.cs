@@ -1,4 +1,5 @@
-﻿using CsvHelper;
+﻿using System.Diagnostics;
+using CsvHelper;
 using CsvHelper.Configuration.Attributes;
 using System.Globalization;
 
@@ -26,6 +27,7 @@ class CryptoEventsReader(Basics basics)
     const string Type_Exchange = "EXCHANGE";
     const string Type_Reward = "REWARD";
     const string Product_Current = "Current";
+    const string Product_CryptoStaking = "Crypto Staking";
     const string State_Completed = "COMPLETED";
 
     // Example of 2025 CSV format:
@@ -102,20 +104,7 @@ class CryptoEventsReader(Basics basics)
                 outWriter.WriteLine($"Ignore record type {Type_Transfer}: {record}");
                 continue;
             }
-
-            // TODO: implement
-            if (record.Type == Type_Reward)
-            {
-                outWriter.WriteLine($"Ignore record type {Type_Reward}: {record}");
-                continue;
-            }
-
-            if (record.Product != Product_Current)
-                throw new NotSupportedException($"Record product {record.Product}: {record}");
-
-            if (record.Type != Type_Exchange)
-                throw new NotSupportedException($"Record type {record.Type}: {record}");
-
+            
             if (record.State != State_Completed)
                 throw new NotSupportedException($"Record state {record.State}: {record}");
 
@@ -124,7 +113,18 @@ class CryptoEventsReader(Basics basics)
                 throw new InvalidOperationException("Amount is 0");
 
             var quantity = Math.Abs(amount);
-            var type = amount >= 0 ? EventType.BuyMarket : EventType.SellMarket;
+            var type = (amount, record.Type, record.Product) switch
+            {
+                (<= 0, Type_Reward, Product_CryptoStaking) => throw new InvalidOperationException("Reward Amount is not positive"),
+                (> 0, Type_Reward, Product_CryptoStaking) => EventType.Reward,
+                (>= 0, Type_Exchange, Product_Current) => EventType.BuyMarket,
+                (< 0, Type_Exchange, Product_Current) => EventType.SellMarket,
+                _ => throw new InvalidOperationException($"Amount {amount}, type {record.Type}, and product {record.Product} are inconsistent"),
+            };
+            
+            // Unlike stocks, which are considered distinct assets, all cryptos, from a tax perspective, are considered a single asset.
+            // This default behavior can be changed by setting mergeAllCryptos to false.
+            var ticker = basics.MergeAllCryptos ? CryptoTicker : record.Currency;
 
             var fiatAmount = decimal.Parse(record.FiatAmount, basics.DefaultCulture);
             if (Math.Sign(amount) != Math.Sign(fiatAmount))
@@ -144,17 +144,18 @@ class CryptoEventsReader(Basics basics)
             // Unlike stocks, which are exchanged against Local FIAT, crypto are exchanged against Base FIAT
             // That has changed in 2025, where you can exchange against any FIAT of choice, whether Base FIAT
             // (e.g. EUR) or not (e.g. CHF).
+            var currency = record.BaseCurrency;
             var fxRate = 1m;
 
             events.Add(new(
                 Date: date,
                 Type: type,
-                Ticker: CryptoTicker,
+                Ticker: ticker,
                 Quantity: quantity,
                 PricePerShareLocal: pricePerShareLocal,
                 TotalAmountLocal: totalAmountLocal,
                 FeesLocal: feesLocal,
-                Currency: record.BaseCurrency,
+                Currency: currency,
                 FXRate: fxRate,
                 Broker: broker));
         }
@@ -191,6 +192,10 @@ class CryptoEventsReader(Basics basics)
                 events.Add(new(date, EventType.Reset, null, null, null, 0, null, basics.BaseCurrency, 1.0m, broker));
                 continue;
             }
+            
+            // Unlike stocks, which are considered distinct assets, all cryptos, from a tax perspective, are considered a single asset.
+            // This default behavior can be changed by setting mergeAllCryptos to false.
+            var ticker = basics.MergeAllCryptos ? CryptoTicker : record.Symbol;
 
             if (string.IsNullOrWhiteSpace(record.Symbol))
                 throw new InvalidOperationException("Symbol is empty");
@@ -223,37 +228,30 @@ class CryptoEventsReader(Basics basics)
             if (feesCurrency != pricePerShareCurrency)
                 throw new InvalidOperationException($"Currencies are inconsistent: Price = {pricePerShareCurrency}, Fees = {feesCurrency}");
             
-            var fxRate = fxRates[pricePerShareCurrency, date.Date];
-            outWriter.WriteLine($"FX rate used for conversion to base currency ({basics.BaseCurrency}): {fxRate}");
-
-            var @event = record.Type switch
+            var (type, totalAmountLocal) = record.Type switch
             {
-                Type2025_Buy => new Event(
-                    Date: date,
-                    Type: EventType.BuyMarket,
-                    Ticker: CryptoTicker,
-                    Quantity: quantity,
-                    PricePerShareLocal: pricePerShareLocal,
-                    TotalAmountLocal: priceAllSharesLocal + feesLocal,
-                    FeesLocal: feesLocal,
-                    Currency: basics.BaseCurrency,
-                    FXRate: fxRate,
-                    Broker: broker),
-                Type2025_Sell => new Event(
-                    Date: date,
-                    Type: EventType.SellMarket,
-                    Ticker: CryptoTicker,
-                    Quantity: quantity,
-                    PricePerShareLocal: pricePerShareLocal,
-                    TotalAmountLocal: priceAllSharesLocal - feesLocal,
-                    FeesLocal: feesLocal,
-                    Currency: basics.BaseCurrency,
-                    FXRate: fxRate,
-                    Broker: broker),
+                Type2025_Buy => (EventType.BuyMarket, priceAllSharesLocal + feesLocal),
+                Type2025_Sell => (EventType.SellMarket, priceAllSharesLocal - feesLocal),
                 _ => throw new NotSupportedException($"Record type {record.Type}: {record}"),
             };
             
-            events.Add(@event);
+            // The currency is set always to the base currency (e.g. EUR), and the FX rate is determined from the
+            // cryptocurrency (identified from the pricePerShare, and from the priceAllShares) to the base currency.
+            var currency = basics.BaseCurrency;
+            var fxRate = fxRates[pricePerShareCurrency, date.Date];
+            outWriter.WriteLine($"FX rate used for conversion to base currency ({basics.BaseCurrency}): {fxRate}");
+            
+            events.Add(new(
+                Date: date,
+                Type: type,
+                Ticker: ticker,
+                Quantity: quantity,
+                PricePerShareLocal: pricePerShareLocal,
+                TotalAmountLocal: totalAmountLocal,
+                FeesLocal: feesLocal,
+                Currency: currency,
+                FXRate: fxRate,
+                Broker: broker));
         }
 
         return events;

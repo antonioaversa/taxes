@@ -96,14 +96,35 @@ public class CryptoEventsReaderTest
     }
 
     [TestMethod]
-    public void ParseContent_WithRewardType_IgnoresTheRecord() // TODO: to be fixed
+    public void ParseContent_WithRewardType_ReadsTheRecord()
     {
         var content = $"""
             {HeaderLine}
-            REWARD,Current,2022-06-25 13:29:03,2022-06-25 13:29:03,Exchanged to ZRX,1000.0000000000,ZRX,293.9067439000,298.3167439000,4.4100000000,EUR,COMPLETED,1000.0000000000
+            REWARD,Crypto Staking,2022-06-25 13:29:03,2022-06-25 13:29:03,Exchanged to ZRX,1000.0000000000,ZRX,293.9067439000,298.3167439000,4.4100000000,EUR,COMPLETED,1000.0000000000
             """;
         var events = Instance.ParseContent(content, NoFxRates, Broker, NoOut);
-        Assert.AreEqual(0, events.Count);
+        Assert.AreEqual(1, events.Count);
+        var firstEvent = events[0];
+        Assert.AreEqual(new DateTime(2022, 6, 25, 13, 29, 3, DateTimeKind.Utc), firstEvent.Date);
+        Assert.AreEqual(EventType.Reward, firstEvent.Type);
+        Assert.AreEqual("CRYPTO", firstEvent.Ticker);
+        Assert.AreEqual(1000m, firstEvent.Quantity);
+        Assert.IsNotNull(firstEvent.PricePerShareLocal);
+        Assert.AreEqual(293.9067439m / 1000, firstEvent.PricePerShareLocal.Value, 0.000001m);
+        Assert.AreEqual(298.3167439m, firstEvent.TotalAmountLocal, 0.000001m);
+        Assert.IsNotNull(firstEvent.FeesLocal);
+        Assert.AreEqual(4.41m, firstEvent.FeesLocal.Value, 0.000001m);
+        Assert.AreEqual("EUR", firstEvent.Currency);
+        Assert.AreEqual(1m, firstEvent.FXRate);
+    }
+
+    [TestMethod]
+    public void ParseContent_WithRewardTypeAndCurrentProduct_RaisesExceptionForInconsistency()
+    {
+        ThrowsAny<Exception>(() => Instance.ParseContent($"""
+            {HeaderLine}
+            REWARD,Current,2022-06-25 13:29:03,2022-06-25 13:29:03,Exchanged to ZRX,1000.0000000000,ZRX,293.9067439000,298.3167439000,4.4100000000,EUR,COMPLETED,1000.0000000000
+            """, NoFxRates, Broker, NoOut));
     }
 
     [TestMethod]
@@ -311,6 +332,24 @@ public class CryptoEventsReaderTest
             """, NoFxRates, Broker, NoOut));
     }
 
+    [TestMethod]
+    public void ParseContent_WithMergeAllCryptosFalse_KeepsOriginalCryptoCurrency()
+    {
+        var content = $"""
+            {HeaderLine}
+            EXCHANGE,Current,2022-06-25 13:29:03,2022-06-25 13:29:03,Exchanged to ZRX,1000.0000000000,ZRX,293.9067439000,298.3167439000,4.4100000000,EUR,COMPLETED,1000.0000000000
+            EXCHANGE,Current,2022-06-27 10:32:23,2022-06-27 10:32:23,Exchanged to EUR,-1000.0000000000,ZRX,-324.0898000000,-319.2298000000,4.8600000000,EUR,COMPLETED,0.0000000000
+            """;
+        var basics = new Basics() { MergeAllCryptos = false};
+        var instance = new CryptoEventsReader(basics);
+        var events = instance.ParseContent(content, NoFxRates, Broker, NoOut);
+        Assert.AreEqual(2, events.Count);
+        var firstEvent = events[0];
+        Assert.AreEqual("ZRX", firstEvent.Ticker);
+        var secondEvent = events[1];
+        Assert.AreEqual("ZRX", secondEvent.Ticker);
+    }
+    
     [TestMethod]
     public void ParseContent_2025_WithValidReset_ReturnsResetEvent() 
     {

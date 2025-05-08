@@ -76,4 +76,9 @@ public enum EventType
     /// It is also a tax-relevant event, since interests are subject to both withholding and normal taxes.
     /// </summary>
     Interest,
+    
+    /// <summary>
+    /// A reward for the investor. Relevant for crypto, where rewards are given for staking.
+    /// </summary>
+    Reward,
 }
