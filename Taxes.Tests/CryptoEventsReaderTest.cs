@@ -27,7 +27,7 @@ public class CryptoEventsReaderTest
     }
     
     [TestMethod]
-    public void Parse_WithTemporaryFile()
+    public void ParseFile_WithTemporaryFile()
     {
         var path = Path.GetTempFileName();
         try
@@ -38,7 +38,7 @@ public class CryptoEventsReaderTest
                 EXCHANGE,Current,2022-06-27 10:32:23,2022-06-27 10:32:23,Exchanged to EUR,-1000.0000000000,ZRX,-324.0898000000,-319.2298000000,4.8600000000,EUR,COMPLETED,0.0000000000
                 """);
 
-            var events = Instance.Parse(path, NoFxRates, Broker, NoOut);
+            var events = Instance.ParseFile(path, NoFxRates, Broker, NoOut);
             Assert.AreEqual(2, events.Count);
         }
         finally
@@ -49,13 +49,13 @@ public class CryptoEventsReaderTest
     }
 
     [TestMethod]
-    public void Parse_WithEmptyContent_ThrowException()
+    public void ParseContent_WithEmptyContent_ThrowException()
     {
         ThrowsAny<Exception>(() => Instance.ParseContent(string.Empty, NoFxRates, Broker, NoOut));
     }
 
     [TestMethod]
-    public void Parse_WithOnlyHeader_ReturnEmptyList()
+    public void ParseContent_WithOnlyHeader_ReturnEmptyList()
     {
         var content = HeaderLine;
         var events = Instance.ParseContent(content, NoFxRates, Broker, NoOut);
@@ -63,7 +63,7 @@ public class CryptoEventsReaderTest
     }
 
     [TestMethod]
-    public void Parse_WithBlankLines_IgnoresThem()
+    public void ParseContent_WithBlankLines_IgnoresThem()
     {
         var content = $"""
             {HeaderLine}
@@ -76,7 +76,7 @@ public class CryptoEventsReaderTest
     }
 
     [TestMethod]
-    public void Parse_WithInvalidType_RaisesException()
+    public void ParseContent_WithInvalidType_RaisesException()
     {
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine}
@@ -85,7 +85,7 @@ public class CryptoEventsReaderTest
     }
 
     [TestMethod]
-    public void Parse_WithTransferType_IgnoresTheRecord()
+    public void ParseContent_WithTransferType_IgnoresTheRecord()
     {
         var content = $"""
             {HeaderLine}
@@ -96,7 +96,7 @@ public class CryptoEventsReaderTest
     }
 
     [TestMethod]
-    public void Parse_WithRewardType_IgnoresTheRecord() // TODO: to be fixed
+    public void ParseContent_WithRewardType_IgnoresTheRecord() // TODO: to be fixed
     {
         var content = $"""
             {HeaderLine}
@@ -107,7 +107,7 @@ public class CryptoEventsReaderTest
     }
 
     [TestMethod]
-    public void Parse_WithNonCurrentProduct_RaisesException()
+    public void ParseContent_WithNonCurrentProduct_RaisesException()
     {
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine}
@@ -116,7 +116,7 @@ public class CryptoEventsReaderTest
     }
 
     [TestMethod]
-    public void Parse_WithInvalidDateTime_RaisesException()
+    public void ParseContent_WithInvalidDateTime_RaisesException()
     {
         // Missing part of time in Started Date
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
@@ -155,7 +155,7 @@ public class CryptoEventsReaderTest
     [DataRow("2022-06-25", DisplayName = "Short datetime format not supported")]
     [DataRow("2022-06-25 13:29:03+02:00", DisplayName = "Timezone not supported")]
     [DataRow("2022-06-25T13:29:03", DisplayName = "T between date and time not supported")]
-    public void Parse_WithUnsupportedDateTimeFormats(string startedDate)
+    public void ParseContent_WithUnsupportedDateTimeFormats(string startedDate)
     {
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine}
@@ -164,7 +164,7 @@ public class CryptoEventsReaderTest
     }
 
     [TestMethod]
-    public void Parse_WithStartedDateDifferentThanCompletedDate_RaisesException()
+    public void ParseContent_WithStartedDateDifferentThanCompletedDate_RaisesException()
     {
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine}
@@ -173,7 +173,7 @@ public class CryptoEventsReaderTest
     }
 
     [TestMethod]
-    public void Parse_WithStateDifferentThanCompleted_RaisesException()
+    public void ParseContent_WithStateDifferentThanCompleted_RaisesException()
     {
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine}
@@ -182,7 +182,7 @@ public class CryptoEventsReaderTest
     }
 
     [TestMethod]
-    public void Parse_WithRecordBaseCurrencyDifferentThanBasicsBaseCurrency_RaisesException()
+    public void ParseContent_WithRecordBaseCurrencyDifferentThanBasicsBaseCurrency_RaisesException()
     {
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine}
@@ -191,7 +191,7 @@ public class CryptoEventsReaderTest
     }
 
     [TestMethod]
-    public void Parse_WithReset_ReturnsResetEvent()
+    public void ParseContent_WithReset_ReturnsResetEvent()
     {
         var content = $"""
             {HeaderLine}
@@ -212,7 +212,7 @@ public class CryptoEventsReaderTest
     }
 
     [TestMethod]
-    public void Parse_WithExchange_ReturnsEventsWithCorrectProperties()
+    public void ParseContent_WithExchange_ReturnsEventsWithCorrectProperties()
     {
         var content = $"""
             {HeaderLine}
@@ -257,7 +257,7 @@ public class CryptoEventsReaderTest
     }
 
     [TestMethod]
-    public void Parse_WithZeroQuantity_RaisesException()
+    public void ParseContent_WithZeroQuantity_RaisesException()
     {
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine}
@@ -266,7 +266,7 @@ public class CryptoEventsReaderTest
     }
 
     [TestMethod]
-    public void Parse_WithAmountAndFiatAmountHavingDifferentSigns_RaisesException()
+    public void ParseContent_WithAmountAndFiatAmountHavingDifferentSigns_RaisesException()
     {
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine}
@@ -275,7 +275,7 @@ public class CryptoEventsReaderTest
     }
     
     [TestMethod]
-    public void Parse_WithFiatAmountsHavingDifferentSigns_RaisesException()
+    public void ParseContent_WithFiatAmountsHavingDifferentSigns_RaisesException()
     {
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine}
@@ -284,7 +284,7 @@ public class CryptoEventsReaderTest
     }
 
     [TestMethod]
-    public void Parse_WithNegativeFees_RaisesException()
+    public void ParseContent_WithNegativeFees_RaisesException()
     {
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine}
@@ -293,7 +293,7 @@ public class CryptoEventsReaderTest
     }
 
     [TestMethod]
-    public void Parse_WithZeroFees_IsOk()
+    public void ParseContent_WithZeroFees_IsOk()
     {
         var events = Instance.ParseContent($"""
             {HeaderLine}
@@ -303,7 +303,7 @@ public class CryptoEventsReaderTest
     }
 
     [TestMethod]
-    public void Parse_With2025Header_RaisesException()
+    public void ParseContent_With2025Header_RaisesException()
     {
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine2025}
@@ -312,7 +312,7 @@ public class CryptoEventsReaderTest
     }
 
     [TestMethod]
-    public void Parse2025_WithValidReset_ReturnsResetEvent() 
+    public void ParseContent_2025_WithValidReset_ReturnsResetEvent() 
     {
         var content = $"""
             {HeaderLine2025}
@@ -333,7 +333,7 @@ public class CryptoEventsReaderTest
     }
 
     [TestMethod]
-    public void Parse2025_WithResetWithNoDate_RaisesException() 
+    public void ParseContent_2025_WithResetWithNoDate_RaisesException() 
     {
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine2025}
@@ -342,7 +342,7 @@ public class CryptoEventsReaderTest
     }
 
     [TestMethod]
-    public void Parse2025_WithResetWithTicker_RaisesException() 
+    public void ParseContent_2025_WithResetWithTicker_RaisesException() 
     {
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine2025}
@@ -351,7 +351,7 @@ public class CryptoEventsReaderTest
     }
 
     [TestMethod]
-    public void Parse2025_WithResetWithQuantity_RaisesException() 
+    public void ParseContent_2025_WithResetWithQuantity_RaisesException() 
     {
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine2025}
@@ -360,7 +360,7 @@ public class CryptoEventsReaderTest
     }
 
     [TestMethod]
-    public void Parse2025_WithResetWithPrice_RaisesException() 
+    public void ParseContent_2025_WithResetWithPrice_RaisesException() 
     {
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine2025}
@@ -369,7 +369,7 @@ public class CryptoEventsReaderTest
     }
 
     [TestMethod]
-    public void Parse2025_WithValidSell_ReturnsSellEvent() 
+    public void ParseContent_2025_WithValidSell_ReturnsSellEvent() 
     {
         var content = $"""
             {HeaderLine2025}
@@ -392,7 +392,7 @@ public class CryptoEventsReaderTest
     }
 
     [TestMethod]
-    public void Parse2025_WithValidBuy_ReturnsBuyEvent() 
+    public void ParseContent_2025_WithValidBuy_ReturnsBuyEvent() 
     {
         var content = $"""
             {HeaderLine2025}
@@ -415,7 +415,7 @@ public class CryptoEventsReaderTest
     }
 
     [TestMethod]
-    public void Parse2025_WithCurrencyBeforeAmount_ParsesCurrencyCorrectly() 
+    public void ParseContent_2025_WithCurrencyBeforeAmount_ParsesCurrencyCorrectly() 
     {
         var content = $"""
             {HeaderLine2025}
@@ -438,7 +438,7 @@ public class CryptoEventsReaderTest
     }
 
     [TestMethod]
-    public void Parse2025_WithCurrencyAfterAmount_ParsesCurrencyCorrectly()
+    public void ParseContent_2025_WithCurrencyAfterAmount_ParsesCurrencyCorrectly()
     {
         var content = $"""
             {HeaderLine2025}
@@ -461,7 +461,7 @@ public class CryptoEventsReaderTest
     }
 
     [TestMethod]
-    public void Parse2025_WithMultipleEventsWithDifferentCurrencies_ParsesEachCurrencyCorrectly()
+    public void ParseContent_2025_WithMultipleEventsWithDifferentCurrencies_ParsesEachCurrencyCorrectly()
     {
         var fxRates = new FxRates(Basics, new()
         {
@@ -482,7 +482,7 @@ public class CryptoEventsReaderTest
     }
 
     [TestMethod]
-    public void Parse2025_WithSingleEventWithMultipleCurrencies_ThrowsException()
+    public void ParseContent_2025_WithSingleEventWithMultipleCurrencies_ThrowsException()
     {
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine2025}
@@ -491,7 +491,7 @@ public class CryptoEventsReaderTest
     }
 
     [TestMethod]
-    public void Parse2025_WithValidBuyAndSell_ReturnsEvents() 
+    public void ParseContent_2025_WithValidBuyAndSell_ReturnsEvents() 
     {
         var content = $"""
             {HeaderLine2025}
@@ -527,7 +527,7 @@ public class CryptoEventsReaderTest
     }
 
     [TestMethod]
-    public void Parse2025_WithPre2025Header_RaisesException() 
+    public void ParseContent_2025_WithPre2025Header_RaisesException() 
     {
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine}
@@ -536,7 +536,7 @@ public class CryptoEventsReaderTest
     }
 
     [TestMethod]
-    public void Parse2025_WithEmptyLines_IgnoresThem()
+    public void ParseContent_2025_WithEmptyLines_IgnoresThem()
     {
         var content = $"""
             {HeaderLine2025}
@@ -549,7 +549,7 @@ public class CryptoEventsReaderTest
     }
 
     [TestMethod]
-    public void Parse2025_WithInvalidType_RaisesException()
+    public void ParseContent_2025_WithInvalidType_RaisesException()
     {
         ThrowsAny<Exception>(() => Instance.ParseContent($"""
             {HeaderLine2025}
@@ -558,7 +558,7 @@ public class CryptoEventsReaderTest
     }
     
     [TestMethod]
-    public void Parse2025_WithDeltaAbovePrecision_RaisesException()
+    public void ParseContent_2025_WithDeltaAbovePrecision_RaisesException()
     {
         var content = $"""
             {HeaderLine2025}
@@ -569,7 +569,7 @@ public class CryptoEventsReaderTest
     }
 
     [TestMethod]
-    public void Parse2025_WithDeltaExactlyEqualsToPrecision_DoesNotRaiseException()
+    public void ParseContent_2025_WithDeltaExactlyEqualsToPrecision_DoesNotRaiseException()
     {
         var content = $"""
             {HeaderLine2025}

@@ -42,7 +42,7 @@ class CryptoEventsReader(Basics basics)
 
     public Basics Basics => basics;
 
-    public IList<Event> Parse(string path, FxRates fxRates, string broker, TextWriter outWriter)
+    public IList<Event> ParseFile(string path, FxRates fxRates, string broker, TextWriter outWriter)
     {
         if (string.IsNullOrWhiteSpace(path))
             throw new ArgumentNullException(nameof(path));

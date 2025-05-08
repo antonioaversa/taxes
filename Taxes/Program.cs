@@ -34,7 +34,7 @@ var cryptoEvents = basics.CryptoEventsFiles
         .Select(path => new EventsFileAndBroker(path, eventsFiles.Broker)))
     .OrderBy(eventsFileAndBroker => eventsFileAndBroker.FilePath)
     .SelectMany(eventsFileAndBroker => cryptoEventsReader
-        .Parse(eventsFileAndBroker.FilePath, fxRates, eventsFileAndBroker.Broker, outWriters.Default)
+        .ParseFile(eventsFileAndBroker.FilePath, fxRates, eventsFileAndBroker.Broker, outWriters.Default)
         .PrintEachElement(outWriters.Default, @event => $"Parsing Event {@event}..."))
     .ToList();
 ProcessEvents(cryptoEvents, basics, cryptoPortfolioValues, outWriters);
