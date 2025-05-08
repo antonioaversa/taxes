@@ -239,7 +239,7 @@ class CryptoEventsReader(Basics basics)
             // cryptocurrency (identified from the pricePerShare, and from the priceAllShares) to the base currency.
             var currency = basics.BaseCurrency;
             var fxRate = fxRates[pricePerShareCurrency, date.Date];
-            outWriter.WriteLine($"FX rate used for conversion to base currency ({basics.BaseCurrency}): {fxRate}");
+            outWriter.WriteLine($"FX rate used for conversion of {pricePerShareCurrency} to base currency ({basics.BaseCurrency}): {fxRate}");
             
             events.Add(new(
                 Date: date,

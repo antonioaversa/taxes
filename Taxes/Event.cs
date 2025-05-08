@@ -192,7 +192,15 @@ record Event(
     /// </summary>
     string Broker)
 {
-    public bool IsBuy => Type is EventType.BuyMarket or EventType.BuyLimit;
+    /// <summary>
+    /// Whether the event type is in the "buy" class. Rewards are considered buy events, because they
+    /// are acquisition of new shares.
+    /// </summary>
+    public bool IsBuy => Type is EventType.BuyMarket or EventType.BuyLimit or EventType.Reward;
+    
+    /// <summary>
+    /// Whether the event type is in the "sell" class.
+    /// </summary>
     public bool IsSell => Type is EventType.SellMarket or EventType.SellLimit;
 
     private static readonly Basics basics = new(); // TODO: remove it after checking where ToString is used

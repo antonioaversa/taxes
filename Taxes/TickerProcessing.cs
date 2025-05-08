@@ -34,6 +34,7 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
                 EventType.StockSplit => ProcessStockSplit,
                 EventType.Dividend => ProcessDividend,
                 EventType.Interest => ProcessInterest,
+                EventType.Reward => ProcessReward,
                 _ => throw new NotSupportedException($"Event type not supported: {tickerEvent}"),
             };
 
@@ -94,7 +95,7 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
             throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.Ticker)} null");
         if (tickerEvent.PricePerShareLocal == null)
             throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.PricePerShareLocal)} null");
-        if (tickerEvent.Quantity == null || tickerEvent.Quantity.Value <= 0)
+        if (tickerEvent.Quantity is not > 0)
             throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.Quantity)} null or non-positive");
         if (tickerEvent.TotalAmountLocal <= 0)
             throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.TotalAmountLocal)} non-positive");
@@ -158,7 +159,7 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
             throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.Ticker)} null");
         if (tickerEvent.PricePerShareLocal == null)
             throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.PricePerShareLocal)} null");
-        if (tickerEvent.Quantity == null || tickerEvent.Quantity.Value <= 0)
+        if (tickerEvent.Quantity is not > 0)
             throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.Quantity)} null or non-positive");
         if (tickerEvents.FirstOrDefault(e => e.Currency != tickerEvent.Currency && (e.IsBuy || e.IsSell)) is { } previousEvent)
             throw new NotSupportedException($"Etherogenous currencies: {previousEvent} vs {tickerEvent}");
@@ -514,4 +515,31 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
             GrossInterestsBase = tickerState.GrossInterestsBase + grossInterestBase,
         };
     }
+
+    internal /* for testing */ TickerState ProcessReward(
+        Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, OutWriters outWriters)
+    {
+        if (tickerEvent != tickerEvents[eventIndex])
+            throw new InvalidDataException($"Event and event index inconsistent");
+        if (tickerEvent.Type is not EventType.Reward)
+            throw new NotSupportedException($"Unsupported type: {tickerEvent.Type}");
+        if (tickerEvent.Ticker == null)
+            throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.Ticker)} null");
+        if (tickerEvent.TotalAmountLocal <= 0)
+            throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.TotalAmountLocal)} non-positive");
+        if (tickerEvent.Quantity is not > 0)
+            throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.Quantity)} non-positive");
+
+        var outWriter = outWriters.Default;
+
+        // TODO: verify the following is conceptually correct from a tax-perspective
+        var totalBuyPriceBase = 0m;
+        return tickerState with
+        {
+            TotalQuantity = tickerState.TotalQuantity + tickerEvent.Quantity.Value,
+            TotalAmountBase = tickerState.TotalAmountBase + totalBuyPriceBase,
+            CryptoPortfolioAcquisitionValueBase = tickerState.CryptoPortfolioAcquisitionValueBase + totalBuyPriceBase,
+        };
+    }
+
 }
