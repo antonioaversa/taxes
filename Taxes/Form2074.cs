@@ -6,7 +6,7 @@ static class Form2074
 
     public static void PrintDataForSection5(Data data, TextWriter outWriter)
     {
-        outWriter.WriteLine(Separator.Insert(5, " 2074 Section 5 "));
+        outWriter.WriteLine(Separator.Insert(5, $" 2074 Section 5 for {data.TickerEvent.Ticker}({data.TickerEvent.OriginalTicker}) "));
         outWriter.WriteLine($"{data.TickerEvent.Ticker} [{data.TickerState.Isin}]");
         outWriter.WriteLine(data.TickerEvent.Broker);
         outWriter.WriteLine(data.TickerEvent.Date.ToString("dd'/'MM'/'yyyy"));
