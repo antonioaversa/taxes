@@ -218,7 +218,7 @@ record Event(
     public override string ToString() => 
         $"{Date:yyyy-MM-dd HH:mm:ss} " + 
         (Ticker != null && Ticker == OriginalTicker ? $"{Ticker} " : "") +
-        (Ticker != null && Ticker != OriginalTicker ? $"{Ticker}(${OriginalTicker}) " : "") + 
+        (Ticker != null && Ticker != OriginalTicker ? $"{Ticker}({OriginalTicker}) " : "") + 
         $"{Type} " +
         (PricePerShareLocal != null && Quantity != null 
             ? $"{Quantity.Value.R(basics)} shares at {PricePerShareLocal.Value.R(basics)} {Currency}/share " 
