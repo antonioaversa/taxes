@@ -1,4 +1,5 @@
 using System.Globalization;
+using static Taxes.CryptoEventsReader;
 
 namespace Taxes.Test;
 
@@ -538,7 +539,80 @@ public class TickerProcessingTest
         var sell1 = new Event(T0 + 2 * D, SellLimit, Ticker, 1, 2.0m, 1.8m, 0.2m, EUR, 1, Broker);
         var stateAfterCashTopUp1 = new TickerState(Ticker, Isin, TotalQuantity: 3, TotalAmountBase: 5.5m);
         var stateAfterSell1 = Instance.ProcessSell(sell1, [buy1, cashTopUp1, sell1], 2, stateAfterCashTopUp1, NoOuts);
-        AssertEq(2, stateAfterSell1.TotalQuantity);
+        AssertEq(2, stateAfterSell1.TotalQuantity); 
+    }
+    
+    [TestMethod]
+    public void ProcessSell_WhenNonCryptoTicker_EmitsOnlyForm2047() 
+    {
+        var tickerProcessing = new TickerProcessing(new Basics()
+        {
+            Rounding = x => decimal.Round(x, 2),
+            FilterTaxFormsByPeriodOfInterest = false,
+        });
+        var localCurrency = USD; // FX rate between USD and EUR stays stable at 4 USD for 1 EUR across events
+        var initialState = new TickerState(Ticker, Isin);
+        
+        // First buy 3 shares at 100.10002 USD, with fees of 3.20003 USD => Total Amount Local of 303.50009 USD
+        var buy1 = new Event(T0 + 0 * D, BuyLimit, Ticker, 3, 100.10002m, 303.50009m, 3.20003m, localCurrency, 4m, Broker);
+        var stateAfterBuy = tickerProcessing.ProcessBuy(buy1, [buy1], 0, initialState, NoOuts);
+        // Then sell 2 shares at 150.15003 USD, with fees of 2.50005 USD => Total Amount Local of 300.30006 USD - 2.50005 USD = 297.80001 USD
+        var sell1 = new Event(T0 + 1 * D, SellLimit, Ticker, 2, 150.15003m, 297.80001m, 2.50005m, localCurrency, 4m, Broker);
+        var outWriters = new OutWriters(new StringWriter(), new StringWriter(), new StringWriter());
+        tickerProcessing.ProcessSell(sell1, [buy1, sell1], 1, stateAfterBuy, outWriters);
+        
+        var form2047 = outWriters.Form2047Writer.ToString()!;
+        Assert.IsFalse(string.IsNullOrEmpty(form2047));
+        Assert.IsTrue(form2047.Contains(Ticker));
+        Assert.IsFalse(form2047.Contains((T0 + 0 * D).ToString("dd/MM/yyyy")));
+        Assert.IsTrue(form2047.Contains((T0 + 1 * D).ToString("dd/MM/yyyy")));
+        Assert.IsTrue(string.IsNullOrEmpty(outWriters.Form2086Writer.ToString()));
+    }
+
+    [TestMethod]
+    public void ProcessSell_WhenCryptoTicker_EmitsOnlyForm2086()
+    {
+        var portfolioValuesPath = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllText(portfolioValuesPath,
+                $"""
+                Date,PortfolioValue,Currency
+                {T0 + 0 * D:yyyy-MM-dd},1000,EUR
+                {T0 + 1 * D:yyyy-MM-dd},1200,EUR
+                """);
+
+            var basics = new Basics()
+            {
+                Rounding = x => decimal.Round(x, 2),
+                FilterTaxFormsByPeriodOfInterest = false,
+            };
+            var fxRates = new FxRates(basics, new Dictionary<string, Dictionary<DateTime, decimal>>());
+            var cryptoPortfolioValues = new CryptoPortfolioValues(basics, fxRates, portfolioValuesPath);
+            var tickerProcessing = new TickerProcessing(basics, cryptoPortfolioValues);
+            var localCurrency = USD; // FX rate between USD and EUR stays stable at 4 USD for 1 EUR across events
+            var initialState = new TickerState(CryptoTicker, Isin);
+
+            // First buy 3 shares at 100.10002 USD, with fees of 3.20003 USD => Total Amount Local of 303.50009 USD
+            var buy1 = new Event(T0 + 0 * D, BuyLimit, CryptoTicker, 3, 100.10002m, 303.50009m, 3.20003m, localCurrency, 4m, Broker);
+            var stateAfterBuy = tickerProcessing.ProcessBuy(buy1, [buy1], 0, initialState, NoOuts);
+            // Then sell 2 shares at 150.15003 USD, with fees of 2.50005 USD => Total Amount Local of 300.30006 USD - 2.50005 USD = 297.80001 USD
+            var sell1 = new Event(T0 + 1 * D, SellLimit, CryptoTicker, 2, 150.15003m, 297.80001m, 2.50005m, localCurrency, 4m, Broker);
+            var outWriters = new OutWriters(new StringWriter(), new StringWriter(), new StringWriter());
+            tickerProcessing.ProcessSell(sell1, [buy1, sell1], 1, stateAfterBuy, outWriters);
+
+            Assert.IsTrue(string.IsNullOrEmpty(outWriters.Form2047Writer.ToString()));
+            var form2086 = outWriters.Form2086Writer.ToString()!;
+            Assert.IsFalse(string.IsNullOrEmpty(form2086));
+            Assert.IsTrue(form2086.Contains(CryptoTicker));
+            Assert.IsFalse(form2086.Contains((T0 + 0 * D).ToString("dd/MM/yyyy")));
+            Assert.IsTrue(form2086.Contains((T0 + 1 * D).ToString("dd/MM/yyyy")));
+        }
+        finally
+        {
+            if (File.Exists(portfolioValuesPath))
+                File.Delete(portfolioValuesPath);
+        }
     }
 
     [TestMethod]
