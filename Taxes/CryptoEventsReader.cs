@@ -13,7 +13,7 @@ class CryptoEventsReader(Basics basics)
     // In the case of crypto, however, all cryptocurrencies are consider a single financial asset, and what is taken into account for
     // the calculation of capital gains and losses is the total value of the portfolio at the time the taxable event (e.g. sell of a
     // crypto) is made.
-    private const string CryptoTicker = "CRYPTO";
+    public const string CryptoTicker = "CRYPTO";
     
     // Example of pre-2025 CSV format:
     // Type,Product,Started Date,Completed Date,Description,Amount,Currency,Fiat amount,Fiat amount (inc. fees),Fee,Base currency,State,Balance

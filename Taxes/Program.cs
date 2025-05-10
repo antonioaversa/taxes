@@ -62,7 +62,26 @@ static void ProcessEvents(IList<Event> events, Basics basics, CryptoPortfolioVal
         .ToList();
 
     tickerStates.PrintAggregatedMetrics(outWriters.Default, basics);
-    outWriters.Default.Write(outWriters.Form2047Writer.ToString());
-    outWriters.Default.Write(outWriters.Form2086Writer.ToString());
+
+    var anyCryptoEvent = events.Any(e => 
+        e.Ticker == CryptoEventsReader.CryptoTicker);
+    var anyNonCryptoEvent = events.Any(e => 
+        !string.IsNullOrEmpty(e.Ticker) && e.Ticker != CryptoEventsReader.CryptoTicker);
+    
+    switch (anyCryptoEvent, anyNonCryptoEvent)
+    {
+        case (true, true):
+            throw new InvalidOperationException(
+                $"Cannot process crypto and non-crypto events at the same time. Please split them into different {nameof(ProcessEvents)} executions.");
+        case (true, false):
+            outWriters.Default.Write(outWriters.Form2086Writer.ToString());
+            break;
+        case (false, true):
+            outWriters.Default.Write(outWriters.Form2047Writer.ToString());
+            break;
+        case (false, false):
+            throw new InvalidOperationException(
+                "Neither crypto nor non-crypto events found. Please check your input files.");
+    }
 }
 
