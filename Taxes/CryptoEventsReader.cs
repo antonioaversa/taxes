@@ -157,7 +157,8 @@ class CryptoEventsReader(Basics basics)
                 FeesLocal: feesLocal,
                 Currency: currency,
                 FXRate: fxRate,
-                Broker: broker));
+                Broker: broker,
+                OriginalTicker: record.Currency));
         }
 
         return events;
@@ -251,7 +252,8 @@ class CryptoEventsReader(Basics basics)
                 FeesLocal: feesLocal,
                 Currency: currency,
                 FXRate: fxRate,
-                Broker: broker));
+                Broker: broker,
+                OriginalTicker: record.Symbol));
         }
 
         return events;

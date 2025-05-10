@@ -190,8 +190,18 @@ record Event(
     /// It is used for reporting in the French Tax Declaration, Form 2047, Section 5.
     /// For this reason, its value should be kept short (<= 19 chars) but meaningful.
     /// </summary>
-    string Broker)
+    string Broker,
+    
+    /// <summary>
+    /// The ticker as defined in the source of events. For stocks it generally corresponds to
+    /// the Ticker, since each stock is considered as a different financial asset, and taxed like so.
+    /// Crypto, however, are considered as a single financial asset. For this reason, all crypto
+    /// events share the same Ticker (CRYPTO), and the OriginalTicker is used to trace what was the
+    /// actual crypto exchanged.
+    string? OriginalTicker = null)
 {
+    public string? OriginalTicker { get; } = OriginalTicker ?? Ticker; 
+    
     /// <summary>
     /// Whether the event type is in the "buy" class. Rewards are considered buy events, because they
     /// are acquisition of new shares.
@@ -206,7 +216,10 @@ record Event(
     private static readonly Basics basics = new(); // TODO: remove it after checking where ToString is used
 
     public override string ToString() => 
-        $"{Date:yyyy-MM-dd HH:mm:ss} {(Ticker != null ? $"{Ticker} " : "")}{Type} " +
+        $"{Date:yyyy-MM-dd HH:mm:ss} " + 
+        (Ticker != null && Ticker == OriginalTicker ? $"{Ticker} " : "") +
+        (Ticker != null && Ticker != OriginalTicker ? $"{Ticker}(${OriginalTicker}) " : "") + 
+        $"{Type} " +
         (PricePerShareLocal != null && Quantity != null 
             ? $"{Quantity.Value.R(basics)} shares at {PricePerShareLocal.Value.R(basics)} {Currency}/share " 
             : string.Empty) + 
