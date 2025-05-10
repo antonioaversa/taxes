@@ -6,7 +6,7 @@ static class Form2086
 
     public static void PrintDataForSection3(Data data, TextWriter outWriter)
     {
-        outWriter.WriteLine(Separator.Insert(5, " 2086 Section 3 "));
+        outWriter.WriteLine(Separator.Insert(5, $" 2086 Section 3 for {data.TickerEvent.Ticker}({data.TickerEvent.OriginalTicker}) "));
         outWriter.WriteLine(data.TickerEvent.Date.ToString("dd'/'MM'/'yyyy"));
         outWriter.WriteLine(Math.Round(data.PortfolioCurrentValueBase, 0));
         outWriter.WriteLine(Math.Round(data.TickerEvent.PricePerShareLocal!.Value * data.TickerEvent.Quantity!.Value, 0));
