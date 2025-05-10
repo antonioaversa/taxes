@@ -213,8 +213,10 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
         var (plusValueCryptoBase, cryptoFractionInitialCapitalBase) =
             CalculatePlusValueCryptoBase(tickerEvent, tickerState, totalSellPriceBase, Math.Max(sellFees1Base, sellFees2Base));
 
-        if (!basics.FilterTaxFormsByPeriodOfInterest ||
-            (tickerEvent.Date >= basics.BeginTaxPeriodOfInterest && tickerEvent.Date <= basics.EndTaxPeriodOfInterest))
+        var isForm2074Ticker = tickerEvent.Ticker != CryptoEventsReader.CryptoTicker;
+        var isWithinPeriodOfInterest = !basics.FilterTaxFormsByPeriodOfInterest ||
+                              (tickerEvent.Date >= basics.BeginTaxPeriodOfInterest && tickerEvent.Date <= basics.EndTaxPeriodOfInterest);
+        if (isForm2074Ticker && isWithinPeriodOfInterest)
         {
             Form2074.PrintDataForSection5(new(
                 Basics: basics,
@@ -388,8 +390,10 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
             else
                 outWriter.WriteLine($"\tMinus Value CRYPTO ({basics.BaseCurrency}) = {-plusValueCryptoBase.R(basics)}");
 
-            if (!basics.FilterTaxFormsByPeriodOfInterest ||
-                (tickerEvent.Date >= basics.BeginTaxPeriodOfInterest && tickerEvent.Date <= basics.EndTaxPeriodOfInterest))
+            var isForm2086Ticker = tickerEvent.Ticker == CryptoEventsReader.CryptoTicker;
+            var isWithinPeriodOfInterest = !basics.FilterTaxFormsByPeriodOfInterest ||
+                                           (tickerEvent.Date >= basics.BeginTaxPeriodOfInterest && tickerEvent.Date <= basics.EndTaxPeriodOfInterest);
+            if (isForm2086Ticker && isWithinPeriodOfInterest)
             {
                 Form2086.PrintDataForSection3(new(
                     TickerState: tickerState,
