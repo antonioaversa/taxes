@@ -213,15 +213,19 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
         var (plusValueCryptoBase, cryptoFractionInitialCapitalBase) =
             CalculatePlusValueCryptoBase(tickerEvent, tickerState, totalSellPriceBase, Math.Max(sellFees1Base, sellFees2Base));
 
-        Form2074.PrintDataForSection5(new(
-            Basics: basics,
-            TickerState: tickerState,
-            TickerEvent: tickerEvent,
-            PerShareSellPriceBase: perShareSellPriceBase,
-            TotalSellFeesBase: sellFees1Base,
-            PerShareAvgBuyPriceBase: perShareAvgBuyPriceBase,
-            TotalAvgBuyPriceBase: totalAvgBuyPriceBase,
-            PlusValueCumpBase: plusValueCumpBase), outWriters.Form2047Writer);
+        if (!basics.FilterTaxFormsByPeriodOfInterest ||
+            (tickerEvent.Date >= basics.BeginTaxPeriodOfInterest && tickerEvent.Date <= basics.EndTaxPeriodOfInterest))
+        {
+            Form2074.PrintDataForSection5(new(
+                Basics: basics,
+                TickerState: tickerState,
+                TickerEvent: tickerEvent,
+                PerShareSellPriceBase: perShareSellPriceBase,
+                TotalSellFeesBase: sellFees1Base,
+                PerShareAvgBuyPriceBase: perShareAvgBuyPriceBase,
+                TotalAvgBuyPriceBase: totalAvgBuyPriceBase,
+                PlusValueCumpBase: plusValueCumpBase), outWriters.Form2047Writer);
+        }
 
         return tickerState with
         {
@@ -384,12 +388,16 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
             else
                 outWriter.WriteLine($"\tMinus Value CRYPTO ({basics.BaseCurrency}) = {-plusValueCryptoBase.R(basics)}");
 
-            Form2086.PrintDataForSection3(new(
-                TickerState: tickerState,
-                TickerEvent: tickerEvent,
-                PortfolioCurrentValueBase: portfolioCurrentValueBase,
-                SellFeesBase: sellFees1Base,
-                PlusValueCryptoBase: plusValueCryptoBase), outWriters.Form2086Writer);
+            if (!basics.FilterTaxFormsByPeriodOfInterest ||
+                (tickerEvent.Date >= basics.BeginTaxPeriodOfInterest && tickerEvent.Date <= basics.EndTaxPeriodOfInterest))
+            {
+                Form2086.PrintDataForSection3(new(
+                    TickerState: tickerState,
+                    TickerEvent: tickerEvent,
+                    PortfolioCurrentValueBase: portfolioCurrentValueBase,
+                    SellFeesBase: sellFees1Base,
+                    PlusValueCryptoBase: plusValueCryptoBase), outWriters.Form2086Writer);
+            }
 
             return (plusValueCryptoBase, nextPortfolioFractionOfInitialCapital);
         }

@@ -2,6 +2,11 @@
   "Rounding": "Fixed_4_0.0005",
   "Precision": 0.01,
   "BaseCurrency": "EUR",
+  
+  "BeginTaxPeriodOfInterest": "2024-01-01",
+  "EndTaxPeriodOfInterest": "2024-12-31",
+  "FilterTaxFormsByPeriodOfInterest": true,
+  
   "Positions": {
     // Stocks and ETFs
     "AAPL": {

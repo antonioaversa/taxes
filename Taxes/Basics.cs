@@ -42,6 +42,11 @@ public partial class Basics
     public Func<decimal, decimal> Rounding { get; init; }
     public decimal Precision { get; init; }
     public string BaseCurrency { get; init; }
+    
+    public DateTime BeginTaxPeriodOfInterest { get; init; }
+    public DateTime EndTaxPeriodOfInterest { get; init; }
+    public bool FilterTaxFormsByPeriodOfInterest { get; init; }
+    
     public ReadOnlyDictionary<string, Position> Positions { get; init; }
     public ReadOnlyCollection<EventsFiles> StockEventsFiles { get; init; }
     public ReadOnlyCollection<EventsFiles> CryptoEventsFiles { get; init; }
@@ -83,6 +88,14 @@ public partial class Basics
             ?? throw new InvalidDataException($"Invalid {nameof(Precision)} in {basicsFileName}");
         BaseCurrency = basicsFile.BaseCurrency
             ?? throw new InvalidDataException($"Invalid {nameof(BaseCurrency)} in {basicsFileName}");
+        
+        BeginTaxPeriodOfInterest = DateTime.ParseExact(
+            basicsFile.BeginTaxPeriodOfInterest, "yyyy-MM-dd", DefaultCulture);
+        EndTaxPeriodOfInterest = DateTime.ParseExact(
+            basicsFile.EndTaxPeriodOfInterest, "yyyy-MM-dd", DefaultCulture);
+        FilterTaxFormsByPeriodOfInterest = bool.Parse(
+            basicsFile.FilterTaxFormsByPeriodOfInterest);
+        
         Positions = new ReadOnlyDictionary<string, Position>(basicsFile.Positions
             ?? throw new InvalidDataException($"Invalid {nameof(Positions)} in {basicsFileName}"));
         StockEventsFiles = (basicsFile.StockEventsFiles
@@ -123,6 +136,14 @@ public partial class Basics
         public decimal? Precision { get; set; } = null;
         [JsonRequired]
         public string? BaseCurrency { get; set; } = null;
+
+        [JsonRequired]
+        public string? BeginTaxPeriodOfInterest { get; set; } = null;
+        [JsonRequired]
+        public string? EndTaxPeriodOfInterest { get; set; } = null;
+        [JsonRequired] 
+        public string? FilterTaxFormsByPeriodOfInterest { get; set; } = null;
+        
         [JsonRequired]
         public Dictionary<string, Position>? Positions { get; set; } = null;
         [JsonRequired]
