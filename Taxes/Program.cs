@@ -16,12 +16,12 @@ var stockEvents = basics.StockEventsFiles
     .SelectMany(eventsFiles => Directory
         .GetFiles(basics.ReportsDirectoryPath, eventsFiles.FilePattern)
         .EnsureNonEmpty()
-        .PrintEachElement(outWriters.Default, filePath => $"Parsing File {filePath}...")
         .Select(path => new EventsFileAndBroker(path, eventsFiles.Broker)))
     .OrderBy(eventsFileAndBroker => eventsFileAndBroker.FilePath)
+    .PrintEachElement(outWriters.Default, eventsFileAndBroker => $"Parsing File {eventsFileAndBroker.FilePath}...")
     .SelectMany(eventsFileAndBroker => stockEventsReader
-        .Parse(eventsFileAndBroker.FilePath, fxRates, eventsFileAndBroker.Broker, outWriters.Default)
-        .PrintEachElement(outWriters.Default, @event => $"Parsing Event {@event}..."))
+        .Parse(eventsFileAndBroker.FilePath, fxRates, eventsFileAndBroker.Broker, outWriters.Default))
+    .PrintEachElement(outWriters.Default, @event => $"Parsing Event {@event}...")
     .ToList();
 ProcessEvents(stockEvents, basics, cryptoPortfolioValues, outWriters);
 
@@ -30,12 +30,12 @@ var cryptoEvents = basics.CryptoEventsFiles
     .SelectMany(eventsFiles => Directory
         .GetFiles(basics.ReportsDirectoryPath, eventsFiles.FilePattern)
         .EnsureNonEmpty()
-        .PrintEachElement(outWriters.Default, filePath => $"Parsing File {filePath}...")
         .Select(path => new EventsFileAndBroker(path, eventsFiles.Broker)))
     .OrderBy(eventsFileAndBroker => eventsFileAndBroker.FilePath)
+    .PrintEachElement(outWriters.Default, filePath => $"Parsing File {filePath}...")
     .SelectMany(eventsFileAndBroker => cryptoEventsReader
-        .ParseFile(eventsFileAndBroker.FilePath, fxRates, eventsFileAndBroker.Broker, outWriters.Default)
-        .PrintEachElement(outWriters.Default, @event => $"Parsing Event {@event}..."))
+        .ParseFile(eventsFileAndBroker.FilePath, fxRates, eventsFileAndBroker.Broker, outWriters.Default))
+    .PrintEachElement(outWriters.Default, @event => $"Parsing Event {@event}...")
     .ToList();
 ProcessEvents(cryptoEvents, basics, cryptoPortfolioValues, outWriters);
 
