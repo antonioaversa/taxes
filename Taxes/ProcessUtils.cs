@@ -8,7 +8,7 @@ public static class ProcessUtils
 {
     public static void PrintEnvironmentAndSettings(TextWriter outWriter)
     {
-        outWriter.WriteLine("ENVIRONMENT AND SETTINGS");
+        outWriter.WriteLine("# ENVIRONMENT AND SETTINGS");
         outWriter.WriteLine();
         outWriter.WriteLine($"Date and time: {DateTime.Now}");
         outWriter.WriteLine($"Machine name: {Environment.MachineName}");

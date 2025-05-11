@@ -11,6 +11,7 @@ var fxRates = fxRatesReader.ParseMultiCurrenciesFromFile(fxRatesFilePath);
 var cryptoPortfolioValuesFilePath = Path.Combine(basics.ReportsDirectoryPath, basics.CryptoPortfolioValuesFilePath);
 var cryptoPortfolioValues = new CryptoPortfolioValues(basics, fxRates, cryptoPortfolioValuesFilePath);
 
+await outWriters.Default.WriteLineAsync("# STOCKS");
 var stockEventsReader = new StockEventsReader(basics);
 var stockEvents = basics.StockEventsFiles
     .SelectMany(eventsFiles => Directory
@@ -25,6 +26,7 @@ var stockEvents = basics.StockEventsFiles
     .ToList();
 ProcessEvents(stockEvents, basics, cryptoPortfolioValues, outWriters);
 
+await outWriters.Default.WriteLineAsync("# CRYPTO");
 var cryptoEventsReader = new CryptoEventsReader(basics);
 var cryptoEvents = basics.CryptoEventsFiles
     .SelectMany(eventsFiles => Directory
@@ -38,6 +40,8 @@ var cryptoEvents = basics.CryptoEventsFiles
     .PrintEachElement(outWriters.Default, @event => $"Parsing Event {@event}...")
     .ToList();
 ProcessEvents(cryptoEvents, basics, cryptoPortfolioValues, outWriters);
+
+return;
 
 static void ProcessEvents(IList<Event> events, Basics basics, CryptoPortfolioValues cryptoPortfolioValues, OutWriters outWriters)
 {
