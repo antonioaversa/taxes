@@ -74,6 +74,8 @@ public enum EventType
     /// A cash payment to the investor, for the interest on the cash credit in the investing account.
     /// It changes the state of the portfolio, as the amount received by interest is tracked by the ticker states.
     /// It is also a tax-relevant event, since interests are subject to both withholding and normal taxes.
+    /// It also includes interests accrued due to security lending, in the context of a on Stock Yield Enhancement
+    /// Programs, such as the one from IBKR.
     /// </summary>
     Interest,
     

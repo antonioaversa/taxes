@@ -39,12 +39,15 @@ record Event(
     /// deducted from the proceeds.
     /// 
     /// IBKR
-    /// IBKR has different sections of the Activity Statement (both in CSV and PDF), for the different types of events:
+    /// IBKR has different sections of the Activity Statement (both in CSV and PDF), for the different types of
+    /// events:
     /// - Trades: Buy* and Sell* events
     /// - Dividends and Withholding Tax: Dividend events
     /// - Interest: Interest events
     ///   - Interest Accruals is a summary of the Interest events
-    ///   - Stock Yield Enhancement Program Securities Lent Interest Details are included in Interest Events
+    ///   - Stock Yield Enhancement Program Securities Lent Interest Details are included in Interest Events,
+    ///     with Description "IBKR Managed Securities (SYEP) Interest for MM-yyyy", with one month delay (i.e.
+    ///     securities lending in December generates interests that are accrued in January of the following year.
     /// </summary>
     EventType Type,
 
