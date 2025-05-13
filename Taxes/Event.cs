@@ -43,6 +43,8 @@ record Event(
     /// - Trades: Buy* and Sell* events
     /// - Dividends and Withholding Tax: Dividend events
     /// - Interest: Interest events
+    ///   - Interest Accruals is a summary of the Interest events
+    ///   - Stock Yield Enhancement Program Securities Lent Interest Details are included in Interest Events
     /// </summary>
     EventType Type,
 
