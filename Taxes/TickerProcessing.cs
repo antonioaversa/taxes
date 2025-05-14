@@ -478,7 +478,11 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
         var netDividendBase = netDividendLocal / tickerEvent.FXRate;
         outWriter.WriteLine($"\tNet Dividend ({basics.BaseCurrency}) = {netDividendBase.R(basics)}");
 
-        var witholdingTaxRate = Basics.WithholdingTaxes[basics.Positions[tickerState.Ticker].Country].Dividends;
+        var country = basics.Positions[tickerState.Ticker].Country;
+        if (string.IsNullOrEmpty(country))
+            throw new InvalidDataException($"Invalid event - related position has empty country");
+
+        var witholdingTaxRate = Basics.WithholdingTaxes[country].Dividends;
         var whtDividendBase = netDividendBase * witholdingTaxRate / (1m - witholdingTaxRate);
         outWriter.WriteLine($"\tWHT Dividend ({basics.BaseCurrency}) = {whtDividendBase.R(basics)}");
 
@@ -513,7 +517,11 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
         var netInterestBase = netInterestLocal / tickerEvent.FXRate;
         outWriter.WriteLine($"\tNet Interest ({basics.BaseCurrency}) = {netInterestBase.R(basics)}");
 
-        var witholdingTaxRate = Basics.WithholdingTaxes[basics.Positions[tickerState.Ticker].Country].Interests;
+        var country = basics.Positions[tickerState.Ticker].Country;
+        if (string.IsNullOrEmpty(country))
+            throw new InvalidDataException($"Invalid event - related position has empty country");        
+        
+        var witholdingTaxRate = Basics.WithholdingTaxes[country].Interests;
         var whtInterestBase = netInterestBase * witholdingTaxRate / (1m - witholdingTaxRate);
         outWriter.WriteLine($"\tWHT Interest ({basics.BaseCurrency}) = {whtInterestBase.R(basics)}");
 

@@ -26,7 +26,7 @@ public partial class Basics
         ["TRANSFER FROM REVOLUT TRADING LTD TO REVOLUT SECURITIES EUROPE UAB"] = EventType.CustodyChange,
         ["STOCK SPLIT"] = EventType.StockSplit,
         ["DIVIDEND"] = EventType.Dividend,
-        ["INTEREST"]  = EventType.Interest,
+        ["INTEREST"] = EventType.Interest,
     };
 
     public string[] FxRatesHeaderLinesFirstWord { get; } =
@@ -42,11 +42,11 @@ public partial class Basics
     public Func<decimal, decimal> Rounding { get; init; }
     public decimal Precision { get; init; }
     public string BaseCurrency { get; init; }
-    
+
     public DateTime BeginTaxPeriodOfInterest { get; init; }
     public DateTime EndTaxPeriodOfInterest { get; init; }
     public bool FilterTaxFormsByPeriodOfInterest { get; init; }
-    
+
     public ReadOnlyDictionary<string, Position> Positions { get; init; }
     public ReadOnlyCollection<EventsFiles> StockEventsFiles { get; init; }
     public ReadOnlyCollection<EventsFiles> CryptoEventsFiles { get; init; }
@@ -67,37 +67,41 @@ public partial class Basics
             throw new FileNotFoundException(basicsFilePath);
 
         var basicsFileContentStr = File.ReadAllText(Path.Combine(reportsDirectoryPath, basicsFileName));
-        var basicsFile = JsonConvert.DeserializeObject<BasicsFile>(basicsFileContentStr) 
+        var basicsFile = JsonConvert.DeserializeObject<BasicsFile>(basicsFileContentStr)
             ?? throw new InvalidDataException($"Invalid {basicsFileName}");
 
         Rounding = (basicsFile.Rounding
             ?? throw new InvalidDataException($"Invalid {nameof(Rounding)} in {basicsFileName}")) switch
-            {
-                var r when Regex_RoundingWithNumberOfDigits().Match(r) is { Success: true, Groups: var groups } =>
-                    value => RoundingWithNumberOfDigits(
-                        value, 
-                        int.Parse(groups["numberOfDigits"].Value, DefaultCulture)),
-                var r when Regex_RoundingWithResolutionAroundZero().Match(r) is { Success: true, Groups: var groups } =>
-                    value => RoundingWithResolutionAroundZero(
-                        value, 
-                        int.Parse(groups["numberOfDigits"].Value, DefaultCulture),
-                        decimal.Parse(groups["resolutionAroundZero"].Value, DefaultCulture)),
-                var r => throw new InvalidDataException($"Invalid {nameof(Rounding)} value in {basicsFileName}: {r}")
-            };
-        Precision = basicsFile.Precision 
+        {
+            var r when Regex_RoundingWithNumberOfDigits().Match(r) is { Success: true, Groups: var groups } =>
+                value => RoundingWithNumberOfDigits(
+                    value,
+                    int.Parse(groups["numberOfDigits"].Value, DefaultCulture)),
+            var r when Regex_RoundingWithResolutionAroundZero().Match(r) is { Success: true, Groups: var groups } =>
+                value => RoundingWithResolutionAroundZero(
+                    value,
+                    int.Parse(groups["numberOfDigits"].Value, DefaultCulture),
+                    decimal.Parse(groups["resolutionAroundZero"].Value, DefaultCulture)),
+            var r => throw new InvalidDataException($"Invalid {nameof(Rounding)} value in {basicsFileName}: {r}")
+        };
+        Precision = basicsFile.Precision
             ?? throw new InvalidDataException($"Invalid {nameof(Precision)} in {basicsFileName}");
         BaseCurrency = basicsFile.BaseCurrency
             ?? throw new InvalidDataException($"Invalid {nameof(BaseCurrency)} in {basicsFileName}");
-        
+
         BeginTaxPeriodOfInterest = DateTime.ParseExact(
             basicsFile.BeginTaxPeriodOfInterest, "yyyy-MM-dd", DefaultCulture);
         EndTaxPeriodOfInterest = DateTime.ParseExact(
             basicsFile.EndTaxPeriodOfInterest, "yyyy-MM-dd", DefaultCulture);
         FilterTaxFormsByPeriodOfInterest = bool.Parse(
             basicsFile.FilterTaxFormsByPeriodOfInterest);
-        
+
         Positions = new ReadOnlyDictionary<string, Position>(basicsFile.Positions
-            ?? throw new InvalidDataException($"Invalid {nameof(Positions)} in {basicsFileName}"));
+                                                             ?? throw new InvalidDataException($"Invalid {nameof(Positions)} in {basicsFileName}"));
+        var firstInvalidPosition = Positions.Values.FirstOrDefault(p => string.IsNullOrEmpty(p.Country) || string.IsNullOrEmpty(p.ISIN));
+        if (firstInvalidPosition != null)
+            throw new InvalidDataException($"Invalid {nameof(Positions)} in {basicsFileName}: {firstInvalidPosition}");
+
         StockEventsFiles = (basicsFile.StockEventsFiles
             ?? throw new InvalidDataException($"Invalid {nameof(StockEventsFiles)} in {basicsFileName}")).AsReadOnly();
         

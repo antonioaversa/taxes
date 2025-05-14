@@ -129,75 +129,81 @@
       "Country": "IE",
       "ISIN": "IE00BK5BQT80"
     },
-    // Crypto-currencies, mapped to no-country and with fake ISIN
+    // Crypto-currencies, mapped to local country (no WHT) and with fake ISIN
     "CRYPTO": {
-      "Country": "",
+      "Country": "FR",
       "ISIN": "CRYPTO"
     },
     "AAVE": {
-      "Country": "",
+      "Country": "FR",
       "ISIN": "CRYPTO_AAVE"
     },
     "ADA": {
-      "Country": "",
+      "Country": "FR",
       "ISIN": "CRYPTO_ADA"
     },
     "BNT": {
-      "Country": "",
+      "Country": "FR",
       "ISIN": "CRYPTO_BNT"
     },
     "BTC": {
-      "Country": "",
+      "Country": "FR",
       "ISIN": "CRYPTO_BTC"
     },
     "DOGE": {
-      "Country": "",
+      "Country": "FR",
       "ISIN": "CRYPTO_DOGE"
     },
     "ETH": {
-      "Country": "",
+      "Country": "FR",
       "ISIN": "CRYPTO_ETH"
     },
     "NMR": {
-      "Country": "",
+      "Country": "FR",
       "ISIN": "CRYPTO_NMR"
     },
     "NU": {
-      "Country": "",
+      "Country": "FR",
       "ISIN": "CRYPTO_NU"
     },
     "PERP": {
-      "Country": "",
+      "Country": "FR",
       "ISIN": "CRYPTO_PERP"
     },
     "RLC": {
-      "Country": "",
+      "Country": "FR",
       "ISIN": "CRYPTO_RLC"
     },
     "SKL": {
-      "Country": "",
+      "Country": "FR",
       "ISIN": "CRYPTO_SKL"
     },
     "SNX": {
-      "Country": "",
+      "Country": "FR",
       "ISIN": "CRYPTO_SNX"
     },
     "SOL": {
-      "Country": "",
+      "Country": "FR",
       "ISIN": "CRYPTO_SOL"
     },
     "STORJ": {
-      "Country": "",
+      "Country": "FR",
       "ISIN": "CRYPTO_STORJ"
     },
     "ZRX": {
-      "Country": "",
+      "Country": "FR",
       "ISIN": "CRYPTO_ZRX"
     },
-    // Interests, mapped to a country and with fake ISIN
+    // Interests from IBKR Cash, mapped to a country and with fake ISIN
     "INTEREST_IBKR": {
       "Country": "IE",
       "ISIN": "IE_INTEREST_IBKR"
+    },
+    // Interests from IBKR Stock Yield Enhancement Program are not subject to WHT,
+    // and are mapped to the local country (FR), with 0 WHT
+    "INTEREST_IBKR_SYEP": {
+      "Country": "FR",
+      "ISIN": "FR_INTEREST_IBKR_SYEP"
     }
   },
   "StockEventsFiles": [
@@ -255,6 +261,10 @@
     "IE": {
       "Dividends": 0.15,
       "Interests": 0.20
+    },
+    "FR": {
+      "Dividends": 0.00,
+      "Interests": 0.00
     }
   }
 }

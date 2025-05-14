@@ -167,8 +167,10 @@ Make sure that `Basics.json` is up-to-date:
 - define `BaseCurrency`, used as target currency for all financial calculations
   - for the time being only `EUR`, for EURO, is supported
 - define `Positions`, used in reporting of calculation results, as a string-to-object dictionary, mapping the Ticker of 
-  a financial asset, to the Country and ISIN of that asset. 
+  a financial asset, to the Country and ISIN of that asset. Both are mandatory. 
   - e.g. `{ "AAPL" : { "Country": "US", "ISIN": "US0378331005" }, ... }`
+  - `FR` is added to the list for all those products that are not considered "foreign" and are not subject to 
+    withholding tax, such as crypto and security lending programs
   - for the time being only `US` and `IE` stocks are supported, for the calculation of withholding tax on dividends
 - define events file paths: 
   - `StockEventsFilePaths`, as the list of paths of files containing ticker events for stocks
