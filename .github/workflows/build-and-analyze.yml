@@ -1,0 +1,84 @@
+name: Build, Test and Analyze
+
+on:
+  push:
+    branches:
+      - main # Or your default branch
+      - test-sonar-ci
+  pull_request:
+    branches:
+      - main # Or your default branch
+      - test-sonar-ci
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  build-test-analyze:
+    name: Build, Test and Analyze
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # SonarCloud needs full history to assign issues correctly
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin' # Or your preferred distribution
+          java-version: '17'
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x' # Specify your .NET version
+
+      - name: Cache SonarCloud packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      - name: Cache SonarCloud scanner
+        id: cache-sonar-scanner
+        uses: actions/cache@v4
+        with:
+          path: ./.sonar/scanner 
+          key: ${{ runner.os }}-sonar-scanner
+          restore-keys: ${{ runner.os }}-sonar-scanner
+      
+      - name: Install SonarScanner for .NET
+        if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
+        run: dotnet tool install --global dotnet-sonarscanner
+
+      - name: Install dotnet-coverage tool
+        run: dotnet tool install --global dotnet-coverage
+
+      - name: Begin SonarCloud Scan
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to decorate PRs
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          dotnet sonarscanner begin /k:"antonioaversa_taxes" \
+            /o:"antonioaversa" \
+            /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
+            /d:sonar.host.url="https://sonarcloud.io" \
+            /d:sonar.cs.vscoveragexml.reportsPaths="./coverage-results/coverage.xml" \
+            /d:sonar.exclusions="**/*Tests/**" \
+            /d:sonar.scanner.scanAll=false
+
+      - name: Build the project
+        run: dotnet build --configuration Release --no-incremental
+
+      - name: Run tests and collect code coverage (Visual Studio XML format)
+        run: |
+          dotnet-coverage collect "dotnet test --configuration Release --no-build --logger trx --results-directory ./test-results" -f xml -o ./coverage-results/coverage.xml
+
+      - name: List coverage results
+        run: ls -R ./coverage-results
+
+      - name: End SonarCloud Scan
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed for PR decoration
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}" 
