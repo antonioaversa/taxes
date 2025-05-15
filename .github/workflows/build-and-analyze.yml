@@ -60,7 +60,7 @@ jobs:
             /o:"antonioaversa" \
             /d:sonar.login="${{ secrets.SONAR_TOKEN }}" \
             /d:sonar.host.url="https://sonarcloud.io" \
-            /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml" \
+            /d:sonar.cs.cobertura.reportsPaths="./coverage-results/**/coverage.cobertura.xml" \
             /d:sonar.exclusions="**/*Tests/**" \
             /d:sonar.verbose="true"
 
@@ -78,11 +78,14 @@ jobs:
           dotnet test --configuration Release --no-build \
           --collect:"XPlat Code Coverage" \
           --results-directory ./coverage-results \
-          /p:CoverletOutputFormat=opencover \
-          /p:CoverletOutput=./coverage-results/coverage # This specifies the output file name (without extension)
+          /p:CoverletOutputFormat=cobertura \
+          /p:CoverletOutput=./coverage-results/ # Keep directory for GUID subfolder creation
           # The XPlat Code Coverage driver might put the file in a subdirectory like TestResults/{guid}/coverage.cobertura.xml
           # The sonar.cs.opencover.reportsPaths glob should find it.
           # If you use a solution file: dotnet test Taxes.sln --configuration Release --no-build --collect:"XPlat Code Coverage" ...
+
+      - name: List coverage results
+        run: ls -R ./coverage-results
 
       - name: End SonarCloud Scan
         env:
