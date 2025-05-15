@@ -1,0 +1,91 @@
+name: Build, Test and Analyze
+
+on:
+  push:
+    branches:
+      - main # Or your default branch
+      - test-sonar-ci
+  pull_request:
+    branches:
+      - main # Or your default branch
+      - test-sonar-ci
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  build-test-analyze:
+    name: Build, Test and Analyze
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # SonarCloud needs full history to assign issues correctly
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin' # Or your preferred distribution
+          java-version: '17'
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x' # Specify your .NET version
+
+      - name: Cache SonarCloud packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache # Corrected path for Linux runner
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      - name: Cache SonarCloud scanner
+        id: cache-sonar-scanner
+        uses: actions/cache@v4
+        with:
+          path: ./.sonar/scanner # Corrected path for Linux runner
+          key: ${{ runner.os }}-sonar-scanner
+          restore-keys: ${{ runner.os }}-sonar-scanner
+      
+      - name: Install SonarScanner for .NET
+        if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
+        run: dotnet tool install --global dotnet-sonarscanner
+
+      - name: Begin SonarCloud Scan
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to decorate PRs
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          dotnet sonarscanner begin /k:"antonioaversa_taxes" \
+            /o:"antonioaversa" \
+            /d:sonar.login="${{ secrets.SONAR_TOKEN }}" \
+            /d:sonar.host.url="https://sonarcloud.io" \
+            /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml" \
+            /d:sonar.exclusions="**/*Tests/**" \
+            /d:sonar.verbose="true"
+
+      - name: Build the project
+        # If you have a solution file (e.g., Taxes.sln) in the root, you can use:
+        # run: dotnet build Taxes.sln --configuration Release --no-incremental
+        # Otherwise, build the specific project or all projects:
+        run: dotnet build --configuration Release --no-incremental
+
+      - name: Run tests and collect code coverage
+        # Adjust the command if your test project path or naming is different.
+        # This command assumes your test project is discoverable or you target a solution.
+        # The output format OpenCover is generally well-supported by SonarCloud.
+        run: |
+          dotnet test --configuration Release --no-build \
+          --collect:"XPlat Code Coverage" \
+          --results-directory ./coverage-results \
+          /p:CoverletOutputFormat=opencover \
+          /p:CoverletOutput=./coverage-results/coverage # This specifies the output file name (without extension)
+          # The XPlat Code Coverage driver might put the file in a subdirectory like TestResults/{guid}/coverage.cobertura.xml
+          # The sonar.cs.opencover.reportsPaths glob should find it.
+          # If you use a solution file: dotnet test Taxes.sln --configuration Release --no-build --collect:"XPlat Code Coverage" ...
+
+      - name: End SonarCloud Scan
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed for PR decoration
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: dotnet sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}" 
