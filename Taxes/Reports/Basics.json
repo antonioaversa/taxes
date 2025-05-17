@@ -21,6 +21,10 @@
       "Country": "US",
       "ISIN": "US0231351067"
     },
+    "B28A": { // IVOA
+      "Country": "IE",
+      "ISIN": "IE0008UEVOE0"
+    },
     "BEP": {
       "Country": "US",
       "ISIN": "BMG162581083"
@@ -41,9 +45,17 @@
       "Country": "US",
       "ISIN": "US1667641005"
     },
+    "EMIM": {
+      "Country": "IE",
+      "ISIN": "IE00BKM4GZ66"
+    },
     "ESTC": {
       "Country": "US",
       "ISIN": "NL0013056914"
+    },
+    "EXUS": {
+      "Country": "IE",
+      "ISIN": "IE0006WW1TQ4"
     },
     "GOOG": {
       "Country": "US",
@@ -226,6 +238,10 @@
     {
       "FilePattern": "2024 Revolut All Stocks Transactions RSEUAB.csv",
       "Broker": "REVOLUT RSEUAB"
+    },
+    {
+      "FilePattern": "2024 IBKR All Stocks Transactions.csv",
+      "Broker": "INTERACTIVE BROKERS"
     }
   ],
   "CryptoEventsFiles": [
