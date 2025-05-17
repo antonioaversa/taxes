@@ -132,13 +132,20 @@ public class StockEventsReaderTests
             "2022-03-30, 23:48:44",,CASH TOP-UP,,,"$3,000",USD,1.12
             """);
         Assert.AreEqual(new(2022,03,30,23,48,44, DateTimeKind.Utc), Instance.Parse(textReader3, NoFxRates, Broker, NoOut)[0].Date);
-        // IBKR Dividends and Withholding Tax format
+        // IBKR Dividends
         using var textReader4 = new StringReader(
             """
             Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
             2022-03-30,,CASH TOP-UP,,,"$3,000",USD,1.12
             """);
         Assert.AreEqual(new(2022,03,30,0,0,0, DateTimeKind.Utc), Instance.Parse(textReader4, NoFxRates, Broker, NoOut)[0].Date);
+        // IBKR Withholding Tax, Interest, Interest Accruals, and SYEP Securities Lent Activity
+        using var textReader5 = new StringReader(
+            """
+            Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
+            3/30/22,,CASH TOP-UP,,,"$3,000",USD,1.12
+            """);
+        Assert.AreEqual(new(2022,03,30,0,0,0, DateTimeKind.Utc), Instance.Parse(textReader5, NoFxRates, Broker, NoOut)[0].Date);
     }
 
     [TestMethod]

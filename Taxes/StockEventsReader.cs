@@ -108,10 +108,14 @@ partial class StockEventsReader(Basics basics)
         if (DateTime.TryParseExact(record.Date, "yyyy-MM-dd, HH:mm:ss", basics.DefaultCulture,
             DateTimeStyles.RoundtripKind, out var commaDate))
             return commaDate;
-        // IBKR Dividends and Withholding Tax format
+        // IBKR Dividends format
         if (DateTime.TryParseExact(record.Date, "yyyy-MM-dd", basics.DefaultCulture,
             DateTimeStyles.RoundtripKind, out var date))
             return date;
+        // IBKR Withholding Tax, Interest, Interest Accruals, and SYEP Securities Lent Activity format
+        if (DateTime.TryParseExact(record.Date, "M/d/yy", basics.DefaultCulture,
+            DateTimeStyles.RoundtripKind, out var dateWithMillis))
+            return dateWithMillis;
         throw new FormatException($"Unable to parse date: '{record.Date}'");
     }
 
