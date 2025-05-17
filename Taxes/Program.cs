@@ -1,10 +1,16 @@
 ﻿using Taxes;
 
-var outWriters = new OutWriters(Console.Out, new StringWriter(), new StringWriter());
+var appBaseDirectory = AppContext.BaseDirectory;
+
+var teeTextWriter = new TeeTextWriter(
+    outputDirectoryPath: Path.Combine(appBaseDirectory, "logs"),
+    fileNameFormat: "Taxes-{datetime}.md",
+    primaryWriter: Console.Out);
+var outWriters = new OutWriters(teeTextWriter, new StringWriter(), new StringWriter());
 
 ProcessUtils.PrintEnvironmentAndSettings(outWriters.Default);
 
-var basics = new Basics();
+var basics = new Basics(Path.Combine(appBaseDirectory, "Reports"));
 var fxRatesFilePath = Path.Combine(basics.ReportsDirectoryPath, basics.FXRatesFilePath);
 var fxRatesReader = new FxRatesReader(basics);
 var fxRates = fxRatesReader.ParseMultiCurrenciesFromFile(fxRatesFilePath);

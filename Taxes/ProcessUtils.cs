@@ -13,6 +13,7 @@ public static class ProcessUtils
         outWriter.WriteLine($"Date and time: {DateTime.Now}");
         outWriter.WriteLine($"Machine name: {Environment.MachineName}");
         outWriter.WriteLine($"User name: {Environment.UserName}");
+        outWriter.WriteLine($"AppContext base directory: {AppContext.BaseDirectory}");
         outWriter.WriteLine($"Current working directory: {Environment.CurrentDirectory}");
         outWriter.WriteLine($"Command line parameters: {string.Join(' ', Environment.GetCommandLineArgs())}");
         outWriter.WriteLine($"Commit hash: {CommandOutput("git rev-parse HEAD").Trim()}");

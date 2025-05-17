@@ -14,6 +14,7 @@ public class ProcessUtilsTest
         Assert.IsTrue(output.Contains("Date and time: "));
         Assert.IsTrue(output.Contains("Machine name: "));
         Assert.IsTrue(output.Contains("User name: "));
+        Assert.IsTrue(output.Contains("AppContext base directory: "));
         Assert.IsTrue(output.Contains("Current working directory: "));
         Assert.IsTrue(output.Contains("Command line parameters: "));
         Assert.IsTrue(output.Contains("Commit hash: "));
