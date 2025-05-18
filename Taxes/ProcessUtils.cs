@@ -6,25 +6,49 @@ namespace Taxes;
 
 public static class ProcessUtils
 {
-    public static void PrintEnvironmentAndSettings(TextWriter outWriter)
+    public static void PrintEnvironmentAndSettings(TextWriter outWriter, string logFilePath)
     {
         outWriter.WriteLine("# ENVIRONMENT AND SETTINGS");
         outWriter.WriteLine();
-        outWriter.WriteLine($"Date and time: {DateTime.Now}");
-        outWriter.WriteLine($"Machine name: {Environment.MachineName}");
-        outWriter.WriteLine($"User name: {Environment.UserName}");
-        outWriter.WriteLine($"AppContext base directory: {AppContext.BaseDirectory}");
-        outWriter.WriteLine($"Current working directory: {Environment.CurrentDirectory}");
-        outWriter.WriteLine($"Command line parameters: {string.Join(' ', Environment.GetCommandLineArgs())}");
-        outWriter.WriteLine($"Commit hash: {CommandOutput("git rev-parse HEAD").Trim()}");
-        outWriter.WriteLine($"Modified files: {CommandOutput("git diff")}");
-        outWriter.WriteLine("MD5 digest of files in Reports folder:");
-        foreach (var filePath in Directory.GetFiles("Reports"))
-        {
-            outWriter.WriteLine($"- {filePath}: {FileUtils.CalculateMD5Digest(filePath)}");
-        }
 
-        outWriter.WriteLine(new string('=', 100));
+        outWriter.WriteLine("## General settings");
+        outWriter.WriteLine();
+        outWriter.WriteLine($"- Date and time: {DateTime.Now:o}");
+        outWriter.WriteLine($"- Machine name: {Environment.MachineName}");
+        outWriter.WriteLine($"- User name: {Environment.UserName}");
+        outWriter.WriteLine($"- AppContext base directory: {AppContext.BaseDirectory}");
+        outWriter.WriteLine($"- Current working directory: {Environment.CurrentDirectory}");
+        outWriter.WriteLine($"- Command line parameters: {string.Join(' ', Environment.GetCommandLineArgs())}");
+        outWriter.WriteLine($"- Git commit hash: {CommandOutput("git rev-parse HEAD").Trim()}");
+        outWriter.WriteLine();
+
+        outWriter.WriteLine("## Output files");
+        outWriter.WriteLine();
+        outWriter.WriteLine($"- Log file: {logFilePath}");
+        outWriter.WriteLine();
+
+        outWriter.WriteLine("## MD5 digests");
+        outWriter.WriteLine();
+        outWriter.WriteLine("MD5 digest of files in Reports folder:");
+        var reportsPath = Path.Combine(AppContext.BaseDirectory, "Reports");
+        if (Directory.Exists(reportsPath))
+        {
+            foreach (var filePath in Directory.GetFiles(reportsPath))
+            {
+                outWriter.WriteLine($"- {filePath}: {FileUtils.CalculateMD5Digest(filePath)}");
+            }
+        }
+        else
+        {
+            outWriter.WriteLine($"- Reports directory not found at {reportsPath}");
+        }
+        outWriter.WriteLine();
+
+        outWriter.WriteLine("## Git Modified Files");
+        outWriter.WriteLine();
+        outWriter.WriteLine("```diff");
+        outWriter.Write(CommandOutput("git diff"));
+        outWriter.WriteLine("\n```");
     }
 
     internal /* for testing */ static string CommandOutput(string command, string? workingDirectory = null)

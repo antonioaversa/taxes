@@ -242,14 +242,21 @@ record TickerState(
     /// </summary>
     decimal CryptoFractionOfInitialCapitalBase = 0m)
 {
-    private static readonly Basics basics = new(); // TODO: remove it after checking where ToString is used
+    // private static readonly Basics basics = new(); // TODO: remove it after checking where ToString is used
 
-    public override string ToString() =>
+    public string ToString(Basics basics) =>
         $"{TotalQuantity.R(basics)} shares => {TotalAmountBase.R(basics)} {basics.BaseCurrency}, " +
         $"+V = CUMP {PlusValueCumpBase.R(basics)} {basics.BaseCurrency}, PEPS {PlusValuePepsBase.R(basics)} {basics.BaseCurrency}, CRYP {PlusValueCryptoBase.R(basics)} {basics.BaseCurrency}, " +
         $"-V = CUMP {MinusValueCumpBase.R(basics)} {basics.BaseCurrency}, PEPS {MinusValuePepsBase.R(basics)} {basics.BaseCurrency}, CRYP {MinusValueCryptoBase.R(basics)} {basics.BaseCurrency}, " +
         $"Dividends = {NetDividendsBase.R(basics)} {basics.BaseCurrency} + WHT {WhtDividendsBase.R(basics)} {basics.BaseCurrency} = {GrossDividendsBase.R(basics)} {basics.BaseCurrency}, " +
         $"Interests = {NetInterestsBase.R(basics)} {basics.BaseCurrency} + WHT {WhtInterestsBase.R(basics)} {basics.BaseCurrency} = {GrossInterestsBase.R(basics)} {basics.BaseCurrency}";
+
+    public override string ToString() =>
+        $"{TotalQuantity} shares => {TotalAmountBase} SomeCurrency, " +
+        $"+V = CUMP {PlusValueCumpBase}, PEPS {PlusValuePepsBase}, CRYP {PlusValueCryptoBase}, " +
+        $"-V = CUMP {MinusValueCumpBase}, PEPS {MinusValuePepsBase}, CRYP {MinusValueCryptoBase}, " +
+        $"Dividends = {NetDividendsBase} + WHT {WhtDividendsBase} = {GrossDividendsBase}, " +
+        $"Interests = {NetInterestsBase} + WHT {WhtInterestsBase} = {GrossInterestsBase}";
 }
 
 public record OutWriters(TextWriter Default, TextWriter Form2047Writer, TextWriter Form2086Writer)

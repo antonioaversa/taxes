@@ -9,7 +9,7 @@ public class ProcessUtilsTest
     public void PrintEnvironmentAndSettings()
     {
         using var writer = new StringWriter();
-        ProcessUtils.PrintEnvironmentAndSettings(writer);
+        ProcessUtils.PrintEnvironmentAndSettings(writer, "dummy.log");
         var output = writer.ToString();
         Assert.IsTrue(output.Contains("Date and time: "));
         Assert.IsTrue(output.Contains("Machine name: "));
@@ -17,8 +17,8 @@ public class ProcessUtilsTest
         Assert.IsTrue(output.Contains("AppContext base directory: "));
         Assert.IsTrue(output.Contains("Current working directory: "));
         Assert.IsTrue(output.Contains("Command line parameters: "));
-        Assert.IsTrue(output.Contains("Commit hash: "));
-        Assert.IsTrue(output.Contains("Modified files: "));
+        Assert.IsTrue(output.Contains("Git commit hash: "));
+        Assert.IsTrue(output.Contains("## Git Modified Files"));
         Assert.IsTrue(output.Contains("MD5 digest of files in Reports folder:"));
     }
 

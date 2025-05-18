@@ -221,9 +221,7 @@ record Event(
     /// </summary>
     public bool IsSell => Type is EventType.SellMarket or EventType.SellLimit;
 
-    private static readonly Basics basics = new(); // TODO: remove it after checking where ToString is used
-
-    public override string ToString() => 
+    public string ToString(Basics basics) => 
         $"{Date:yyyy-MM-dd HH:mm:ss} " + 
         (Ticker != null && Ticker == OriginalTicker ? $"{Ticker} " : "") +
         (Ticker != null && Ticker != OriginalTicker ? $"{Ticker}({OriginalTicker}) " : "") + 
@@ -232,4 +230,14 @@ record Event(
             ? $"{Quantity.Value.R(basics)} shares at {PricePerShareLocal.Value.R(basics)} {Currency}/share " 
             : string.Empty) + 
         $"=> {TotalAmountLocal.R(basics)} {Currency} (FXRate = {FXRate})";
+
+    public override string ToString() => 
+        $"{Date:yyyy-MM-dd HH:mm:ss} " + 
+        (Ticker != null && Ticker == OriginalTicker ? $"{Ticker} " : "") +
+        (Ticker != null && Ticker != OriginalTicker ? $"{Ticker}({OriginalTicker}) " : "") + 
+        $"{Type} " +
+        (PricePerShareLocal != null && Quantity != null 
+            ? $"{Quantity.Value} shares at {PricePerShareLocal.Value} {Currency}/share " 
+            : string.Empty) + 
+        $"=> {TotalAmountLocal} {Currency} (FXRate = {FXRate})";
 }

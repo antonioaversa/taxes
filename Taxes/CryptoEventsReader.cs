@@ -302,6 +302,11 @@ class CryptoEventsReader(Basics basics)
         [Name("Base currency")] public string BaseCurrency { get; set; } = string.Empty;
         [Name("State")] public string State { get; set; } = string.Empty;
         [Name("Balance")] public string Balance { get; set; } = string.Empty;
+
+        public override string ToString()
+        {
+            return $"{Type},{Product},{StartedDate},{CompletedDate},{Description},{Amount},{Currency},{FiatAmount},{FiatAmountIncFees},{Fee},{BaseCurrency},{State},{Balance}";
+        }
     }
 
     [Delimiter(",")]

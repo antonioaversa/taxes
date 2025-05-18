@@ -8,7 +8,7 @@ var teeTextWriter = new TeeTextWriter(
     primaryWriter: Console.Out);
 var outWriters = new OutWriters(teeTextWriter, new StringWriter(), new StringWriter());
 
-ProcessUtils.PrintEnvironmentAndSettings(outWriters.Default);
+ProcessUtils.PrintEnvironmentAndSettings(outWriters.Default, teeTextWriter.FilePath);
 
 var basics = new Basics(Path.Combine(appBaseDirectory, "Reports"));
 var fxRatesFilePath = Path.Combine(basics.ReportsDirectoryPath, basics.FXRatesFilePath);
@@ -17,23 +17,31 @@ var fxRates = fxRatesReader.ParseMultiCurrenciesFromFile(fxRatesFilePath);
 var cryptoPortfolioValuesFilePath = Path.Combine(basics.ReportsDirectoryPath, basics.CryptoPortfolioValuesFilePath);
 var cryptoPortfolioValues = new CryptoPortfolioValues(basics, fxRates, cryptoPortfolioValuesFilePath);
 
+await outWriters.Default.WriteLineAsync("");
 await outWriters.Default.WriteLineAsync("# STOCKS");
+await outWriters.Default.WriteLineAsync("");
+await outWriters.Default.WriteLineAsync("## Parsing files");
+await outWriters.Default.WriteLineAsync("");
 var stockEventsReader = new StockEventsReader(basics);
 basics.StockEventsFiles
     .FindEventsFiles(basics, outWriters)
     .SelectMany(eventsFileAndBroker => stockEventsReader
         .Parse(eventsFileAndBroker.FilePath, fxRates, eventsFileAndBroker.Broker, outWriters.Default))
-    .PrintEachElement(outWriters.Default, @event => $"Parsing Event {@event}...")
+    .PrintEachElement(outWriters.Default, @event => $"  - Parsing Event {@event.ToString(basics)}...")
     .ToList()
     .ProcessEvents(basics, cryptoPortfolioValues, outWriters);
 
+await outWriters.Default.WriteLineAsync("");
 await outWriters.Default.WriteLineAsync("# CRYPTO");
+await outWriters.Default.WriteLineAsync("");
+await outWriters.Default.WriteLineAsync("## Parsing files");
+await outWriters.Default.WriteLineAsync("");
 var cryptoEventsReader = new CryptoEventsReader(basics);
 basics.CryptoEventsFiles
     .FindEventsFiles(basics, outWriters)
     .SelectMany(eventsFileAndBroker => cryptoEventsReader
         .ParseFile(eventsFileAndBroker.FilePath, fxRates, eventsFileAndBroker.Broker, outWriters.Default))
-    .PrintEachElement(outWriters.Default, @event => $"Parsing Event {@event}...")
+    .PrintEachElement(outWriters.Default, @event => $"  - Parsing Event {@event.ToString(basics)}...")
     .ToList()
     .ProcessEvents(basics, cryptoPortfolioValues, outWriters);
 
@@ -47,11 +55,14 @@ namespace Taxes
                     .EnsureNonEmpty()
                     .Select(path => new EventsFileAndBroker(path, eventsFiles.Broker)))
                 .OrderBy(eventsFileAndBroker => eventsFileAndBroker.FilePath)
-                .PrintEachElement(outWriters.Default, filePath => $"Parsing File {filePath}...");
+                .PrintEachElement(outWriters.Default, efb => $"- Parsing File {System.IO.Path.GetFileName(efb.FilePath)}...");
 
         public static void ProcessEvents(this IList<Event> events, Basics basics, CryptoPortfolioValues cryptoPortfolioValues, OutWriters outWriters)
         {
             var tickerProcessing = new TickerProcessing(basics, cryptoPortfolioValues);
+
+            outWriters.Default.WriteLine(); // Empty line before H2
+            outWriters.Default.WriteLine("## Process events");
 
             // Taken into account in each ticker
             var nonTickerRelatedEvents = (
@@ -72,6 +83,9 @@ namespace Taxes
                     select tickerProcessing.ProcessTicker(e.ticker, e.tickerEvents, outWriters))
                 .ToList();
 
+            outWriters.Default.WriteLine();
+            outWriters.Default.WriteLine("## Aggregated Metrics");
+            outWriters.Default.WriteLine();
             tickerStates.PrintAggregatedMetrics(outWriters.Default, basics);
 
             var anyCryptoEvent = events.Any(e =>
@@ -84,10 +98,16 @@ namespace Taxes
                 case (true, true):
                     throw new InvalidOperationException(
                         $"Cannot process crypto and non-crypto events at the same time. Please split them into different {nameof(ProcessEvents)} executions.");
-                case (true, false):
+                case (true, false): // Crypto case -> 2086 Form
+                    outWriters.Default.WriteLine(); 
+                    outWriters.Default.WriteLine("## 2086 Form");
+                    outWriters.Default.WriteLine(); 
                     outWriters.Default.Write(outWriters.Form2086Writer.ToString());
                     break;
-                case (false, true):
+                case (false, true): // Stocks case -> 2074 Form
+                    outWriters.Default.WriteLine(); 
+                    outWriters.Default.WriteLine("## 2074 Form");
+                    outWriters.Default.WriteLine(); 
                     outWriters.Default.Write(outWriters.Form2047Writer.ToString());
                     break;
                 case (false, false):

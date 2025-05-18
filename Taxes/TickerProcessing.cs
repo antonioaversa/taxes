@@ -13,9 +13,17 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
 
         var isin = (string.IsNullOrWhiteSpace(ticker) ? "" : basics.Positions[ticker].ISIN);
         if (string.IsNullOrWhiteSpace(ticker))
-            outWriter.WriteLine($"PROCESS NON-TICKER-RELATED EVENTS");
+        {
+            outWriter.WriteLine();
+            outWriter.WriteLine($"### Non-Ticker-Related Events");
+            outWriter.WriteLine();
+        }
         else 
-            outWriter.WriteLine($"PROCESS {ticker} [{isin}]");
+        {
+            outWriter.WriteLine();
+            outWriter.WriteLine($"### {ticker} [{isin}]");
+            outWriter.WriteLine();
+        }
 
         var eventIndex = 0;
         var tickerState = new TickerState(ticker, isin);
@@ -40,11 +48,10 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
 
             tickerState = tickerAction(tickerEvent, tickerEvents, eventIndex++, tickerState, outWriters);
 
-            outWriter.WriteLine($"\tTicker State: {tickerState}");
+            outWriter.WriteLine($"\tTicker State: {tickerState.ToString(basics)}");
             outWriter.WriteLine();
         }
 
-        outWriter.WriteLine(Separator);
         return tickerState;
     }
 

@@ -90,11 +90,18 @@ public partial class Basics
             ?? throw new InvalidDataException($"Invalid {nameof(BaseCurrency)} in {basicsFileName}");
 
         BeginTaxPeriodOfInterest = DateTime.ParseExact(
-            basicsFile.BeginTaxPeriodOfInterest, "yyyy-MM-dd", DefaultCulture);
+            basicsFile.BeginTaxPeriodOfInterest 
+                ?? throw new InvalidDataException($"Invalid {nameof(basicsFile.BeginTaxPeriodOfInterest)} in {basicsFileName}"), 
+            "yyyy-MM-dd", 
+            DefaultCulture);
         EndTaxPeriodOfInterest = DateTime.ParseExact(
-            basicsFile.EndTaxPeriodOfInterest, "yyyy-MM-dd", DefaultCulture);
+            basicsFile.EndTaxPeriodOfInterest 
+                ?? throw new InvalidDataException($"Invalid {nameof(basicsFile.EndTaxPeriodOfInterest)} in {basicsFileName}"), 
+            "yyyy-MM-dd", 
+            DefaultCulture);
         FilterTaxFormsByPeriodOfInterest = bool.Parse(
-            basicsFile.FilterTaxFormsByPeriodOfInterest);
+            basicsFile.FilterTaxFormsByPeriodOfInterest 
+                ?? throw new InvalidDataException($"Invalid {nameof(FilterTaxFormsByPeriodOfInterest)} in {basicsFileName}"));
 
         Positions = new ReadOnlyDictionary<string, Position>(basicsFile.Positions
                                                              ?? throw new InvalidDataException($"Invalid {nameof(Positions)} in {basicsFileName}"));
