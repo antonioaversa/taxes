@@ -12,7 +12,12 @@ sources of data.
 
 It currently deals with the calculation of the following asset classes:
 - stocks (and ETFs of stocks)
+  - capital gains and losses (CUMP, PEPS)
+  - dividends
+  - interests from security lending
+  - interests from credit (i.e. cash) included here
 - crypto-currencies
+  - capital gains and losses
 
 > [!WARNING]
 > It has not been designed to process bonds, ETFs of bonds, or other financial assets, such as options, futures, etc.
@@ -21,7 +26,7 @@ It currently deals with the calculation of the following asset classes:
 
 Check the [Prerequirements section](#Prerequirements) for more details on the prerequisites to use the software.
 
-Check the [Build section](#Build) for more details on how to build and execute the software.
+Check the [Build and Test section](#Build-and-Test) for more details on how to build and execute the software.
 
 Check the [Input and output section](#Input-and-output) for more details on how to use the software.
 
@@ -34,7 +39,7 @@ The software is written in C# and requires the .NET 9.0 runtime to be installed 
 The latest version of .NET 9.0 for all major Operating Systems (Linux, MacOS, Windows) can be downloaded from the 
 [official site](https://dotnet.microsoft.com/download/dotnet/9.0).
 
-## Build
+## Build and Test
 
 The software can be built using the `dotnet` command-line tool on the three major Operating Systems.
 
@@ -45,6 +50,13 @@ by opening a terminal and executing the following commands starting from the roo
 cd Taxes
 dotnet build
 dotnet run
+```
+
+To run the tests, you can either be at root-level or at test-project-level:
+
+```shell
+cd Taxes.Tests
+dotnet test
 ```
 
 ## Input and output
@@ -82,8 +94,9 @@ It requires the following input:
 	- however, BCE FX Rates should be used whenever available, so that simulation results are as close to actual taxes
 	  as possible
  
-The output is emitted to the standard output. It shows the processing of the events, and the calculation of the taxes
-step-by-step, giving the state of the portfolio and the taxes due after each event.
+The output is a markdown file emitted to both standard output and a file. 
+It shows the processing of the events, and the calculation of the taxes step-by-step, giving the state of the portfolio 
+and the taxes due after each event.
 
 Example of output:
 
@@ -166,8 +179,12 @@ Make sure that `Basics.json` is up-to-date:
   - e.g. `0.01`, for two digits precision
 - define `BaseCurrency`, used as target currency for all financial calculations
   - for the time being only `EUR`, for EURO, is supported
+- define properties related to the period of interest for taxation:
+  - `BeginTaxPeriodOfInterest`: the begin of the period, typically the 1st of January of the tax year
+  - `EndTaxPeriodOfInterest`: the end of the period, typically the 31st of December of the tax year
+  - `FilterTaxFormsByPeriodOfInterest`: whether to only emit tax forms for the period of interest (default: `true`)
 - define `Positions`, used in reporting of calculation results, as a string-to-object dictionary, mapping the Ticker of 
-  a financial asset, to the Country and ISIN of that asset. Both are mandatory. 
+  a financial asset, to the 2-letter id of the Country and ISIN of that asset. Both are mandatory. 
   - e.g. `{ "AAPL" : { "Country": "US", "ISIN": "US0378331005" }, ... }`
   - `FR` is added to the list for all those products that are not considered "foreign" and are not subject to 
     withholding tax, such as crypto and security lending programs
@@ -187,9 +204,12 @@ Make sure that `Basics.json` is up-to-date:
   - `CryptoPortfolioValuesFilePath`, as the path of the file containing the value of the entire crypto portfolio
     for each relevant day 
   - data extraction from Revolut and format described in the [Setup crypto portfolio values section](#Setup-crypto-portfolio-values) 
+  - `MergeAllCryptos`: whether to consider all crypto-currencies as a single financial product or no (default: `true`)
 - define FX Rates settings: 
   - `FXRatesFilePath`, as the path of the file that contains the FX Rates
   - data extraction from the web and format described in the [Setup FX Rates section](#Setup-FX-Rates)
+- define `WithholdingTaxes`, used in tax calculation, as a string-to-object dictionary, mapping the 2-letter id of a 
+  country, to its dividend and interest withholding rates
 
 ### Setup stock events
 
@@ -197,7 +217,7 @@ The stock events are exported from the Revolut app in CSV format.
 
 An example of valid stock events file is the following:
 
-```texts
+```text
 Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
 2022-03-30T23:48:44.882381Z,,CASH TOP-UP,,,"$3,000",USD,1.12
 2022-05-02T13:32:24.217636Z,TSLA,BUY - MARKET,1.018999,$861.63,$878,USD,01.06
@@ -213,6 +233,18 @@ Date,Ticker,Type,Quantity,Price per share,Total Amount,Currency,FX Rate
 2023-12-11T14:34:06.497Z,PFE,BUY - LIMIT,17,$28.50 ,$485.71 ,USD,1.0765
 2023-12-18T14:37:36.664Z,ORCL,BUY - MARKET,20,$104.24 ,"$2,084.90 ",USD,1.0947
 ```
+
+The file can be generated by:
+- opening the Revolut App
+- going to the Invest section
+- More -> Documents
+- Select "Brokerage" account
+- Select "Account statement"
+- Select "Excel" as export format
+- Select the appropriate period type: e.g. "Tax year"
+- Select the appropriate period: e.g. "2024"
+- Click on "Generate"
+- Open with Excel, or any other application able to visualize the CSV
 
 ### Setup crypto events
 
@@ -261,7 +293,7 @@ BTC,Sell,0.02,"EUR 62,671.63","EUR 1,253.4426",EUR 12.41,"Mar 8, 2024, 9:32:39 P
 
 The file can be generated by:
 - opening the Revolut App
-- going to the Cryto section
+- going to the Crypto section
 - More -> Documents
 - Select "Account statement"
 - Select "Excel" as export format
@@ -330,6 +362,9 @@ A reset event resets to 0 all counters related to the calculation of capital gai
 A reset event, however, is different from simply removing all the events of the previous year and start fresh, as it 
 allows to keep the history of all the events, and match, for example, sell events within the year of interest to buy
 events in previous years, according CUMP and PEPS methodologies.
+
+Because all non-ticker-related events are taken into account for each ticker-specific processing, and because reset is
+a non-ticker-related event, you only need two reset events per year: one for the stocks and one for the crypto.
 
 #### Stocks reset event
 
