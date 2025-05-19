@@ -5,6 +5,11 @@ public class TickerStateTest
 {
     private const string Ticker = "AAPL";
     private const string Isin = "US0378331005";
+    private static readonly Basics TestBasics = new() 
+    { 
+        BaseCurrency = "USD", 
+        Rounding = value => Math.Round(value, 4) 
+    };
 
     [TestMethod]
     public void DefaultCtor_InitializesPropertiesToDefault()
@@ -43,7 +48,7 @@ public class TickerStateTest
             WhtDividendsBase = 0.12m,
             GrossDividendsBase = 1.35m,
         };
-        var tickerStateString = tickerState.ToString();
+        var tickerStateString = tickerState.ToString(TestBasics);
         Assert.IsTrue(tickerStateString.Contains("Dividends ="));
     }
 
@@ -56,7 +61,14 @@ public class TickerStateTest
             WhtInterestsBase = 0.12m,
             GrossInterestsBase = 1.35m,
         };
-        var tickerStateString = tickerState.ToString();
+        var tickerStateString = tickerState.ToString(TestBasics);
         Assert.IsTrue(tickerStateString.Contains("Interests ="));
+    }
+
+    [TestMethod]
+    public void ToString_Parameterless_ThrowsNotSupportedException()
+    {
+        var tickerState = new TickerState(Ticker, Isin);
+        Assert.ThrowsException<NotSupportedException>(() => tickerState.ToString());
     }
 }

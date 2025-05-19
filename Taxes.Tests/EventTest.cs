@@ -33,4 +33,11 @@ public class EventTest
         var tickerEvent = new Event(Date, eventType, Ticker, 0, 0, 0, 0, Currency, 0, Broker);
         Assert.AreEqual(expected, tickerEvent.IsSell);
     }
+
+    [TestMethod]
+    public void ToString_Parameterless_ThrowsNotSupportedException()
+    {
+        var anEvent = new Event(Date, EventType.BuyMarket, Ticker, 10, 100, 1000, 1, Currency, 1.2m, Broker);
+        Assert.ThrowsException<NotSupportedException>(() => anEvent.ToString());
+    }
 }

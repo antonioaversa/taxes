@@ -232,12 +232,5 @@ record Event(
         $"=> {TotalAmountLocal.R(basics)} {Currency} (FXRate = {FXRate})";
 
     public override string ToString() => 
-        $"{Date:yyyy-MM-dd HH:mm:ss} " + 
-        (Ticker != null && Ticker == OriginalTicker ? $"{Ticker} " : "") +
-        (Ticker != null && Ticker != OriginalTicker ? $"{Ticker}({OriginalTicker}) " : "") + 
-        $"{Type} " +
-        (PricePerShareLocal != null && Quantity != null 
-            ? $"{Quantity.Value} shares at {PricePerShareLocal.Value} {Currency}/share " 
-            : string.Empty) + 
-        $"=> {TotalAmountLocal} {Currency} (FXRate = {FXRate})";
+        throw new NotSupportedException("This method is not supported. Please use the overload that takes a Basics instance.");
 }

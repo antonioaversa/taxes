@@ -29,7 +29,7 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
         var tickerState = new TickerState(ticker, isin);
         foreach (var tickerEvent in tickerEvents)
         {
-            outWriter.WriteLine($"{eventIndex}: {tickerEvent}");
+            outWriter.WriteLine($"{eventIndex}: {tickerEvent.ToString(basics)}");
             TickerAction tickerAction = tickerEvent.Type switch
             {
                 EventType.Reset => ProcessReset,
@@ -107,7 +107,7 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
         if (tickerEvent.TotalAmountLocal <= 0)
             throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.TotalAmountLocal)} non-positive");
         if (tickerEvents.FirstOrDefault(e => e.Currency != tickerEvent.Currency && (e.IsBuy || e.IsSell)) is { } previousEvent)
-            throw new NotSupportedException($"Etherogenous currencies: {previousEvent} vs {tickerEvent}");
+            throw new NotSupportedException($"Etherogenous currencies: {previousEvent.ToString(basics)} vs {tickerEvent.ToString(basics)}");
         if (tickerEvent.Ticker != tickerState.Ticker)
             throw new InvalidDataException($"Event and state tickers don't match");
         if (tickerEvent.FeesLocal == null)
@@ -169,7 +169,7 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
         if (tickerEvent.Quantity is not > 0)
             throw new InvalidDataException($"Invalid event - {nameof(tickerEvent.Quantity)} null or non-positive");
         if (tickerEvents.FirstOrDefault(e => e.Currency != tickerEvent.Currency && (e.IsBuy || e.IsSell)) is { } previousEvent)
-            throw new NotSupportedException($"Etherogenous currencies: {previousEvent} vs {tickerEvent}");
+            throw new NotSupportedException($"Etherogenous currencies: {previousEvent.ToString(basics)} vs {tickerEvent.ToString(basics)}");
         if (tickerState.TotalQuantity - tickerEvent.Quantity.Value < -basics.Precision)
             throw new InvalidDataException($"Invalid event - Cannot sell more than owned");
         if (tickerEvent.TotalAmountLocal <= 0)
@@ -327,13 +327,13 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
                 if (pepsCurrentIndexSoldQuantity < pepsBuyEventQuantity)
                 {
                     outWriter.WriteLine(
-                        $"\tPEPS Buy Event {pepsBuyEvent} at index {pepsCurrentIndex} bought partially");
+                        $"\tPEPS Buy Event {pepsBuyEvent.ToString(basics)} at index {pepsCurrentIndex} bought partially");
 
                 }
                 else if (pepsCurrentIndexSoldQuantity == pepsBuyEventQuantity)
                 {
                     outWriter.WriteLine(
-                        $"\tPEPS Buy Event {pepsBuyEvent} at index {pepsCurrentIndex} bought entirely => move to next");
+                        $"\tPEPS Buy Event {pepsBuyEvent.ToString(basics)} at index {pepsCurrentIndex} bought entirely => move to next");
 
                     do { pepsCurrentIndex++; } 
                     while (pepsCurrentIndex < tickerEvents.Count && !tickerEvents[pepsCurrentIndex].IsBuy);
@@ -452,8 +452,8 @@ class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValu
                     Quantity = tickerEvents[i].Quantity!.Value * splitRatio,
                     PricePerShareLocal = tickerEvents[i].PricePerShareLocal!.Value / splitRatio,
                 };
-                outWriter.WriteLine($"\t\t{tickerEvents[i]}");
-                outWriter.WriteLine($"\t\t\tbecomes {normalizedEvent}");
+                outWriter.WriteLine($"\t\t{tickerEvents[i].ToString(basics)}");
+                outWriter.WriteLine($"\t\t\tbecomes {normalizedEvent.ToString(basics)}");
                 tickerEvents[i] = normalizedEvent;
             }
         }

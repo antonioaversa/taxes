@@ -252,11 +252,7 @@ record TickerState(
         $"Interests = {NetInterestsBase.R(basics)} {basics.BaseCurrency} + WHT {WhtInterestsBase.R(basics)} {basics.BaseCurrency} = {GrossInterestsBase.R(basics)} {basics.BaseCurrency}";
 
     public override string ToString() =>
-        $"{TotalQuantity} shares => {TotalAmountBase} SomeCurrency, " +
-        $"+V = CUMP {PlusValueCumpBase}, PEPS {PlusValuePepsBase}, CRYP {PlusValueCryptoBase}, " +
-        $"-V = CUMP {MinusValueCumpBase}, PEPS {MinusValuePepsBase}, CRYP {MinusValueCryptoBase}, " +
-        $"Dividends = {NetDividendsBase} + WHT {WhtDividendsBase} = {GrossDividendsBase}, " +
-        $"Interests = {NetInterestsBase} + WHT {WhtInterestsBase} = {GrossInterestsBase}";
+        throw new NotSupportedException("This method is not supported. Please use the overload that takes a Basics instance.");
 }
 
 public record OutWriters(TextWriter Default, TextWriter Form2047Writer, TextWriter Form2086Writer)
