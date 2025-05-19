@@ -212,10 +212,10 @@
       "ISIN": "IE_INTEREST_IBKR"
     },
     // Interests from IBKR Stock Yield Enhancement Program are not subject to WHT,
-    // and are mapped to the local country (FR), with 0 WHT
+    // and are mapped to a variant of the country of origin (IE), with 0 WHT: IE_NO_WHT
     "INTEREST_IBKR_SYEP": {
-      "Country": "FR",
-      "ISIN": "FR_INTEREST_IBKR_SYEP"
+      "Country": "IE_NO_WHT",
+      "ISIN": "IE_INTEREST_IBKR_SYEP"
     }
   },
   "StockEventsFiles": [
@@ -278,7 +278,7 @@
       "Dividends": 0.15,
       "Interests": 0.20
     },
-    "FR": {
+    "IE_NO_WHT": {
       "Dividends": 0.00,
       "Interests": 0.00
     }
