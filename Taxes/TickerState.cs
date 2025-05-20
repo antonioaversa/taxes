@@ -242,8 +242,6 @@ record TickerState(
     /// </summary>
     decimal CryptoFractionOfInitialCapitalBase = 0m)
 {
-    // private static readonly Basics basics = new(); // TODO: remove it after checking where ToString is used
-
     public string ToString(Basics basics) =>
         $"{TotalQuantity.R(basics)} shares => {TotalAmountBase.R(basics)} {basics.BaseCurrency}, " +
         $"+V = CUMP {PlusValueCumpBase.R(basics)} {basics.BaseCurrency}, PEPS {PlusValuePepsBase.R(basics)} {basics.BaseCurrency}, CRYP {PlusValueCryptoBase.R(basics)} {basics.BaseCurrency}, " +
