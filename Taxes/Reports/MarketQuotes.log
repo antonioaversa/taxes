@@ -1,0 +1,35 @@
+2025-05-21 23:50:42,573 - INFO - Old log file ./Taxes/Reports/MarketQuotes.log removed successfully.
+2025-05-21 23:50:42,573 - INFO - --- Crypto quote downloader script started at 2025-05-21 23:50:42 ---
+2025-05-21 23:50:42,575 - INFO - Found 15 crypto ticker(s): STORJ, BNT, NMR, PERP, SNX, BTC, DOGE, ETH, RLC, AAVE, NU, ADA, ZRX, SOL, SKL
+2025-05-21 23:50:43,928 - INFO - Replacing existing file: ./Taxes/Reports/MarketQuotes_STORJBTC.csv
+2025-05-21 23:50:43,931 - INFO - SUCCESS: Downloaded daily data for STORJBTC from Binance. URL: https://www.cryptodatadownload.com/cdd/Binance_STORJBTC_d.csv. Saved to: MarketQuotes_STORJBTC.csv
+2025-05-21 23:50:45,152 - INFO - Replacing existing file: ./Taxes/Reports/MarketQuotes_BNTBTC.csv
+2025-05-21 23:50:45,154 - INFO - SUCCESS: Downloaded daily data for BNTBTC from Binance. URL: https://www.cryptodatadownload.com/cdd/Binance_BNTBTC_d.csv. Saved to: MarketQuotes_BNTBTC.csv
+2025-05-21 23:50:46,235 - INFO - Replacing existing file: ./Taxes/Reports/MarketQuotes_NMRBTC.csv
+2025-05-21 23:50:46,237 - INFO - SUCCESS: Downloaded daily data for NMRBTC from Binance. URL: https://www.cryptodatadownload.com/cdd/Binance_NMRBTC_d.csv. Saved to: MarketQuotes_NMRBTC.csv
+2025-05-21 23:50:47,383 - INFO - Replacing existing file: ./Taxes/Reports/MarketQuotes_PERPBTC.csv
+2025-05-21 23:50:47,385 - INFO - SUCCESS: Downloaded daily data for PERPBTC from Binance. URL: https://www.cryptodatadownload.com/cdd/Binance_PERPBTC_d.csv. Saved to: MarketQuotes_PERPBTC.csv
+2025-05-21 23:50:48,667 - INFO - Replacing existing file: ./Taxes/Reports/MarketQuotes_SNXBTC.csv
+2025-05-21 23:50:48,670 - INFO - SUCCESS: Downloaded daily data for SNXBTC from Binance. URL: https://www.cryptodatadownload.com/cdd/Binance_SNXBTC_d.csv. Saved to: MarketQuotes_SNXBTC.csv
+2025-05-21 23:50:49,748 - INFO - Replacing existing file: ./Taxes/Reports/MarketQuotes_BTCEUR.csv
+2025-05-21 23:50:49,751 - INFO - SUCCESS: Downloaded daily data for BTCEUR from Binance. URL: https://www.cryptodatadownload.com/cdd/Binance_BTCEUR_d.csv. Saved to: MarketQuotes_BTCEUR.csv
+2025-05-21 23:50:50,458 - INFO - Replacing existing file: ./Taxes/Reports/MarketQuotes_DOGEEUR.csv
+2025-05-21 23:50:50,460 - INFO - SUCCESS: Downloaded daily data for DOGEEUR from Binance. URL: https://www.cryptodatadownload.com/cdd/Binance_DOGEEUR_d.csv. Saved to: MarketQuotes_DOGEEUR.csv
+2025-05-21 23:50:51,265 - INFO - Replacing existing file: ./Taxes/Reports/MarketQuotes_ETHEUR.csv
+2025-05-21 23:50:51,267 - INFO - SUCCESS: Downloaded daily data for ETHEUR from Binance. URL: https://www.cryptodatadownload.com/cdd/Binance_ETHEUR_d.csv. Saved to: MarketQuotes_ETHEUR.csv
+2025-05-21 23:50:52,603 - INFO - Replacing existing file: ./Taxes/Reports/MarketQuotes_RLCBTC.csv
+2025-05-21 23:50:52,606 - INFO - SUCCESS: Downloaded daily data for RLCBTC from Binance. URL: https://www.cryptodatadownload.com/cdd/Binance_RLCBTC_d.csv. Saved to: MarketQuotes_RLCBTC.csv
+2025-05-21 23:50:53,685 - INFO - Replacing existing file: ./Taxes/Reports/MarketQuotes_AAVEBTC.csv
+2025-05-21 23:50:53,687 - INFO - SUCCESS: Downloaded daily data for AAVEBTC from Binance. URL: https://www.cryptodatadownload.com/cdd/Binance_AAVEBTC_d.csv. Saved to: MarketQuotes_AAVEBTC.csv
+2025-05-21 23:50:57,837 - INFO - Replacing existing file: ./Taxes/Reports/MarketQuotes_ADAEUR.csv
+2025-05-21 23:50:57,841 - INFO - SUCCESS: Downloaded daily data for ADAEUR from Binance. URL: https://www.cryptodatadownload.com/cdd/Binance_ADAEUR_d.csv. Saved to: MarketQuotes_ADAEUR.csv
+2025-05-21 23:50:59,066 - INFO - Replacing existing file: ./Taxes/Reports/MarketQuotes_ZRXBTC.csv
+2025-05-21 23:50:59,067 - INFO - SUCCESS: Downloaded daily data for ZRXBTC from Binance. URL: https://www.cryptodatadownload.com/cdd/Binance_ZRXBTC_d.csv. Saved to: MarketQuotes_ZRXBTC.csv
+2025-05-21 23:50:59,810 - INFO - Replacing existing file: ./Taxes/Reports/MarketQuotes_SOLEUR.csv
+2025-05-21 23:50:59,811 - INFO - SUCCESS: Downloaded daily data for SOLEUR from Binance. URL: https://www.cryptodatadownload.com/cdd/Binance_SOLEUR_d.csv. Saved to: MarketQuotes_SOLEUR.csv
+2025-05-21 23:51:00,993 - INFO - Replacing existing file: ./Taxes/Reports/MarketQuotes_SKLBTC.csv
+2025-05-21 23:51:00,998 - INFO - SUCCESS: Downloaded daily data for SKLBTC from Binance. URL: https://www.cryptodatadownload.com/cdd/Binance_SKLBTC_d.csv. Saved to: MarketQuotes_SKLBTC.csv
+2025-05-21 23:51:00,999 - INFO - Download Summary:
+2025-05-21 23:51:00,999 - WARNING - Could not find/download data for the following 1 ticker(s) after trying all exchanges/pairs:
+2025-05-21 23:51:00,999 - WARNING -   - NU
+2025-05-21 23:51:00,999 - INFO - --- Crypto quote downloader script finished at 2025-05-21 23:51:00 ---
