@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 
 namespace Taxes;
 
-partial class StockEventsReader(Basics basics)
+internal partial class StockEventsReader(Basics basics)
 {
     public Basics Basics => basics;
 

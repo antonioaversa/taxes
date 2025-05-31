@@ -4,7 +4,7 @@
 /// The state of a ticker in the portfolio, during the processing of events for that portfolio.
 /// The state of the entire portfolio is given by the list of states of all tickers in the portfolio.
 /// </summary>
-record TickerState(
+public record TickerState(
     /// <summary>
     /// The mandatory alphanumeric code that identifies the ticker. Example: AAPL for Apple Inc.
     /// While tickers are exchange-specific, and only unique on a given exchange, this symbol is supposed to be unique
@@ -258,11 +258,11 @@ public record OutWriters(TextWriter Default, TextWriter Form2047Writer, TextWrit
     public OutWriters() : this(TextWriter.Null, TextWriter.Null, TextWriter.Null) { }
 }
 
-delegate TickerState TickerAction(
+internal delegate TickerState TickerAction(
     Event tickerEvent, IList<Event> tickerEvents, int eventIndex, TickerState tickerState, OutWriters outWriters);
 
 [AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = true)]
-class MetricAttribute(string description, bool aggregateByCountry = false) : Attribute
+public class MetricAttribute(string description, bool aggregateByCountry = false) : Attribute
 {
     public string Description { get; } = description;
     public bool AggregateByCountry { get; } = aggregateByCountry;

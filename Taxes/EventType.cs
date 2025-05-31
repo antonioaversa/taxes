@@ -1,7 +1,7 @@
 ﻿namespace Taxes;
 
 /// <summary>
-/// The type of an event.
+/// The type of event.
 /// </summary>
 public enum EventType
 {

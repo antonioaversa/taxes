@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace Taxes;
 
-public partial class FxRatesReader(Basics basics)
+internal partial class FxRatesReader(Basics basics)
 {
     public Basics Basics => basics;
 

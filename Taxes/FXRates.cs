@@ -38,7 +38,7 @@ public record FxRates(Basics Basics, Dictionary<string, Dictionary<DateTime, dec
         return result;
     }
 
-    static bool IsWeekend(DateTime date) => date.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday;
+    private static bool IsWeekend(DateTime date) => date.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday;
 
     internal sealed class DictionaryAlwaysReturning1 : IDictionary<DateTime, decimal>
     {

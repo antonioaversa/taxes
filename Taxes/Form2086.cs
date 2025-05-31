@@ -1,6 +1,6 @@
 ﻿namespace Taxes;
 
-static class Form2086
+internal static class Form2086
 {
     private static readonly string Separator = new('*', 100);
 

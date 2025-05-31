@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Taxes;
 
-public static class ProcessUtils
+internal static class ProcessUtils
 {
     public static void PrintEnvironmentAndSettings(TextWriter outWriter, string logFilePath)
     {

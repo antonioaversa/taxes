@@ -1,6 +1,6 @@
 ﻿namespace Taxes;
 
-class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValues = null)
+public class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfolioValues = null)
 {
     private static readonly string Separator = new string('=', 100);
     public Basics Basics => basics;

@@ -4,7 +4,7 @@ using CsvHelper.Configuration.Attributes;
 
 namespace Taxes;
 
-class CryptoPortfolioValues
+public class CryptoPortfolioValues
 {
     private static CsvConfiguration CsvConfiguration(Basics basics) => 
         new(basics.DefaultCulture)

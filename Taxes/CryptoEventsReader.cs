@@ -4,7 +4,7 @@ using System.Globalization;
 
 namespace Taxes;
 
-class CryptoEventsReader(Basics basics)
+public class CryptoEventsReader(Basics basics)
 {
     // Unlike stocks, which are considered distinct assets, all cryptos, from a tax perspective, are considered a single asset.
     // When a stock is bought or sold, the tax office looks into what specific stock has been affected by the financial event, and tax
@@ -21,13 +21,13 @@ class CryptoEventsReader(Basics basics)
     // TRANSFER,Current,2022-06-25 13:29:03,2022-06-25 13:29:03,Exchanged to ZRX,1000.0000000000,ZRX,293.9067439000,298.3167439000,4.4100000000,EUR,COMPLETED,1000.0000000000
     // REWARD,Current,2022-06-25 13:29:03,2022-06-25 13:29:03,Exchanged to ZRX,1000.0000000000,ZRX,293.9067439000,298.3167439000,4.4100000000,EUR,COMPLETED,1000.0000000000
 
-    const string Type_Reset = "RESET";
-    const string Type_Transfer = "TRANSFER";
-    const string Type_Exchange = "EXCHANGE";
-    const string Type_Reward = "REWARD";
-    const string Product_Current = "Current";
-    const string Product_CryptoStaking = "Crypto Staking";
-    const string State_Completed = "COMPLETED";
+    private const string Type_Reset = "RESET";
+    private const string Type_Transfer = "TRANSFER";
+    private const string Type_Exchange = "EXCHANGE";
+    private const string Type_Reward = "REWARD";
+    private const string Product_Current = "Current";
+    private const string Product_CryptoStaking = "Crypto Staking";
+    private const string State_Completed = "COMPLETED";
 
     // Example of 2025 CSV format:
     // Symbol,Type,Quantity,Price,Value,Fees,Date
@@ -37,9 +37,9 @@ class CryptoEventsReader(Basics basics)
     // BTC,Sell,0.03053533,"EUR 63,551.31","EUR 1,940.56",EUR 19.21,"May 22, 2024, 3:30:49 PM"
     // ETH,Sell,0.1,"3,235.24 CHF",323.52 CHF,2.55 CHF,"Dec 1, 2024, 7:58:16 PM"
 
-    const string Type2025_Buy = "Buy";
-    const string Type2025_Sell = "Sell";
-    const string Type2025_Reset = "Reset";
+    private const string Type2025_Buy = "Buy";
+    private const string Type2025_Sell = "Sell";
+    private const string Type2025_Reset = "Reset";
 
     public Basics Basics => basics;
 

@@ -11,7 +11,7 @@
 /// - Fees: fees of all shares in this event
 /// - Portfolio: all shares of all events, not just this event
 /// </summary>
-record Event(
+public record Event(
     /// <summary>
     /// The date and time at which the event occurred.
     /// It's mandatory for all types of events, even synthetic ones like Reset.
