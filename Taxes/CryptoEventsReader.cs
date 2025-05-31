@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using CsvHelper;
+﻿using CsvHelper;
 using CsvHelper.Configuration.Attributes;
 using System.Globalization;
 
@@ -274,16 +273,15 @@ class CryptoEventsReader(Basics basics)
             var currency = parts[1];
             return (amount, currency);
         }
-        else if (decimal.TryParse(parts[1], NumberStyles.Any, basics.DefaultCulture, out amount))
+
+        if (decimal.TryParse(parts[1], NumberStyles.Any, basics.DefaultCulture, out amount))
         {
             // Second part is a number
             var currency = parts[0];
             return (amount, currency);
         }
-        else
-        {
-            throw new InvalidOperationException($"Invalid amount with currency: {amountWithCurrency}");
-        }
+
+        throw new InvalidOperationException($"Invalid amount with currency: {amountWithCurrency}");
     }
 
     [Delimiter(",")]

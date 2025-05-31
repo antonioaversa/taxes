@@ -1,8 +1,3 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
-using System.Collections.Generic;
-using Taxes;
-
 namespace Taxes.Tests
 {
     [TestClass]

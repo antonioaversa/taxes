@@ -1,6 +1,4 @@
-﻿using System.Text;
-
-namespace Taxes;
+﻿namespace Taxes;
 
 /// <summary>
 /// An event in the portfolio, that may or may not change the state of the portfolio.
