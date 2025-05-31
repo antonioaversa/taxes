@@ -1,6 +1,6 @@
 namespace Taxes;
 
-static class ProgramExtensions
+internal static class ProgramExtensions
 {
     public static IEnumerable<EventsFileAndBroker> FindEventsFiles(this IEnumerable<Basics.EventsFiles> files, Basics basics, OutWriters outWriters) =>
         files.SelectMany(eventsFiles => Directory

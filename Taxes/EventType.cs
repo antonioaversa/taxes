@@ -1,9 +1,9 @@
 ﻿namespace Taxes;
 
 /// <summary>
-/// The type of an event.
+/// The type of event.
 /// </summary>
-public enum EventType
+internal enum EventType
 {
     /// <summary>
     /// Synthetic event added to reset aggregates calculation at the beginning of a year.

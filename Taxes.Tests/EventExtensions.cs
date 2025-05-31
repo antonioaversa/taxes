@@ -1,6 +1,6 @@
 ﻿namespace Taxes.Test;
 
-static class EventExtensions
+internal static class EventExtensions
 {
     [AssertionMethod]
     public static void AssertEvent(

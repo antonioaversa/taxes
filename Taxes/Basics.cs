@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 
 namespace Taxes;
 
-public partial class Basics
+internal partial class Basics
 {
     public string ReportsDirectoryPath { get; }
 

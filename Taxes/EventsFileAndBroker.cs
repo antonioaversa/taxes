@@ -1,3 +1,3 @@
 ﻿namespace Taxes;
 
-record EventsFileAndBroker(string FilePath, string Broker);
+internal record EventsFileAndBroker(string FilePath, string Broker);

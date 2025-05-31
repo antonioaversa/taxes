@@ -2,7 +2,7 @@
 
 namespace Taxes;
 
-public static class FileUtils
+internal static class FileUtils
 {
     public static string CalculateMD5Digest(string filePath)
     {

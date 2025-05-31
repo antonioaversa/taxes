@@ -6,7 +6,7 @@ namespace Taxes;
 /// A TextWriter implementation that writes to both a primary TextWriter (e.g., Console.Out)
 /// and a secondary TextWriter (e.g., a log file).
 /// </summary>
-public class TeeTextWriter : TextWriter
+internal class TeeTextWriter : TextWriter
 {
     private readonly TextWriter _primaryWriter;
     private readonly StreamWriter _secondaryWriter;

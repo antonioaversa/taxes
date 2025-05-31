@@ -1,6 +1,6 @@
 ﻿namespace Taxes;
 
-static class EnumerableExtensions
+internal static class EnumerableExtensions
 {
     public static IEnumerable<T> EnsureNonEmpty<T>(this IEnumerable<T> values)
     {

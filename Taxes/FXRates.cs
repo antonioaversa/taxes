@@ -14,7 +14,7 @@ namespace Taxes;
 /// the base currency every time an FX Rate is asked. If an FX Rate is asked
 /// for the base currency, 1.0m is returned, irrespective of the date.
 /// </summary>
-public record FxRates(Basics Basics, Dictionary<string, Dictionary<DateTime, decimal>> Rates)
+internal record FxRates(Basics Basics, Dictionary<string, Dictionary<DateTime, decimal>> Rates)
 {
     public IDictionary<DateTime, decimal> this[string currency] => 
         currency == Basics.BaseCurrency 
@@ -38,7 +38,7 @@ public record FxRates(Basics Basics, Dictionary<string, Dictionary<DateTime, dec
         return result;
     }
 
-    static bool IsWeekend(DateTime date) => date.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday;
+    private static bool IsWeekend(DateTime date) => date.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday;
 
     internal sealed class DictionaryAlwaysReturning1 : IDictionary<DateTime, decimal>
     {

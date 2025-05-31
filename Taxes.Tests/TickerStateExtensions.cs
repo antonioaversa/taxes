@@ -1,6 +1,6 @@
 ﻿namespace Taxes.Test;
 
-static class TickerStateExtensions
+internal static class TickerStateExtensions
 {
     public static void AssertState(
         this TickerState tickerState,

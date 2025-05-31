@@ -1,7 +1,7 @@
 ﻿namespace Taxes.Test;
 
 [TestClass]
-public class EventTest
+internal class EventTest
 {
     private static readonly DateTime Date = (2021, 1, 1).ToUtc();
     private const string Ticker = "AAPL";

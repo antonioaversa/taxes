@@ -1,6 +1,6 @@
 ﻿namespace Taxes.Test;
 
-static class AssertExtensions
+internal static class AssertExtensions
 {
     [AssertionMethod]
     public static void ThrowsAny<T>(Action action) where T : Exception

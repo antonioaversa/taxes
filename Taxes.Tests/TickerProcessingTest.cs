@@ -8,7 +8,7 @@ using static AssertExtensions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 [TestClass] 
-public class TickerProcessingTest
+internal class TickerProcessingTest
 {
     private const string EUR = "EUR";
     private const string USD = "USD";
