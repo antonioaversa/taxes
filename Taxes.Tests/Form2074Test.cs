@@ -1,6 +1,4 @@
-﻿using Taxes.Test;
-
-namespace Taxes.Tests;
+﻿namespace Taxes.Tests;
 
 using static EventType;
 

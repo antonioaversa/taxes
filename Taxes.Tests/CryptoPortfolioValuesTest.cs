@@ -1,5 +1,4 @@
-﻿using Taxes.Test;
-using static Taxes.Test.AssertExtensions;
+﻿using static Taxes.Tests.AssertExtensions;
 
 namespace Taxes.Tests;
 

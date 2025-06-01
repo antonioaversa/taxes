@@ -1,4 +1,4 @@
-﻿namespace Taxes.Test;
+﻿namespace Taxes.Tests;
 
 internal static class AssertExtensions
 {

@@ -1,7 +1,7 @@
 using System.Globalization;
 using static Taxes.CryptoEventsReader;
 
-namespace Taxes.Test;
+namespace Taxes.Tests;
 
 using static EventType;
 using static AssertExtensions;

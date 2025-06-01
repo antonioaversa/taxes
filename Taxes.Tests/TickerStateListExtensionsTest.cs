@@ -1,6 +1,6 @@
 using static Taxes.Basics;
 
-namespace Taxes.Test;
+namespace Taxes.Tests;
 
 [TestClass]
 public class TickerStateListExtensionsTest
