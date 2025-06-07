@@ -70,4 +70,66 @@ public class CryptoQuotesReaderTest
         Assert.AreEqual(expectedQuote.VolumeBase, firstQuote.VolumeBase);
         Assert.AreEqual(expectedQuote.TradeCount, firstQuote.TradeCount);
     }
+
+    [TestMethod]
+    public void Read_FileWithBlankLine_SkipsLine()
+    {
+        // Arrange
+        var tempFilePath = Path.GetTempFileName();
+        var fileContent = string.Join(Environment.NewLine,
+            "Unix,Date,Symbol,Open,High,Low,Close,Volume ADA,Volume EUR,tradecount",
+            "1747699200000,2025-05-20,ADAEUR,0.6615,0.6703,0.6433,0.6607,2884102.0,1885827.80505,10704",
+            "", // Blank line
+            "1747612800000,2025-05-19,ADAEUR,0.6794,0.6839,0.6344,0.6611,3067215.9,2002787.87862,12394"
+        );
+        File.WriteAllText(tempFilePath, fileContent);
+
+        // Act
+        var quotes = CryptoQuotesReader.Read(tempFilePath).ToList();
+
+        // Assert
+        Assert.AreEqual(2, quotes.Count, "Should skip the blank line and read 2 quotes.");
+
+        // Cleanup
+        File.Delete(tempFilePath);
+    }
+
+    [TestMethod]
+    public void Read_LineWithTooFewColumns_ThrowsFormatException()
+    {
+        // Arrange
+        var tempFilePath = Path.GetTempFileName();
+        var fileContent = string.Join(Environment.NewLine,
+            "Unix,Date,Symbol,Open,High,Low,Close,Volume ADA,Volume EUR,tradecount",
+            "1747699200000,2025-05-20,ADAEUR,0.6615,0.6703,0.6433" // Not enough columns
+        );
+        File.WriteAllText(tempFilePath, fileContent);
+
+        // Act & Assert
+        var ex = Assert.ThrowsException<FormatException>(() => CryptoQuotesReader.Read(tempFilePath).ToList());
+        Assert.IsTrue(ex.Message.Contains("expected at least 10"));
+
+        // Cleanup
+        File.Delete(tempFilePath);
+    }
+
+    [TestMethod]
+    public void Read_LineWithUnparsableData_ThrowsFormatException()
+    {
+        // Arrange
+        var tempFilePath = Path.GetTempFileName();
+        // The 'Open' column has non-numeric data
+        var fileContent = string.Join(Environment.NewLine,
+            "Unix,Date,Symbol,Open,High,Low,Close,Volume ADA,Volume EUR,tradecount",
+            "1747699200000,2025-05-20,ADAEUR,not-a-decimal,0.6703,0.6433,0.6607,2884102.0,1885827.80505,10704"
+        );
+        File.WriteAllText(tempFilePath, fileContent);
+
+        // Act & Assert
+        var ex = Assert.ThrowsException<FormatException>(() => CryptoQuotesReader.Read(tempFilePath).ToList());
+        Assert.IsTrue(ex.Message.Contains("Failed to parse one or more values"));
+
+        // Cleanup
+        File.Delete(tempFilePath);
+    }
 } 
