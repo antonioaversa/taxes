@@ -280,7 +280,14 @@ public class TickerProcessing(Basics basics, CryptoPortfolioValues? cryptoPortfo
                     while (pepsCurrentIndex < tickerEvents.Count && !tickerEvents[pepsCurrentIndex].IsBuy);
                 }
 
-                if (remainingQuantityToSell > 0m)
+                // In principle the following condition should simply be: remainingQuantityToSell > 0m. However, due to the 
+                // approximations made on the way, the remaining quantity to sell may very small, but still positive.
+                // Therefore, we need to determine the precision at which we consider remainingQuantityToSell to be zero.
+                // To do that, we multiply the total quantity by the precision. So, for a precision of 0.01 = 1%, if the 
+                // remaining quantity to sell is below the 1% of the total quantity in the ticker state, we consider that
+                // to be zero. 
+                var quantityPrecision = tickerState.TotalQuantity * basics.Precision;
+                if (remainingQuantityToSell > quantityPrecision)
                 {
                     outWriter.WriteLine($"\tPEPS Remaining Quantity to match: {remainingQuantityToSell.R(basics)} => FIND Buy Event");
                 }
